@@ -1,0 +1,382 @@
+@model ProjectTallify.Models.Event?
+
+@{
+    ViewData["Title"] = "Create Event";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    ViewBag.HideMainNav = true;
+    ViewBag.HideOrgCard = true;
+
+    var isEdit = (Model?.Id ?? 0) > 0;
+}
+
+<!-- Loading Overlay -->
+<div id="publishLoadingOverlay" class="loading-overlay" style="display:none;">
+    <div class="loading-content">
+        <div class="loader-spinner"></div>
+        <p id="loadingMessage">Configuring your scoring environment and notifying judges...</p>
+    </div>
+</div>
+
+<!-- Custom Confirmation Modal (for Draft Resume) -->
+<div class="modal fade" id="draftResumeModal" tabindex="-1" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+      <div class="modal-header" style="border-bottom: 1px solid #f3f4f6; padding: 20px 24px;">
+        <h5 class="modal-title" style="font-weight: 700; color: #111827;">Resume Draft?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
+            We found an unfinished event draft. Would you like to resume your event setup or start fresh?
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid #f3f4f6; padding: 16px 24px; background-color: #f9fafb; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+        <button type="button" id="btnDraftFresh" class="btn btn-light" data-bs-dismiss="modal" style="font-weight: 500; color: #374151;">Start Fresh</button>
+        <button type="button" id="btnDraftResume" class="btn btn-primary" style="background-color: var(--color-primary); border: none; font-weight: 600;">Resume Draft</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-page app-page--create-event is-active">
+
+    <!-- PAGE HEADER -->
+    <header class="app-page-header">
+        <h1 class="app-page-title">Create Event</h1>
+        <p class="app-page-subtitle">
+            Follow the 5-step process to set up your competition. We'll help you every step of the way.
+        </p>
+    </header>
+
+    <!-- STEP PILL -->
+    <div class="event-create-steps">
+        <div class="event-step-pill is-active" id="eventStepPill">
+            <span id="eventStepPillText">Event Identity</span>
+        </div>
+    </div>
+
+    <div class="event-create-body">
+
+        <!-- =========================================================
+             HIDDEN FIELDS (for EDIT mode)
+             ========================================================= -->
+        <input type="hidden" id="existingEventId"      value="@(isEdit ? Model!.Id : 0)" />
+        <input type="hidden" id="existingEventType"   value="@(isEdit ? Model!.EventType : "criteria")" />
+        <input type="hidden" id="existingAccessCode"  value="@(isEdit ? Model!.AccessCode : "")" />
+        <input type="hidden" id="existingContestants" value='@(isEdit ? Model!.ContestantsJson : "[]")' />
+        <input type="hidden" id="existingAccessUsers" value='@(isEdit ? Model!.AccessJson : "[]")' />
+        <input type="hidden" id="existingCriteria"    value='@(isEdit ? Model!.AveragingJson : "{}")' />
+        <input type="hidden" id="existingRounds"      value='@(isEdit ? Model!.RoundsJson : "[]")' />
+        @if (isEdit)
+        {
+            <input type="hidden" id="existingEventName"        value="@Model!.Name" />
+            <input type="hidden" id="existingEventVenue"       value="@Model!.Venue" />
+            <input type="hidden" id="existingEventDescription" value="@Model!.Description" />
+            <input type="hidden" id="existingEventStartDate"   value="@Model!.StartDateTime.ToString("yyyy-MM-dd")" />
+            <input type="hidden" id="existingEventStartTime"   value="@Model!.StartDateTime.ToString("HH:mm")" />
+            <input type="hidden" id="existingThemeColor"       value="@Model!.ThemeColor" />
+            <input type="hidden" id="existingHeaderImage"      value="@Model!.HeaderImage" />
+        }
+
+        <!-- =========================================================
+             STEP 1 — EVENT IDENTITY (The Shell)
+             ========================================================= -->
+        <div class="event-step is-active" data-step="1">
+            <section class="event-section-card">
+                <h2 class="event-section-title">Event Identity</h2>
+                <div class="event-form-grid">
+                    <div class="event-field event-field-full">
+                        <div class="event-field-header">
+                            <label class="event-label" for="eventName">Event Name<span class="required">*</span></label>
+                            <div class="event-error-message" data-error-for="eventName"></div>
+                        </div>
+                        <input id="eventName" type="text" class="event-input" placeholder="e.g. Annual Science Fair 2025" />
+                    </div>
+
+                    <div class="event-field event-field-full">
+                        <div class="event-field-header">
+                            <label class="event-label" for="eventVenue">Venue<span class="required">*</span></label>
+                            <div class="event-error-message" data-error-for="eventVenue"></div>
+                        </div>
+                        <input id="eventVenue" type="text" class="event-input" placeholder="e.g. Grand Hall, Main Building" />
+                    </div>
+
+                    <div class="event-field event-field-full">
+                        <div class="event-field-header">
+                            <label class="event-label" for="eventDescription">Description / Notes</label>
+                        </div>
+                        <textarea id="eventDescription" class="event-input event-input-multiline" rows="4" style="resize:none;" placeholder="Briefly describe the event..."></textarea>
+                    </div>
+
+                    <div class="event-field event-field-half">
+                        <div class="event-field-header">
+                            <label class="event-label" for="eventStartDate">Event Start<span class="required">*</span></label>
+                            <div class="event-error-message" data-error-for="eventStart"></div>
+                        </div>
+                        <div class="event-datetime-row">
+                            <div class="event-input-icon-group">
+                                <input id="eventStartDate" type="date" class="event-input event-input-icon-inner" />
+                                <button type="button" class="event-input-icon-btn" data-date-icon-for="eventStartDate"><i class="ri-calendar-line"></i></button>
+                            </div>
+                            <div class="event-input-icon-group">
+                                <input id="eventStartTime" type="time" class="event-input event-input-icon-inner" />
+                                <button type="button" class="event-input-icon-btn" data-time-icon-for="eventStartTime"><i class="ri-time-line"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- =========================================================
+             STEP 2 — THE SCORING BRAIN (Logic & Rounds)
+             ========================================================= -->
+        <div class="event-step" data-step="2">
+            <div id="criteriaStep2">
+                <div class="event-section-card" id="criteriaSystemCard">
+                    <h2 class="event-section-title">Scoring Logic</h2>
+                    <div class="event-type-toggle">
+                        <label class="chip-toggle" for="criteriaSystemAveraging">
+                            <input type="radio" name="criteriaSystem" value="averaging" id="criteriaSystemAveraging" checked>
+                            <span class="chip-toggle-inner">Weighted Average</span>
+                        </label>
+                        <label class="chip-toggle" for="criteriaSystemPointing">
+                            <input type="radio" name="criteriaSystem" value="pointing" id="criteriaSystemPointing">
+                            <span class="chip-toggle-inner">Point-Based</span>
+                        </label>
+                    </div>
+                    <p class="event-subtext" id="criteriaSystemDescription">
+                        Weighted Average: Scoring is based on percentage weights per criteria.
+                    </p>
+                </div>
+
+                <div class="event-section-card">
+                    <div class="event-section-header">
+                        <h2 class="event-section-title">Round Builder</h2>
+                    </div>
+                    <div id="criteriaRoundsList"></div>
+                    <div class="event-section-actions event-section-actions--bottom">
+                        <button type="button" id="btnAddCriteriaRound" class="btn-create-add">
+                            <i class="ri-add-line"></i> Add Round
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             STEP 3 — CONTESTANT ROSTER (The Participants)
+             ========================================================= -->
+        <div class="event-step" data-step="3">
+            <section class="event-section-card">
+                <div class="event-section-header">
+                    <div>
+                        <h2 class="event-section-title">Contestants</h2>
+                        <p class="event-subtext">Manage participants for your event. At least two is required.</p>
+                    </div>
+                </div>
+
+                <div class="event-error-message" data-error-for="contestants" style="margin-bottom:8px;"></div>
+
+                <div class="panel-table-wrapper">
+                    <table class="app-table">
+                        <thead>
+                            <tr>
+                                <th style="width:90px;">ID</th>
+                                <th>Name</th>
+                                <th>Organization</th>
+                                <th style="width:180px;">Photo</th>
+                                <th style="width:140px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contestantsBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="event-section-actions" style="margin-top:12px;">
+                    <button type="button" class="btn-create-add" id="btnAddContestant">
+                        <i class="ri-add-line"></i> Add contestant
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- =========================================================
+             STEP 4 — THE JUDGING PANEL (Security & Access)
+             ========================================================= -->
+        <div class="event-step" data-step="4">
+            <div class="event-section-card">
+                <h2 class="event-section-title">Judge Access Code</h2>
+                <div class="event-field event-field-full">
+                    <label class="event-label" for="eventAccessCode">Set a unique code (e.g., DWCC2025)</label>
+                    <input id="eventAccessCode" type="text" class="event-input" placeholder="e.g. DWCC2025" />
+                </div>
+            </div>
+
+            <div class="event-section-card">
+                <div class="event-section-header">
+                    <div>
+                        <h2 class="event-section-title">Judging Panel</h2>
+                        <p class="event-subtext">Add judges who will receive invitation links.</p>
+                    </div>
+                </div>
+                <div class="event-error-message" data-error-for="judges"></div>
+                <div class="panel-table-wrapper">
+                    <table class="app-table" id="judgesTable">
+                        <thead>
+                            <tr>
+                                <th style="width:80px;">ID</th>
+                                <th style="width:28%;">Name</th>
+                                <th style="width:28%;">Email</th>
+                                <th style="width:110px;">Pin</th>
+                                <th style="width:170px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="judgesBody"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" style="padding: 14px 20px;">
+                                    <button type="button" id="btnAddJudge" class="btn-create-add btn-full-width">
+                                        <i class="ri-add-line"></i> Add Judge
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             STEP 5 — BRANDING & REVIEW (The Polish)
+             ========================================================= -->
+        <div class="event-step" data-step="5">
+            <section class="event-section-card">
+                <h2 class="event-section-title">Branding & Theme</h2>
+                <div class="event-form-grid">
+                    <div class="event-field event-field-full">
+                        <label class="event-label">Theme Selection</label>
+                        <div class="theme-preset-grid">
+                             <button type="button" class="theme-preset-option" data-color="#ff007a"><span class="theme-swatch"><span style="background:#ff007a;"></span></span><span class="theme-label">Tallify Pink</span></button>
+                             <button type="button" class="theme-preset-option" data-color="#2563eb"><span class="theme-swatch"><span style="background:#2563eb;"></span></span><span class="theme-label">Royal Blue</span></button>
+                             <button type="button" class="theme-preset-option" data-color="#059669"><span class="theme-swatch"><span style="background:#059669;"></span></span><span class="theme-label">Emerald</span></button>
+                             <button type="button" class="theme-preset-option theme-preset-option-custom" data-color="custom"><span class="theme-swatch theme-swatch-custom"><i class="ri-palette-line"></i></span><span class="theme-label">Custom</span></button>
+                        </div>
+                        <input type="color" id="eventThemeCustom" class="theme-color-input-hidden" value="#ff007a" />
+                    </div>
+
+                    <div class="event-field event-field-full">
+                        <label class="event-label">Header Image</label>
+                        <div class="header-upload-group">
+                            <label class="header-upload-btn" id="headerImageLabel">
+                                <i class="ri-image-line"></i> Choose photo
+                                <input type="file" id="eventHeaderImage" accept="image/*,.svg" hidden />
+                            </label>
+                            <span id="headerFileName" class="header-filename"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="event-section-card">
+                <h2 class="event-section-title">Final Summary</h2>
+                <div class="review-accordion">
+                    <div class="review-item">
+                        <button type="button" class="review-toggle">Event Identity <i class="ri-arrow-down-s-line"></i></button>
+                        <div class="review-content" id="reviewIdentity"></div>
+                    </div>
+                    <div class="review-item">
+                        <button type="button" class="review-toggle">Scoring & Rounds <i class="ri-arrow-down-s-line"></i></button>
+                        <div class="review-content" id="reviewScoring"></div>
+                    </div>
+                    <div class="review-item">
+                        <button type="button" class="review-toggle">Contestants <i class="ri-arrow-down-s-line"></i></button>
+                        <div class="review-content" id="reviewContestants"></div>
+                    </div>
+                    <div class="review-item">
+                        <button type="button" class="review-toggle">Judges <i class="ri-arrow-down-s-line"></i></button>
+                        <div class="review-content" id="reviewJudges"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="event-section-card">
+                <h2 class="event-section-title">Live Preview</h2>
+                <div id="eventPreviewCard" class="preview-card">
+                    <div id="previewHeader" class="preview-header"></div>
+                    <div class="preview-body">
+                        <h3 id="previewTitle" class="preview-title">Event Name</h3>
+                        <div class="preview-tags">
+                            <span class="preview-chip type-chip">CB</span>
+                            <span class="preview-chip status-chip--open">Preparing</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </div> <!-- /.event-create-body -->
+
+    <!-- GLOBAL FOOTER (step navigation) -->
+    <footer class="event-step-footer">
+        <div class="event-step-progress">
+            <span id="eventStepIndex">1</span> out of <span id="eventStepTotal">5</span>
+        </div>
+        <div class="event-step-actions">
+            <button type="button" class="btn-outline" id="btnStepBack">Cancel</button>
+            <button type="button" class="btn-primary" id="btnStepNext">Next</button>
+        </div>
+    </footer>
+
+</div> <!-- /.app-page -->
+
+<div id="toast-container" class="toast-container"></div>
+
+<style>
+    /* New Styles for 5-Step Wizard */
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+    .loading-content { text-align: center; }
+    .loader-spinner { width: 48px; height: 48px; border: 4px solid var(--color-primary-soft); border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .review-accordion { display: flex; flex-direction: column; gap: 8px; }
+    .review-item { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+    .review-toggle { width: 100%; padding: 16px; background: #f9fafb; border: none; display: flex; justify-content: space-between; align-items: center; font-weight: 600; cursor: pointer; }
+    .review-content { padding: 16px; display: none; background: white; border-top: 1px solid #e5e7eb; }
+    .review-item.is-open .review-content { display: block; }
+    .review-item.is-open .review-toggle i { transform: rotate(180deg); }
+
+    .weight-tracker { height: 4px; width: 100%; background: #e5e7eb; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+    .weight-tracker-bar { height: 100%; width: 0; transition: width 0.3s ease, background-color 0.3s ease; }
+    .weight-tracker-bar.is-perfect { background: #10b981; }
+    .weight-tracker-bar.is-over { background: #ef4444; }
+    .weight-tracker-bar.is-under { background: #f59e0b; }
+
+    .toast-container { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    .toast-item { background: #ef4444; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateY(20px); transition: 0.3s; }
+    .toast-item.is-visible { opacity: 1; transform: translateY(0); }
+    .toast-item.toast-success { background: #10b981; }
+    .toast-item.toast-info { background: #3b82f6; }
+
+    .event-input.is-invalid-red {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+    }
+
+    #eventName,
+    #eventVenue,
+    #eventAccessCode,
+    .event-round-name,
+    .criteria-name,
+    .contestant-name,
+    .contestant-org,
+    .judge-name {
+        text-transform: uppercase;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="~/js/create-event.js?v=@DateTime.Now.Ticks" asp-append-version="true"></script>
+}

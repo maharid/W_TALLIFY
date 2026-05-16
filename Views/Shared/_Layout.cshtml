@@ -1,0 +1,286 @@
+﻿@{
+    var title = ViewData["Title"] as string ?? "Tallify";
+    var activeNav = ViewBag.ActiveNav as string ?? "Dashboard";
+
+    bool isAuthPage   = ViewBag.IsAuthPage == true;
+    bool hideHeader   = ViewBag.HideHeader == true;
+    bool hideMainNav  = ViewBag.HideMainNav == true;
+    bool hideOrgCard  = ViewBag.HideOrgCard == true;
+    bool fullPageMode = ViewBag.FullPageMode == true;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@title - Tallify</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- logo in tab -->
+    <link rel="icon" type="image/png" sizes="32x32" href="~/images/LOGO.png" />
+
+    <link rel="stylesheet" href="~/css/general.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+
+    @* <link rel="stylesheet" href="~/css/manage-event.css" asp-append-version="true" /> *@
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" />
+
+        @inject ProjectTallify.Models.TallifyDbContext _db
+        @inject Microsoft.AspNetCore.Http.IHttpContextAccessor _httpContextAccessor
+        @{
+            string? userTheme = null;
+            ViewBag.ProfileImg = Url.Content("~/images/default pfp.png"); // Default profile image
+            ViewBag.DisplayInitialsInHeader = false; // Flag to indicate if initials should be shown
+            ViewBag.UserInitials = ""; // Store initials
+            ViewData["OrgName"] = "Your Organization"; 
+            ViewData["OrgSubtitle"] = "Subtitle";
+            ViewData["OrgPhoto"] = Url.Content("~/images/default org.png"); // Default org photo
+    
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                var userId = httpContext.Session.GetInt32("UserId");
+                if (userId.HasValue)
+                {
+                    var user = _db.Users.Find(userId.Value);
+                    if (user != null)
+                    {
+                        if (!string.IsNullOrEmpty(user.ThemeColor)) { userTheme = user.ThemeColor; }
+                        if (!string.IsNullOrEmpty(user.OrganizationName)) { ViewData["OrgName"] = user.OrganizationName; }
+                        if (!string.IsNullOrEmpty(user.OrganizationSubtitle)) { ViewData["OrgSubtitle"] = user.OrganizationSubtitle; }
+                        if (!string.IsNullOrEmpty(user.OrganizationPhotoPath)) { ViewData["OrgPhoto"] = user.OrganizationPhotoPath; }
+
+                        if (!string.IsNullOrEmpty(user.ProfilePhotoPath) && !user.ProfilePhotoPath.Contains("default pfp.png", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ViewBag.ProfileImg = user.ProfilePhotoPath;
+                            ViewBag.DisplayInitialsInHeader = false;
+                        }
+                        else
+                        {
+                            // Calculate initials if no photo
+                            var initials = "";
+                            if (!string.IsNullOrEmpty(user.FirstName)) initials += user.FirstName[0];
+                            if (!string.IsNullOrEmpty(user.LastName)) initials += user.LastName[0];
+                            ViewBag.UserInitials = initials.ToUpper().Substring(0, Math.Min(2, initials.Length)); // Max 2 initials
+                            ViewBag.DisplayInitialsInHeader = true;
+                        }
+                    }
+                }
+            }
+        
+            // Check for exclusions: Auth pages and Events/Manage page
+            string? controller = ViewContext.RouteData.Values["controller"]?.ToString();
+            string? action = ViewContext.RouteData.Values["action"]?.ToString();
+            bool isEventManagePage = (string.Equals(controller, "Events", StringComparison.OrdinalIgnoreCase) && 
+                                      string.Equals(action, "Manage", StringComparison.OrdinalIgnoreCase));
+
+            // Helper to convert Hex to RGB for derived colors
+            string HexToRgb(string hex) {
+                if (string.IsNullOrEmpty(hex)) return "255, 0, 122"; // Default pink
+                hex = hex.TrimStart('#');
+                if (hex.Length == 6) {
+                    try {
+                        var r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
+                        var g = int.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
+                        var b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
+                        return $"{r}, {g}, {b}";
+                    } catch { }
+                }
+                return "255, 0, 122";
+            }
+        }
+    @if (!string.IsNullOrEmpty(userTheme) && !isAuthPage)
+    {
+        var rgb = HexToRgb(userTheme);
+        <style>
+            :root {
+                --color-primary: @userTheme !important;
+                --color-link: @userTheme !important;
+                
+                /* Derived colors */
+                --color-primary-soft: rgba(@rgb, 0.35) !important;
+                --color-primary-soft-bg: rgba(@rgb, 0.12) !important;
+                --color-primary-text: #ffffff !important; 
+            }
+            .settings-tab.is-active {
+                color: var(--color-primary);
+                border-bottom-color: var(--color-primary);
+            }
+        </style>
+    }
+</head>
+<body class="@(isAuthPage ? "auth-body" : "app-body")">
+    <!-- Global Loader -->
+    <div id="global-loader">
+        <div class="loader-spinner"></div>
+    </div>
+
+@if (isAuthPage)
+{
+    @RenderBody()
+}
+else
+{
+    @* HEADER + NAV (hidden on Create Event via ViewBags) *@
+    @if (!hideHeader)
+    {
+        <header class="app-header">
+                                    <div class="app-header-left">
+                                        <a asp-controller="Home" asp-action="Dashboard" class="app-brand">
+                                            <img src="~/images/LOGO TEXT.png" alt="Tallify" class="app-brand-logo" />
+                                        </a>
+                                    </div>            <div class="app-header-right">
+                @* Main nav can itself be hidden separately if you ever need it *@
+                @if (!hideMainNav)
+                {
+                    <nav class="app-nav" aria-label="Main navigation">
+                        <a asp-controller="Home"
+                        asp-action="Dashboard"
+                        class="app-nav-link @(activeNav == "Dashboard" ? "is-active" : "")">
+                            Dashboard
+                        </a>
+
+                        <a asp-controller="Events"
+                        asp-action="Index"
+                        class="app-nav-link @(activeNav == "Events" ? "is-active" : "")">
+                            Events
+                        </a>
+
+                        <a asp-controller="Home"
+                        asp-action="AuditLogs"
+                        class="app-nav-link @(activeNav == "AuditLogs" ? "is-active" : "")">
+                            Audit Logs
+                        </a>
+                    </nav>
+
+                }
+
+                <div class="app-header-actions">
+                    <button type="button"
+                            class="app-icon-button @(activeNav == "Settings" ? "app-icon-button-settings--active" : "")"
+                            id="btnSettings"
+                            onclick="window.location.href='@Url.Action("Index","Settings")'"
+                            aria-label="Settings">
+                        <i class="ri-settings-3-line"></i>
+                    </button>
+
+                    <button type="button"
+                            class="app-icon-button"
+                            id="btnNotifications"
+                            aria-label="Notifications"
+                            style="position: relative;">
+                        <i class="ri-notification-3-line"></i>
+                        <span id="notifBadge" 
+                              style="display:none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 10px; min-width: 18px; text-align: center; border: 2px solid white;">
+                            0
+                        </span>
+                    </button>
+
+                    <div class="app-profile-pill" title="Profile">
+                        <div class="app-profile-initials-circle @(ViewBag.DisplayInitialsInHeader == true ? "" : "hidden")" id="headerInitials">
+                            @ViewBag.UserInitials
+                        </div>
+                        <img src="@ViewBag.ProfileImg"
+                             alt="Profile"
+                             class="app-profile-pill-img @(ViewBag.DisplayInitialsInHeader == true ? "hidden" : "")"
+                             id="headerProfileImage" />
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Notifications popover -->
+        <div class="notifications-popover" id="notificationsPopover" aria-hidden="true">
+            <div class="notifications-popover-inner">
+                <div class="notifications-popover-header">
+                    <h3>Notifications</h3>
+                    <button type="button"
+                            id="btnMarkAllRead"
+                            style="margin-left:auto; margin-right:8px; border:none; background:transparent; font-size:11px; color:var(--color-primary); cursor:pointer; font-weight:600;">
+                        Mark all as read
+                    </button>
+                    <button type="button"
+                            class="notifications-close"
+                            id="btnNotificationsClose"
+                            aria-label="Close notifications">
+                        &times;
+                    </button>
+                </div>
+                <div class="notifications-content">
+                    <p class="notifications-empty">
+                        No notifications yet.
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* MAIN AREA *@
+    <main class="app-main @(fullPageMode ? "app-main--fullpage" : "")">
+        @if (!hideOrgCard)
+        {
+            <section class="org-section">
+                <div class="org-card">
+                    <div class="org-avatar" style="background-image: url('@ViewData["OrgPhoto"]');"></div>
+                    <div class="org-text">
+                        <h1 class="org-title" data-org-name>@ViewData["OrgName"]</h1>
+                        <p class="org-subtitle" data-org-subtitle>@ViewData["OrgSubtitle"]</p>
+                    </div>
+                </div>
+            </section>
+        }
+
+        @RenderBody()
+    </main>
+}
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+    <script src="~/js/disable-inspect.js" asp-append-version="true"></script>
+
+    <script>
+        // Notifications popover toggle moved to notifications.js
+    </script>
+
+    @RenderSection("Scripts", required: false)
+
+    <div id="logout-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Log Out</h3>
+
+                <button type="button" id="btn-close-logout" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="summary-modal-body screen-body">
+                Are you sure you want to log out?
+            </div>
+
+            <div class="screen-actions">
+                <button type="button" id="btnCancelLogout" class="btn-screen-cancel">Cancel</button>
+
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="logout-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-screen-confirm">
+                        Log Out
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

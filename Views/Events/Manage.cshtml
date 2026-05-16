@@ -1,0 +1,2029 @@
+﻿@using System
+@using System.Text.Json
+@using ProjectTallify.Models
+@model ProjectTallify.Models.Event
+
+@{
+    // JSON deserialization options (IMPORTANT: case-insensitive)
+    var jsonOptions = new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    // Contestants
+    var contestants = new List<SimpleContestant>();
+    if (!string.IsNullOrWhiteSpace(Model.ContestantsJson))
+    {
+        try
+        {
+            contestants = JsonSerializer.Deserialize<List<SimpleContestant>>(Model.ContestantsJson, jsonOptions)
+                          ?? new List<SimpleContestant>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deserializing ContestantsJson: " + ex);
+        }
+    }
+
+    // Access users (Judges / Scorers)
+    var accessUsers = new List<SimpleAccessUser>();
+    if (!string.IsNullOrWhiteSpace(Model.AccessJson))
+    {
+        try
+        {
+            accessUsers = JsonSerializer.Deserialize<List<SimpleAccessUser>>(Model.AccessJson, jsonOptions)
+                          ?? new List<SimpleAccessUser>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deserializing AccessJson: " + ex);
+        }
+    }
+
+    // Rounds
+    var rounds = new List<ProjectTallify.Models.SimpleRoundWithCriteria>();
+    if (!string.IsNullOrWhiteSpace(Model.RoundsJson))
+    {
+        try
+        {
+            rounds = JsonSerializer.Deserialize<List<ProjectTallify.Models.SimpleRoundWithCriteria>>(Model.RoundsJson, jsonOptions)
+                     ?? new List<ProjectTallify.Models.SimpleRoundWithCriteria>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error deserializing RoundsJson: " + ex);
+        }
+    }
+
+    var statusText = string.IsNullOrWhiteSpace(Model.Status) ? "Preparing" : Model.Status;
+    var isCriteria = Model.EventType == "criteria";
+    var isEnded = statusText.ToLower() == "closed";
+}
+
+<link rel="stylesheet" href="~/css/manage-event.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/grand-reveal.css" />
+
+<div class="manage-page">
+
+    <!-- Back Button -->
+    <div class="back-to-events-row">
+        <a asp-controller="Events" asp-action="Index" class="btn-subtle-back">
+            <i class="ri-arrow-left-line"></i> Back to Events
+        </a>
+    </div>
+
+    <!-- EVENT HEADER CARD -->
+    <section class="manage-event-card">
+        <div class="manage-header-image-wrapper @(string.IsNullOrWhiteSpace(Model.HeaderImage) ? "no-image" : "")"
+             @if (string.IsNullOrWhiteSpace(Model.HeaderImage) && !string.IsNullOrWhiteSpace(Model.ThemeColor)) {
+                 @: style="background-color: @Model.ThemeColor;"
+             }>
+            @if (!string.IsNullOrWhiteSpace(Model.HeaderImage))
+            {
+                var headerUrl = Model.HeaderImage;
+                if (!headerUrl.StartsWith("/") && !headerUrl.StartsWith("http"))
+                {
+                    headerUrl = "/uploads/" + headerUrl;
+                }
+                <img src="@Url.Content(headerUrl)" alt="Event Header" class="manage-header-image" />
+            }
+        </div>
+        <div class="manage-event-main">
+            <div class="manage-event-title-block">
+                <h2 class="manage-event-title-text">@Model.Name</h2>
+
+                            <div class="manage-event-tags">
+
+                                <span class="pill pill-type">
+
+                                    @(isCriteria ? "CB" : "ORW")
+
+                                </span>
+
+                
+
+                                <span class="pill pill-status pill-status-@statusText.ToLower()">
+
+                                    @statusText
+
+                                </span>
+
+                            </div>
+
+                
+            </div>
+
+            <div class="manage-event-actions">
+                <input type="hidden" id="eventAccessCodeHidden" value="@Model.AccessCode" />
+                
+                @if (statusText.ToLower() == "preparing")
+                {
+                    <a asp-controller="Events"
+                       asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       class="btn-secondary">
+                        Edit event
+                    </a>
+                    <button type="button" class="btn-primary" onclick="openConfirmModal('start')">
+                        Start Event
+                    </button>
+                }
+                else if (statusText.ToLower() == "open")
+                {
+                    <button type="button" class="btn-danger" onclick="openConfirmModal('end')">
+                        End Event
+                    </button>
+                }
+                else if (statusText.ToLower() == "closed")
+                {
+                    <button class="btn-danger" disabled title="Event is closed">
+                        Event Ended
+                    </button>
+                }
+            </div>
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- TABS -->
+    <nav class="manage-tabs">
+        <button class="tab-link active" data-tab="overview">Overview</button>
+        <button class="tab-link" data-tab="contestants">Contestants</button>
+        <button class="tab-link" data-tab="access">Access</button>
+
+        @if (isCriteria)
+        {
+            <button class="tab-link" data-tab="criteria">Criteria</button>
+        }
+        else
+        {
+            <button class="tab-link" data-tab="pointing">Pointing System</button>
+        }
+
+        <button class="tab-link" data-tab="tally">Tally</button>
+        <button class="tab-link" data-tab="audit">Audit Logs</button>
+        <button class="tab-link" data-tab="settings">Settings</button>
+    </nav>
+
+    <section class="manage-tab-shell">
+
+        <!-- 1. OVERVIEW -->
+        <section class="tab-content active" id="tab-overview">
+            <h3 class="content-title">Overview</h3>
+            <div class="card">
+                <p class="card-label">Description / Notes</p>
+                <p class="card-text">
+                    @(string.IsNullOrWhiteSpace(Model.Description)
+                        ? "No description added."
+                        : Model.Description)
+                </p>
+            </div>
+
+            <div class="overview-grid">
+                <div class="card overview-item">
+                    <p class="card-label">Venue</p>
+                    <p class="card-value">@Model.Venue</p>
+                </div>
+                <div class="card overview-item">
+                    <p class="card-label">Start</p>
+                    <p class="card-value">
+                        @Model.StartDateTime.ToString("MMM dd, yyyy h:mm tt")
+                    </p>
+                </div>
+
+                <div class="card overview-item">
+                    <p class="card-label">Access Code</p>
+                    <div class="access-code-row">
+                        <span id="accessCodeValue">
+                            @(string.IsNullOrWhiteSpace(Model.AccessCode) ? "â€”" : Model.AccessCode)
+                        </span>
+                        @if (!string.IsNullOrWhiteSpace(Model.AccessCode))
+                        {
+                            <button type="button"
+                                    class="btn-secondary btn-copy-access"
+                                    data-copy-target="accessCodeValue"
+                                    disabled="@isEnded">
+                                Copy
+                            </button>
+                        }
+                    </div>
+                    <p class="card-hint">
+                        Share this code with scorers/judges so they can join the event.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. CONTESTANTS -->
+        <section class="tab-content" id="tab-contestants">
+            <h3 class="content-title">Contestants</h3>
+
+            <div class="card">
+                <table class="app-table">
+                    <thead>
+                        <tr>
+                            <th style="width:15%;">ID</th>
+                            <th style="width:30%;">Name</th>
+                            <th style="width:35%;">Organization</th>
+                            <th style="width:20%;">Photo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manageContestantsBody">
+                        @if (!contestants.Any())
+                        {
+                            <tr class="table-empty-row">
+                                <td colspan="4">
+                                    Contestants will appear here after you add them in the event wizard.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var c in contestants)
+                            {
+                                <tr>
+                                    <td>@c.Id</td>
+                                    <td>@c.Name</td>
+                                    <td>@c.Organization</td>
+                                    <td class="contestant-photo-cell">
+                                        @if (!string.IsNullOrWhiteSpace(c.PhotoUrl))
+                                        {
+                                            var photoUrl = c.PhotoUrl;
+                                            if (!photoUrl.StartsWith("/") && !photoUrl.StartsWith("http"))
+                                            {
+                                                photoUrl = "/uploads/" + photoUrl;
+                                            }
+                                            <div class="contestant-photo-wrapper">
+                                                <div class="contestant-photo-thumb has-photo"
+                                                    data-full-src="@photoUrl"
+                                                    style="background-image: url('@photoUrl');">
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No photo</span>
+                                        }
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. ACCESS (Judges / Scorers) -->
+        <section class="tab-content" id="tab-access">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
+                <h3 class="content-title" style="margin-bottom: 0;">
+                    @(isCriteria ? "Judges" : "Scorers")
+                </h3>
+                @if (isCriteria)
+                {
+                    <div style="display: flex; flex: 1; justify-content: flex-end;">
+                        <button type="button" class="btn-secondary send-all-access-btn" data-event-id="@Model.Id" disabled="@isEnded" style="margin-left: auto;">
+                            Send Access to all
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <div class="card">
+                <table class="app-table">
+                    <thead>
+                        <tr>
+                            <th style="width:10%;">ID</th>
+                            <th style="width:25%;">@(isCriteria ? "Judge Name" : "Scorer Name")</th>
+                            <th style="width:30%;">@(isCriteria ? "Email" : "Assigned Contestant/s")</th>
+                            <th style="width:15%;">Pin</th>
+                            <th style="width:20%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manageAccessBody">
+                        @if (!accessUsers.Any())
+                        {
+                            <tr class="table-empty-row">
+                                <td colspan="5">
+                                    @(isCriteria
+                                        ? "Judges configured in the event wizard will appear here."
+                                        : "Scorers configured in the event wizard will appear here.")
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var u in accessUsers)
+                            {
+                                <tr>
+                                    <td>@u.Id</td>
+                                    <td>@u.Name</td>
+                                    <td>@u.Assigned</td> @* criteria: email; orw: assigned contestants *@
+                                    <td>
+                                        @u.Pin
+                                        @if (isCriteria)
+                                        {
+                                            if (u.IsVerified)
+                                            {
+                                                <span class="status-pill" style="background:#dcfce7; color:#166534; margin-left:8px; font-size:10px;">Verified</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-pill" style="background:#fef3c7; color:#b45309; margin-left:8px; font-size:10px;">Pending</span>
+                                            }
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (isCriteria)
+                                        {
+                                            <button type="button"
+                                                    class="btn-secondary send-access-btn"
+                                                    data-judge-id="@u.Id"
+                                                    disabled="@isEnded">
+                                                Send Access
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button"
+                                                    class="btn-secondary btn-share-user"
+                                                    data-user-id="@u.Id"
+                                                    data-user-name="@u.Name"
+                                                    data-user-email="@u.Assigned"
+                                                    data-user-pin="@u.Pin"
+                                                    disabled="@isEnded">
+                                                Share
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 4. CRITERIA (Rounds) -->
+        @if (isCriteria)
+        {
+            <section class="tab-content" id="tab-criteria">
+                <h3 class="content-title">Criteria & Rounds</h3>
+                <div class="card">
+                    <table class="app-table">
+                        <thead>
+                            <tr>
+                                <th style="width:20%;">Round Name</th>
+                                <th style="width:30%;">Criteria Breakdown</th>
+                                <th style="width:15%;">Weighted Average</th>
+                                <th style="width:15%;">Status</th>
+                                <th style="width:20%; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!rounds.Any())
+                            {
+                                <tr class="table-empty-row"><td colspan="5">No rounds found.</td></tr>
+                            }
+                            else
+                            {
+                                @for (int i = 0; i < rounds.Count; i++)
+                                {
+                                    var r = rounds[i];
+                                    var isPending = r.Status == "pending" || string.IsNullOrEmpty(r.Status);
+                                    var isOngoing = r.Status == "ongoing";
+                                    var isFinished = r.Status == "finished";
+                                    
+                                    bool previousFinished = (i == 0) || (rounds[i-1].Status == "finished");
+                                    var isLocked = !previousFinished && isPending;
+
+                                    <tr>
+                                        <td style="vertical-align: top; font-weight: 500;">@r.RoundName</td>
+                                        <td style="vertical-align: top;">
+                                            @if (r.Criteria != null && r.Criteria.Any())
+                                            {
+                                                <ul style="list-style:none; padding:0; margin:0;">
+                                                    @foreach (var c in r.Criteria)
+                                                    {
+                                                        <li style="display:flex; justify-content:space-between; padding: 4px 0; border-bottom:1px solid #f3f4f6;">
+                                                            <span>@c.Name</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No criteria defined.</span>
+                                            }
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            @if (r.Criteria != null && r.Criteria.Any())
+                                            {
+                                                <ul style="list-style:none; padding:0; margin:0;">
+                                                    @foreach (var c in r.Criteria)
+                                                    {
+                                                        <li style="display:flex; justify-content:space-between; padding: 4px 0; border-bottom:1px solid #f3f4f6;">
+                                                            <span style="color: #6b7280; font-weight: 600;">@(c.Weight.ToString("F2") + "%")</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">N/A</span>
+                                            }
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            @if (isPending) { <span class="status-pill" style="background:#f3f4f6; color:#4b5563;">Not Started</span> }
+                                            else if (isOngoing) { <span class="status-pill" style="background:#dcfce7; color:#166534;">Ongoing</span> }
+                                            else if (isFinished) { <span class="status-pill" style="background:#dbeafe; color:#1e40af;">Finished</span> }
+                                        </td>
+                                        <td style="text-align:right; vertical-align: top;">
+                                            @if (isPending)
+                                            {
+                                                <button type="button" 
+                                                        class="btn-primary-soft btn-small"
+                                                        onclick="window.openStartRoundModal(@r.Id, '@r.RoundName', @r.Order)"
+                                                        disabled="@(isLocked || isEnded)"
+                                                        title="@(isLocked ? "Previous round must be finished" : "")">
+                                                    Start Round
+                                                </button>
+                                            }
+                                            else if (isOngoing)
+                                            {
+                                                <button type="button" 
+                                                        class="btn-danger-soft btn-small"
+                                                        onclick="window.openEndRoundModal(@r.Id, '@r.RoundName')"
+                                                        disabled="@isEnded">
+                                                    End Round
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn-secondary btn-small" disabled>
+                                                    Completed
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        <!-- 4b. POINTING SYSTEM (ORW Rounds) -->
+        @if (!isCriteria)
+        {
+            <section class="tab-content" id="tab-pointing">
+                <h3 class="content-title">Pointing System & Rounds</h3>
+                <div class="card">
+                     <table class="app-table">
+                        <thead>
+                            <tr>
+                                <th style="width:20%;">Round Name</th>
+                                <th style="width:10%;">Correct</th>
+                                <th style="width:10%;">Wrong</th>
+                                <th style="width:10%;">Bonus</th>
+                                <th style="width:10%;">Skip (Pen)</th>
+                                <th style="width:10%;">Violation (Pen)</th>
+                                <th style="width:10%;">Status</th>
+                                <th style="width:20%; text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!rounds.Any())
+                            {
+                                <tr class="table-empty-row"><td colspan="8">No rounds found.</td></tr>
+                            }
+                            else
+                            {
+                                @for (int i = 0; i < rounds.Count; i++)
+                                {
+                                    var r = rounds[i];
+                                    var isPending = r.Status == "pending" || string.IsNullOrEmpty(r.Status);
+                                    var isOngoing = r.Status == "ongoing";
+                                    var isFinished = r.Status == "finished";
+                                    
+                                    bool previousFinished = (i == 0) || (rounds[i-1].Status == "finished");
+                                    var isLocked = !previousFinished && isPending;
+
+                                    <tr>
+                                        <td>@r.RoundName</td>
+                                        <td>
+                                            @if (isPending) { <span class="status-pill" style="background:#f3f4f6; color:#4b5563;">Not Started</span> }
+                                            else if (isOngoing) { <span class="status-pill" style="background:#dcfce7; color:#166534;">Ongoing</span> }
+                                            else if (isFinished) { <span class="status-pill" style="background:#dbeafe; color:#1e40af;">Finished</span> }
+                                        </td>
+                                        <td style="text-align:right;">
+                                            @if (isPending)
+                                            {
+                                                <button type="button" 
+                                                        class="btn-primary-soft btn-small"
+                                                        onclick="window.openStartRoundModal(@r.Id, '@r.RoundName', @r.Order)"
+                                                        disabled="@(isLocked || isEnded)"
+                                                        title="@(isLocked ? "Previous round must be finished" : "")">
+                                                    Start Round
+                                                </button>
+                                            }
+                                            else if (isOngoing)
+                                            {
+                                                <button type="button" 
+                                                        class="btn-danger-soft btn-small"
+                                                        onclick="window.openEndRoundModal(@r.Id, '@r.RoundName')"
+                                                        disabled="@isEnded">
+                                                    End Round
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn-secondary btn-small" disabled>
+                                                    Completed
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        <!-- 5. TALLY -->
+        <section class="tab-content" id="tab-tally">
+            <h3 class="content-title">Live Tally Monitor</h3>
+            <div id="live-tally-container">
+                <div class="card">
+                    <div style="padding: 2rem; text-align: center;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2">Loading live tally...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. AUDIT LOGS -->
+        <section class="tab-content" id="tab-audit">
+            <h3 class="content-title">Audit Logs</h3>
+            <div class="card">
+                <table class="app-table">
+                    <thead>
+                        <tr>
+                            <th style="width:20%;">Date/Time</th>
+                            <th style="width:20%;">User</th>
+                            <th style="width:15%;">Role</th>
+                            <th style="width:45%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.AuditLogs is List<ProjectTallify.Models.AuditLog> logs && logs.Any())
+                        {
+                            foreach (var log in logs)
+                            {
+                                <tr>
+                                    <td>@log.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td>@log.UserName</td>
+                                    <td>@log.UserRole</td>
+                                    <td>
+                                        <strong>@log.Action</strong>
+                                        @if (!string.IsNullOrEmpty(log.Details))
+                                        {
+                                            <br /><small class="text-muted">@log.Details</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr class="table-empty-row">
+                                <td colspan="4">
+                                    No audit logs yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 7. SETTINGS -->
+        <section class="tab-content" id="tab-settings">
+            <div class="settings-layout-grid">
+                <!-- Left Column -->
+                <div class="settings-column">
+                    
+                    <!-- Generate Reports -->
+                    <div class="settings-group card">
+                        <div class="settings-group-header">
+                            <h3 class="settings-group-title">Generate Reports</h3>
+                        </div>
+                        <p class="settings-error-hint"> <!-- NEW CLASS for informational error -->
+                            Reports can only be generated after the event has ended.
+                        </p>
+                        <p class="settings-label">Select reports to generate:</p>
+                        
+                        <div class="settings-field-row" style="flex-direction: column; gap: 10px; flex: 1; margin-bottom: 20px;"> <!-- Added margin-bottom -->
+                            <label class="report-option">
+                                <input type="checkbox" class="report-checkbox" value="overall"> Consolidated Master Sheet
+                            </label>
+                            <label class="report-option">
+                                <input type="checkbox" class="report-checkbox" value="resultperround"> Result per Round
+                            </label>
+                            <label class="report-option">
+                                <input type="checkbox" class="report-checkbox" value="winners"> Winners
+                            </label>
+                            <label class="report-option">
+                                <input type="checkbox" class="report-checkbox" value="judges"> Judge's Score
+                            </label>
+                        </div>
+
+                        <div> <!-- Removed settings-actions-row -->
+                            <button type="button" id="btnGenerateReport" class="settings-primary-button">Generate Reports</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column -->
+                <div class="settings-column">
+                    
+                    <!-- Danger Zone -->
+                    <div class="settings-group card">
+                        <div class="settings-group-header">
+                            <h3 class="settings-group-title" style="color: var(--color-danger-text);">Danger Zone</h3>
+                        </div>
+                        
+                        <div style="flex: 1; margin-bottom: 20px;"> <!-- Added margin-bottom -->
+                            <p class="settings-label">Archive Event</p>
+                            <p class="settings-hint">
+                                Hide this event from your active lists. Can be restored later.
+                            </p>
+                        </div>
+
+                        <div> <!-- Removed settings-actions-row -->
+                            <button type="button" id="btnArchiveEvent" class="settings-danger-button">Archive Event</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </section>
+    
+    <!-- Select Contestants Modal -->
+    <div id="modal-select-contestants" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="width: 90%; max-width: 600px; padding: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: calc(100vh - 80px);">
+            
+            <!-- Header -->
+            <div class="summary-modal-header" style="flex-shrink: 0; background-color: #F5F5F7; padding: 20px 24px; border-bottom: 1px solid var(--color-border); width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                <h3 class="screen-title" style="margin: 0; font-size: 18px; color: var(--color-text);">Select Contestants for <span id="selected-round-name" style="font-weight: 700;"></span></h3>
+                <button type="button" class="screen-close-btn" id="btn-close-select-contestants-modal" aria-label="Close" style="margin: 0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="summary-modal-body screen-body" style="padding: 0 24px 24px 24px; margin: 0; text-align: left; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                
+                <!-- STEP 1: SELECTION -->
+                <div id="modal-step-1" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+                    <!-- Top N Selector (Hidden for Round 1) -->
+                    <div id="top-n-container" style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--color-border);">
+                        <label for="top-n-input" style="font-size: 14px; color: var(--color-text-soft); font-weight: 500;">Select Top:</label>
+                        <input type="number" id="top-n-input" class="event-input" style="width: 70px; text-align: center; padding: 6px;" min="1" value="5" />
+                        <button type="button" id="btn-select-top-n" class="btn-secondary btn-small" style="height: 34px;">Apply</button>
+                    </div>
+
+                    <!-- Contestant Table -->
+                    <div style="flex: 1; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 10px;">
+                        <table class="app-table" style="margin-bottom: 0; border: none;">
+                            <thead style="position: sticky; top: 0; z-index: 1; background-color: #F9FAFB;">
+                                <tr>
+                                    <th style="width: 50px; text-align: center; padding: 12px;">
+                                        <input type="checkbox" id="select-all-contestants-checkbox" />
+                                    </th>
+                                    <th style="width: 60px; text-align: center;">Photo</th>
+                                    <th style="text-align: left;">Name / Org</th>
+                                    <th id="select-contestants-rank-th" style="width: 80px; text-align: center;">Rank</th>
+                                </tr>
+                            </thead>
+                            <tbody id="select-contestants-table-body">
+                                <!-- Contestants loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <p id="top-n-hint" class="text-muted" style="font-size: 12px; margin-top: 8px; text-align: right; display: none;">Available for rounds after the first.</p>
+                </div>
+
+                <!-- STEP 2: CONFIRMATION -->
+                <div id="modal-step-2" style="display:none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden;">
+                    <p class="text-muted" style="padding-top: 0; margin-bottom: 12px; font-size: 14px; color: var(--color-text-soft); flex-shrink: 0;">Here are the contestants selected for this round:</p>
+                    <div id="selected-contestants-summary" style="/* Removed max-height here */ overflow-y: auto; border: 1px solid var(--color-border); border-radius: 10px; padding: 0; flex-grow: 1;">
+                        <!-- List populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="screen-actions" style="flex-shrink: 0; padding: 20px 24px; background-color: #fff; border-top: 1px solid var(--color-border); margin: 0; width: 100%;">
+                
+                <!-- Step 1 Buttons -->
+                <div id="modal-footer-step-1" style="display:flex; gap:12px; width:100%;">
+                    <button type="button" id="btn-cancel-select-contestants" class="btn-screen-cancel" style="flex:1;">Cancel</button>
+                    <button type="button" id="btn-review-selection" class="btn-screen-primary" style="flex:1; justify-content: center;">Review Selection</button>
+                </div>
+
+                <!-- Step 2 Buttons -->
+                <div id="modal-footer-step-2" style="display:none; gap:12px; width:100%;">
+                    <button type="button" id="btn-back-selection" class="btn-screen-cancel" style="flex:1;">Back</button>
+                    <button type="button" id="btn-confirm-start-round" class="btn-screen-confirm" style="flex:1; justify-content: center;">Confirm & Start Round</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div id="reportPreviewModal" class="event-photo-modal-backdrop" style="z-index: 9000;">
+        <div class="event-photo-modal" style="width: 90%; max-width: 1000px; height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+            <div class="event-photo-modal-header">
+                <h3 class="event-photo-modal-title">Report Preview</h3>
+                <button type="button" class="modal-close-x" id="btnCloseReportModal" aria-label="Close">×</button>
+            </div>
+            <div class="event-photo-modal-body" id="reportPreviewContent" style="flex: 1; overflow-y: hidden; padding: 0; background: #333;">
+                <!-- Content loaded via JS (Blob) -->
+            </div>
+            <div class="event-photo-modal-footer" style="padding: 15px; border-top: 1px solid #ddd; background: #fff; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                 <div class="report-nav-controls" style="display: flex; gap: 10px; align-items: center;">
+                     <button type="button" id="btnPrevReport" class="btn-secondary" disabled style="display:none;">&lt; Previous</button>
+                     <span id="reportSlideIndicator" style="font-size: 14px; color: #666; display:none;"></span>
+                     <button type="button" id="btnNextReport" class="btn-secondary" style="display:none;">Next &gt;</button>
+                 </div>
+                 <div style="display: flex; gap: 10px;">
+                     <button type="button" id="btnCancelReport" class="btn-secondary">Close</button>
+                     <a id="btnDownloadReport" href="#" class="btn-primary" download="Report.pdf">Download PDF</a>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Action Modal (Start/End) -->
+    <div id="modal-confirm-action" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%;">
+                <h3 class="screen-title" style="margin: 0 auto;" id="confirm-modal-title">Confirm Action</h3>
+            </div>
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 16px; color: var(--color-text);" id="confirm-modal-message">
+                Are you sure you want to proceed?
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-cancel-confirm" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btn-proceed-confirm" class="btn-screen-confirm" style="width: 100%; justify-content: center;">Yes, Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Access Code Modal -->
+    <div id="modal-access-code" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%;">
+                <h3 class="screen-title" style="margin: 0 auto;" id="access-code-modal-title">Enter Access Code</h3>
+            </div>
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 16px; color: var(--color-text);">
+                <p id="access-code-modal-hint">Please enter the event's Access Code to confirm.</p>
+                <input type="text" id="accessCodeInput" class="event-input" placeholder="Access Code" />
+                <p id="accessCodeError" class="event-error-message" style="color:var(--color-danger-primary); margin-top: 5px;"></p>
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-cancel-access-code" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btn-submit-access-code" class="btn-screen-primary" style="width: 100%; justify-content: center;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Send All Modal -->
+    <div id="confirm-send-overlay" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%;">
+                <h3 class="screen-title" style="margin: 0 auto;">Confirm Action</h3>
+            </div>
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 16px; color: var(--color-text);">
+                Are you sure you want to send access codes to ALL verified judges?
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-cancel-send" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btn-confirm-send" class="btn-screen-confirm" style="width: 100%; justify-content: center;">Yes, Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Send Single Modal -->
+    <div id="confirm-send-single-overlay" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%;">
+                <h3 class="screen-title" style="margin: 0 auto;">Confirm Action</h3>
+            </div>
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 16px; color: var(--color-text);">
+                Send access code to this judge?
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-cancel-send-single" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btn-confirm-send-single" class="btn-screen-confirm" style="width: 100%; justify-content: center;">Yes, Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal (Centered Popup) -->
+    <div id="success-modal-overlay" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%; justify-content: flex-end;">
+                <button type="button" id="btn-close-success-modal" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body" id="success-modal-message" style="margin-top: 0; font-size: 16px; color: var(--color-text);">
+                <!-- Message injected via JS -->
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-ok-success-modal" class="btn-screen-primary" style="width: 100%; justify-content: center;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Archive Modal -->
+    <div id="modal-archive-confirm" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center;">
+            <div class="summary-modal-header" style="width: 100%;">
+                <h3 class="screen-title" style="margin: 0 auto;" id="archive-modal-title">Archive Event</h3>
+            </div>
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 16px; color: var(--color-text);" id="archive-modal-message">
+                Are you sure you want to archive this event? It will be hidden from your main event lists but can be restored later.
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-cancel-archive" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btn-confirm-archive" class="btn-screen-confirm">Yes, Archive</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Preview Modal -->
+    <div id="photoPreviewModal" class="event-photo-modal-backdrop">
+        <div class="event-photo-modal">
+            <div class="event-photo-modal-header">
+                <h3 class="event-photo-modal-title">Contestant Photo</h3>
+                <button type="button" class="modal-close-x" id="btnClosePhotoModal" aria-label="Close">×</button>
+            </div>
+            <div class="event-photo-modal-body">
+                <img id="photoPreviewImage" alt="Contestant photo" src="" style="max-width: 100%; max-height: 80vh; display: block; margin: 0 auto;" />
+            </div>
+        </div>
+    </div>
+    <!-- Prompt Backdrop -->
+    <div id="grand-reveal-backdrop" class="grand-reveal-backdrop"></div>
+
+    <!-- Grand Reveal Overlay -->
+    <div id="grand-reveal-overlay" class="grand-reveal-overlay">
+        <button class="grand-reveal-close" onclick="closeGrandReveal()" style="position: fixed; top: 30px; right: 30px; z-index: 10001;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+        <div class="grand-reveal-content" id="grand-reveal-content">
+            <!-- Cards injected via JS -->
+        </div>
+    </div>
+
+    <!-- Grand Reveal Prompt -->
+    <div id="grand-reveal-prompt" class="grand-reveal-prompt">
+        <div class="prompt-icon">🏆</div>
+        <h3 class="prompt-title">Final Results Ready</h3>
+        <p class="prompt-text">The final scores are in. How would you like to proceed?</p>
+        <div class="prompt-actions">
+            <button class="btn-skip-reveal" onclick="skipGrandReveal()">Show Table</button>
+            <button class="btn-grand-reveal" onclick="triggerGrandReveal()">✨ Grand Reveal</button>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // --- 1. Global Variables & Elements ---
+            const eventId = @Model.Id;
+            const serverAccessCode = document.getElementById('eventAccessCodeHidden').value;
+            
+            let currentAction = ''; // 'start', 'end', or 'endRound'
+
+            // -- Tabs --
+            const tabs = document.querySelectorAll('.tab-link');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // -- Photo Modal --
+            const photoModal = document.getElementById('photoPreviewModal');
+            const photoModalImg = document.getElementById('photoPreviewImage');
+            const btnClosePhotoModal = document.getElementById('btnClosePhotoModal');
+
+            // -- Select Contestants Modal Elements --
+            const selectContestantsModal = document.getElementById('modal-select-contestants');
+            const selectedRoundNameSpan = document.getElementById('selected-round-name');
+            const selectContestantsTableBody = document.getElementById('select-contestants-table-body');
+            const selectAllContestantsCheckbox = document.getElementById('select-all-contestants-checkbox');
+            const topNInput = document.getElementById('top-n-input'); // This ID is already in the new modal structure
+            const btnSelectTopN = document.getElementById('btn-select-top-n'); // This ID is already in the new modal structure
+            const topNHint = document.getElementById('top-n-hint'); // This ID is already in the new modal structure
+            const btnCloseSelectContestantsModal = document.getElementById('btn-close-select-contestants-modal');
+            const btnCancelSelectContestants = document.getElementById('btn-cancel-select-contestants');
+            
+            // New Multi-Step Elements
+            const btnReviewSelection = document.getElementById('btn-review-selection');
+            const btnBackSelection = document.getElementById('btn-back-selection');
+            const btnConfirmStartRound = document.getElementById('btn-confirm-start-round');
+            
+            const modalStep1 = document.getElementById('modal-step-1');
+            const modalStep2 = document.getElementById('modal-step-2');
+            const modalFooter1 = document.getElementById('modal-footer-step-1');
+            const modalFooter2 = document.getElementById('modal-footer-step-2');
+            const summaryContainer = document.getElementById('selected-contestants-summary');
+
+            // -- Confirm Action Modal (Start/End/EndRound) --
+            const confirmActionModal = document.getElementById('modal-confirm-action');
+            const confirmModalTitle = document.getElementById('confirm-modal-title');
+            const confirmModalMessage = document.getElementById('confirm-modal-message');
+            const btnCancelConfirm = document.getElementById('btn-cancel-confirm');
+            const btnProceedConfirm = document.getElementById('btn-proceed-confirm');
+
+            // -- Access Code Modal --
+            const accessCodeModal = document.getElementById('modal-access-code');
+            const accessCodeModalTitle = document.getElementById('access-code-modal-title');
+            const accessCodeModalHint = document.getElementById('access-code-modal-hint');
+            const accessCodeInput = document.getElementById('accessCodeInput');
+            const accessCodeError = document.getElementById('accessCodeError');
+            const btnCancelAccessCode = document.getElementById('btn-cancel-access-code');
+            const btnSubmitAccessCode = document.getElementById('btn-submit-access-code');
+            
+            if (accessCodeInput) {
+                accessCodeInput.addEventListener('input', function() {
+                    if (accessCodeError) {
+                        accessCodeError.textContent = '';
+                        accessCodeError.style.display = 'none';
+                    }
+                });
+            }
+
+            // -- Success Modal --
+            const successModalOverlay = document.getElementById('success-modal-overlay');
+            const successModalMessage = document.getElementById('success-modal-message');
+            const btnCloseSuccess = document.getElementById('btn-close-success-modal');
+            const btnOkSuccess = document.getElementById('btn-ok-success-modal');
+
+
+            // --- 2. Tabs Logic ---
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    tab.classList.add('active');
+                    const targetId = tab.getAttribute('data-tab');
+                    const targetContent = document.getElementById(`tab-${targetId}`);
+                    if (targetContent) targetContent.classList.add('active');
+                });
+            });
+
+            // Restore active tab
+            const savedTab = sessionStorage.getItem('activeManageTab');
+            if (savedTab) {
+                const tabToActivate = document.querySelector(`.tab-link[data-tab="${savedTab}"]`);
+                if (tabToActivate) tabToActivate.click();
+                sessionStorage.removeItem('activeManageTab');
+            }
+            
+            // --- 2b. Photo Modal Logic ---
+            const photoThumbs = document.querySelectorAll('.contestant-photo-thumb[data-full-src]');
+            
+            photoThumbs.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    const src = this.getAttribute('data-full-src');
+                    if (src && photoModal && photoModalImg) {
+                        photoModalImg.src = src;
+                        photoModal.classList.add('is-open');
+                        document.body.classList.add('has-modal-open');
+                    }
+                });
+            });
+            
+            function closePhotoModal() {
+                if(photoModal) photoModal.classList.remove('is-open');
+                if(photoModalImg) setTimeout(() => photoModalImg.src = '', 200); // Clear after transition
+                document.body.classList.remove('has-modal-open');
+            }
+            
+            if(btnClosePhotoModal) btnClosePhotoModal.addEventListener('click', closePhotoModal);
+            if(photoModal) {
+                 photoModal.addEventListener('click', function(e) {
+                     if(e.target === photoModal) closePhotoModal();
+                 });
+            }
+
+
+            // --- 3. Start Round Logic (Select Contestants Modal) ---
+
+            // Helper to load contestants
+            async function loadContestantsForRound(roundOrder) {
+                // RESET WIZARD STATE
+                if (modalStep1) modalStep1.style.display = 'flex';
+                if (modalStep2) modalStep2.style.display = 'none';
+                if (modalFooter1) modalFooter1.style.display = 'flex';
+                if (modalFooter2) modalFooter2.style.display = 'none';
+                if (btnConfirmStartRound) {
+                    btnConfirmStartRound.textContent = "Confirm & Start Round";
+                    btnConfirmStartRound.disabled = false;
+                }
+                if (btnBackSelection) btnBackSelection.disabled = false;
+
+                const topNContainer = document.getElementById('top-n-container');
+                const rankTh = document.getElementById('select-contestants-rank-th');
+                const isFirstRound = roundOrder === 1;
+                const canUseRank = !isFirstRound; // Can use rank means it's NOT the first round
+                const colCount = isFirstRound ? 3 : 4; // Checkbox, Photo, Name/Org, (Rank)
+
+                selectContestantsTableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">Loading...</td></tr>`; 
+                
+                // Toggle Top N UI
+                if (topNContainer) {
+                    topNContainer.style.display = isFirstRound ? 'none' : 'flex';
+                }
+                
+                // Toggle Rank column header visibility
+                if (rankTh) {
+                    rankTh.style.display = isFirstRound ? 'none' : 'table-cell';
+                }
+
+                // Hide hint as it's handled by container visibility
+                if(topNHint) topNHint.style.display = 'none'; 
+                if(btnSelectTopN) btnSelectTopN.disabled = false; 
+
+                try {
+                    const response = await fetch(`/Events/GetContestantsRank?eventId=${eventId}&roundId=${pendingRoundId}`);
+                    const contestants = await response.json();
+
+                    selectContestantsTableBody.innerHTML = '';
+                    if (!contestants || contestants.length === 0) {
+                        selectContestantsTableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">No contestants found.</td></tr>`;
+                        return;
+                    }
+
+                    // Removed sorting to maintain creation order (as returned by API sorted by ID)
+
+                    contestants.forEach(c => {
+                        const rankDisplay = (c.rank && c.rank > 0 && canUseRank) ? `#${c.rank}` : '-';
+                        const photoHtml = c.photoUrl
+                            ? `<div class="contestant-photo-wrapper"><div class="contestant-photo-thumb has-photo" style="background-image: url('${c.photoUrl}');"></div></div>`
+                            : `<span class="text-muted">No photo</span>`;
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="text-align: center; vertical-align: middle;"><input type="checkbox" class="contestant-checkbox" value="${c.id}" data-rank="${c.rank || 9999}"></td>
+                            <td style="text-align: center; vertical-align: middle;">${photoHtml}</td>
+                            <td style="vertical-align: middle;">
+                                <div style="font-weight: 600; color: var(--color-text); font-size: 14px;">${c.name}</div>
+                                <div style="font-size: 12px; color: var(--color-text-soft);">${c.organization}</div>
+                            </td>
+                            ${canUseRank ? `<td style="text-align: center; vertical-align: middle; font-weight: 500; color: var(--color-text-soft);">${rankDisplay}</td>` : ''}
+                        `;
+                        selectContestantsTableBody.appendChild(row);
+                    });
+
+                    // Automatically check "Select All" and all contestant checkboxes by default
+                    if (selectAllContestantsCheckbox) {
+                        selectAllContestantsCheckbox.checked = true;
+                        const checkboxes = selectContestantsTableBody.querySelectorAll('.contestant-checkbox');
+                        checkboxes.forEach(cb => cb.checked = true);
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    selectContestantsTableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px; color:red;">Error loading contestants.</td></tr>`; 
+                }
+            }
+
+            // Global functions for inline onclicks
+            window.openStartRoundModal = function(roundId, roundName, roundOrder) {
+                pendingRoundId = roundId;
+                selectedRoundNameSpan.textContent = roundName; // Update the span in the modal title
+                if(selectContestantsModal) {
+                    selectContestantsModal.classList.add('open');
+                    document.body.classList.add('has-modal-open');
+                }
+                loadContestantsForRound(roundOrder);
+            };
+
+            window.openEndRoundModal = function(roundId, roundName) {
+                currentAction = 'endRound';
+                pendingRoundId = roundId;
+                if(confirmModalTitle) confirmModalTitle.textContent = 'Confirm End Round';
+                if(confirmModalMessage) confirmModalMessage.innerHTML = `Are you sure you want to <strong>end</strong> ${roundName}?<br>This will close scoring for this round.`;
+                if(confirmActionModal) confirmActionModal.classList.add('open');
+            };
+
+            function hideSelectContestantsModal() {
+                if(selectContestantsModal) {
+                    selectContestantsModal.classList.remove('open');
+                    document.body.classList.remove('has-modal-open');
+                }
+            }
+
+            if (btnCloseSelectContestantsModal) btnCloseSelectContestantsModal.addEventListener('click', hideSelectContestantsModal);
+            if (btnCancelSelectContestants) btnCancelSelectContestants.addEventListener('click', hideSelectContestantsModal);
+            if (selectContestantsModal) {
+                selectContestantsModal.addEventListener('click', function(e) {
+                    if (e.target === selectContestantsModal) hideSelectContestantsModal();
+                });
+            }
+
+            if (selectAllContestantsCheckbox) {
+                selectAllContestantsCheckbox.addEventListener('change', function() {
+                    const checkboxes = selectContestantsTableBody.querySelectorAll('.contestant-checkbox');
+                    checkboxes.forEach(cb => cb.checked = this.checked);
+                });
+            }
+
+            if (btnSelectTopN) {
+                btnSelectTopN.addEventListener('click', function() {
+                    const n = parseInt(topNInput.value);
+                    if (!n || n <= 0) {
+                        alert("Please enter a valid number for Top N.");
+                        return;
+                    }
+                    const checkboxes = Array.from(selectContestantsTableBody.querySelectorAll('.contestant-checkbox'));
+                    checkboxes.sort((a, b) => parseFloat(a.dataset.rank) - parseFloat(b.dataset.rank));
+                    checkboxes.forEach(cb => cb.checked = false); // Uncheck all first
+                    let count = 0;
+                    for (const cb of checkboxes) {
+                        if (count < n) {
+                            cb.checked = true;
+                            count++;
+                        }
+                    }
+                    // If "Select All" checkbox is checked, uncheck it after "Select Top N"
+                    if (selectAllContestantsCheckbox && selectAllContestantsCheckbox.checked) {
+                        selectAllContestantsCheckbox.checked = false;
+                    }
+                });
+            }
+
+            // --- Multi-Step Logic ---
+
+            // 1. Review Selection (Step 1 -> Step 2)
+            if (btnReviewSelection) {
+                btnReviewSelection.addEventListener('click', function() {
+                    const selectedCheckboxes = Array.from(selectContestantsTableBody.querySelectorAll('.contestant-checkbox:checked'));
+                    
+                    if (selectedCheckboxes.length === 0) {
+                        alert("Please select at least one contestant.");
+                        return;
+                    }
+
+                    // Build Summary
+                    let summaryHtml = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                    selectedCheckboxes.forEach(cb => {
+                        const row = cb.closest('tr');
+                        // Cells: 0=Checkbox, 1=Photo, 2=Name/Org
+                        const photoHtml = row.cells[1].innerHTML; 
+                        const nameHtml = row.cells[2].innerHTML; 
+                        
+                        summaryHtml += `
+                            <li style="display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--color-border);">
+                                <div style="width: 50px; text-align: center; margin-right: 12px;">${photoHtml}</div>
+                                <div style="flex: 1;">${nameHtml}</div>
+                            </li>
+                        `;
+                    });
+                    summaryHtml += '</ul>';
+                    
+                    if (summaryContainer) summaryContainer.innerHTML = summaryHtml;
+
+                    // Switch Steps
+                    if (modalStep1) modalStep1.style.display = 'none';
+                    if (modalStep2) modalStep2.style.display = 'flex';
+                    if (modalFooter1) modalFooter1.style.display = 'none';
+                    if (modalFooter2) modalFooter2.style.display = 'flex';
+                });
+            }
+
+            // 2. Back (Step 2 -> Step 1)
+            if (btnBackSelection) {
+                btnBackSelection.addEventListener('click', function() {
+                    if (modalStep1) modalStep1.style.display = 'flex';
+                    if (modalStep2) modalStep2.style.display = 'none';
+                    if (modalFooter1) modalFooter1.style.display = 'flex';
+                    if (modalFooter2) modalFooter2.style.display = 'none';
+                });
+            }
+
+            // 3. Confirm & Start (Step 2 -> Action)
+            if (btnConfirmStartRound) {
+                btnConfirmStartRound.addEventListener('click', async function() {
+                    const selectedIds = Array.from(selectContestantsTableBody.querySelectorAll('.contestant-checkbox:checked')).map(cb => cb.value);
+                    
+                    if (selectedIds.length === 0) return;
+
+                    const originalText = this.textContent;
+                    this.textContent = "Starting...";
+                    this.disabled = true;
+                    if(btnBackSelection) btnBackSelection.disabled = true;
+
+                    try {
+                        const response = await fetch('/Events/StartRound', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ eventId: eventId, roundId: pendingRoundId, contestantIds: selectedIds })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            hideSelectContestantsModal();
+                            showSuccessModal(data.message);
+                            // Save tab state
+                            const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
+                            if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            alert(data.message || "Failed to start round.");
+                            this.textContent = originalText;
+                            this.disabled = false;
+                            if(btnBackSelection) btnBackSelection.disabled = false;
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("An error occurred.");
+                        this.textContent = originalText;
+                        this.disabled = false;
+                        if(btnBackSelection) btnBackSelection.disabled = false;
+                    }
+                });
+            }
+
+
+            // --- 4. Start/End Event & Confirm Logic ---
+
+            // Exposed function for Start/End Event buttons
+            window.openConfirmModal = function(action) {
+                currentAction = action;
+                if (action === 'start') {
+                    if(confirmModalTitle) confirmModalTitle.textContent = 'Ready to Start Event?';
+                    if(confirmModalMessage) confirmModalMessage.innerHTML = 'You are about to <strong>officially start</strong> this event. This action will activate all associated rounds and judging/scoring interfaces. Event details cannot be modified after starting. Ensure all configurations are final.';
+                } else if (action === 'end') {
+                    if(confirmModalTitle) confirmModalTitle.textContent = 'Confirm Event End';
+                    if(confirmModalMessage) confirmModalMessage.innerHTML = 'Are you sure you want to <strong>end</strong> this event?<br>This action cannot be undone.';
+                }
+                if(confirmActionModal) confirmActionModal.classList.add('open');
+            };
+
+            function hideConfirmModal() {
+                if(confirmActionModal) confirmActionModal.classList.remove('open');
+            }
+
+            function openAccessCodeModal() {
+                if (currentAction === 'endRound') {
+                    if(accessCodeModalTitle) accessCodeModalTitle.textContent = 'End Round';
+                } else {
+                    if(accessCodeModalTitle) accessCodeModalTitle.textContent = (currentAction === 'start' ? 'Start Event' : 'End Event');
+                }
+                if(accessCodeModalHint) accessCodeModalHint.textContent = 'Please enter the event\'s Access Code to confirm.';
+                if(accessCodeInput) accessCodeInput.value = ''; 
+                if(accessCodeError) accessCodeError.textContent = ''; 
+                if(accessCodeModal) accessCodeModal.classList.add('open');
+            }
+
+            function hideAccessCodeModal() {
+                if(accessCodeModal) accessCodeModal.classList.remove('open');
+            }
+
+            if (btnCancelConfirm) btnCancelConfirm.addEventListener('click', hideConfirmModal);
+            if (btnProceedConfirm) btnProceedConfirm.addEventListener('click', function() {
+                hideConfirmModal();
+                openAccessCodeModal();
+            });
+            if (confirmActionModal) {
+                confirmActionModal.addEventListener('click', function(e) {
+                    if (e.target === confirmActionModal) hideConfirmModal();
+                });
+            }
+
+            if (btnCancelAccessCode) btnCancelAccessCode.addEventListener('click', hideAccessCodeModal);
+            if (accessCodeModal) {
+                accessCodeModal.addEventListener('click', function(e) {
+                    if (e.target === accessCodeModal) hideAccessCodeModal();
+                });
+            }
+
+            // --- Validation Logic ---
+            if (btnSubmitAccessCode) {
+                // Handle Click
+                btnSubmitAccessCode.addEventListener('click', validateAndSubmit);
+                
+                // Handle Enter Key in Input
+                if(accessCodeInput) {
+                    accessCodeInput.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // Prevent default form submit if any
+                            validateAndSubmit();
+                        }
+                    });
+                }
+            }
+
+            async function validateAndSubmit() {
+                const enteredCode = accessCodeInput.value.trim();
+                // Use SERVER-SIDE value as source of truth per requirement
+                const expected = (serverAccessCode || "").trim();
+
+                console.log("Validating. Expected:", expected, "Entered:", enteredCode);
+
+                // Validate against server value
+                if (enteredCode.toLowerCase() !== expected.toLowerCase()) {
+                    if(accessCodeError) {
+                        accessCodeError.textContent = 'Incorrect Access Code.';
+                        accessCodeError.style.display = 'block';
+                        accessCodeError.style.color = '#dc3545'; // Standard danger color
+                    }
+                    return; // Stop execution, do not close modal
+                }
+
+                // Success
+                if(accessCodeError) {
+                    accessCodeError.textContent = '';
+                    accessCodeError.style.display = 'none';
+                }
+                hideAccessCodeModal(); 
+
+                submitEventAction(enteredCode);
+            }
+
+            async function submitEventAction(accessCode) {
+                // -- Logic for End Round --
+                if (currentAction === 'endRound') {
+                    try {
+                        const response = await fetch('/Events/EndRound', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ roundId: pendingRoundId, accessCode: accessCode })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            showSuccessModal(data.message);
+                            // Save tab state
+                            const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
+                            if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            showSuccessModal(data.message || "Failed to end round.");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred.");
+                    }
+                    return;
+                }
+
+                // -- Logic for Start/End Event --
+                const startBtn = document.querySelector('.manage-event-actions button.btn-primary[onclick*="openConfirmModal(\'start\')"]');
+                const endBtn = document.querySelector('.manage-event-actions button.btn-danger[onclick*="openConfirmModal(\'end\')"]');
+                if (startBtn && currentAction === 'start') startBtn.disabled = true;
+                if (endBtn && currentAction === 'end') endBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`/Events/${currentAction}?id=${eventId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value 
+                        },
+                        body: JSON.stringify({ accessCode: accessCode })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        showSuccessModal(data.message);
+                        // Save tab state
+                        const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
+                        if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
+                        setTimeout(() => {
+                            window.location.reload(); 
+                        }, 1500);
+                    } else {
+                        showSuccessModal(data.message || `Failed to ${currentAction} event.`);
+                        if (startBtn && currentAction === 'start') startBtn.disabled = false;
+                        if (endBtn && currentAction === 'end') endBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showSuccessModal(`An error occurred while trying to ${currentAction} the event.`);
+                    if (startBtn && currentAction === 'start') startBtn.disabled = false;
+                    if (endBtn && currentAction === 'end') endBtn.disabled = false;
+                }
+            }
+
+            // --- 5. Copy Access Code Logic ---
+            const copyBtns = document.querySelectorAll('.btn-copy-access');
+            copyBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-copy-target');
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        const textToCopy = targetEl.textContent.trim();
+                        if (textToCopy && textToCopy !== '—') {
+                            navigator.clipboard.writeText(textToCopy).then(() => {
+                                const originalText = this.textContent;
+                                this.textContent = 'Copied!';
+                                setTimeout(() => {
+                                    this.textContent = originalText;
+                                }, 2000);
+                            }).catch(err => {
+                                console.error('Failed to copy: ', err);
+                            });
+                        }
+                    }
+                });
+            });
+
+            // --- 6. Send Access Logic ---
+            const confirmSendOverlay = document.getElementById('confirm-send-overlay');
+            const btnCancelSend = document.getElementById('btn-cancel-send');
+            const btnConfirmSend = document.getElementById('btn-confirm-send');
+            const sendAllBtn = document.querySelector('.send-all-access-btn');
+            
+            // Send All
+            if (sendAllBtn) {
+                sendAllBtn.addEventListener('click', function() {
+                    if (eventStatus !== 'open') {
+                        showSuccessModal("You cannot send access codes yet. Please start the event first.");
+                        return;
+                    }
+                    if (confirmSendOverlay) confirmSendOverlay.classList.add('open');
+                });
+            }
+            
+            if (btnCancelSend) {
+                btnCancelSend.addEventListener('click', function() {
+                    if (confirmSendOverlay) confirmSendOverlay.classList.remove('open');
+                });
+            }
+            
+            if (btnConfirmSend) {
+                btnConfirmSend.addEventListener('click', async function() {
+                    // Close confirm modal
+                    if (confirmSendOverlay) confirmSendOverlay.classList.remove('open');
+                    
+                    // Show loading state on button (optional)
+                    const originalText = this.textContent;
+                    this.textContent = "Sending...";
+                    
+                    try {
+                        const response = await fetch(`/Events/SendAccessCodeToAll?eventId=${eventId}`, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        const data = await response.json();
+                        showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred while sending emails.");
+                    } finally {
+                        this.textContent = originalText;
+                    }
+                });
+            }
+            
+            // Send Single
+            const confirmSendSingleOverlay = document.getElementById('confirm-send-single-overlay');
+            const btnCancelSendSingle = document.getElementById('btn-cancel-send-single');
+            const btnConfirmSendSingle = document.getElementById('btn-confirm-send-single');
+            let pendingJudgeId = null;
+            let pendingJudgeBtn = null;
+
+            const sendSingleBtns = document.querySelectorAll('.send-access-btn');
+            sendSingleBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (eventStatus !== 'open') {
+                        showSuccessModal("You cannot send access codes yet. Please start the event first.");
+                        return;
+                    }
+
+                    pendingJudgeId = this.getAttribute('data-judge-id');
+                    pendingJudgeBtn = this;
+                    
+                    if (pendingJudgeId && confirmSendSingleOverlay) {
+                        confirmSendSingleOverlay.classList.add('open');
+                    }
+                });
+            });
+
+            if (btnCancelSendSingle) {
+                btnCancelSendSingle.addEventListener('click', function() {
+                    if (confirmSendSingleOverlay) confirmSendSingleOverlay.classList.remove('open');
+                    pendingJudgeId = null;
+                    pendingJudgeBtn = null;
+                });
+            }
+
+            if (btnConfirmSendSingle) {
+                btnConfirmSendSingle.addEventListener('click', async function() {
+                    if (!pendingJudgeId) return;
+                    if (confirmSendSingleOverlay) confirmSendSingleOverlay.classList.remove('open');
+
+                    const btn = pendingJudgeBtn;
+                    const judgeId = pendingJudgeId;
+                    
+                    // Reset pending vars
+                    pendingJudgeId = null;
+                    pendingJudgeBtn = null;
+
+                    if (btn) {
+                        var originalText = btn.textContent;
+                        btn.textContent = "Sending...";
+                        btn.disabled = true;
+                    }
+                    
+                    try {
+                        const response = await fetch(`/Events/SendAccessCode?judgeId=${judgeId}`, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        const data = await response.json();
+                        showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred.");
+                    } finally {
+                        if (btn) {
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                        }
+                    }
+                });
+            }
+
+            // --- 7. Generate Report Logic ---
+            const btnGenerateReport = document.getElementById('btnGenerateReport');
+            const reportModal = document.getElementById('reportPreviewModal');
+            const btnCloseReportModal = document.getElementById('btnCloseReportModal');
+            const reportContent = document.getElementById('reportPreviewContent');
+            const btnCancelReport = document.getElementById('btnCancelReport');
+            const btnDownloadReport = document.getElementById('btnDownloadReport');
+            
+            // Pass server status to JS
+            const eventStatus = "@statusText.ToLower()";
+
+            if (btnGenerateReport) {
+                btnGenerateReport.addEventListener('click', async function() {
+                    
+                    // 1. Validate Status
+                    if (eventStatus !== "closed") {
+                        showSuccessModal("Reports can only be generated when the event is ended (closed).");
+                        return;
+                    }
+
+                    // 2. Validate Selection
+                    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+                    if (checkboxes.length === 0) {
+                        showSuccessModal("Please select at least one report option.");
+                        return;
+                    }
+
+                    const selectedTypes = Array.from(checkboxes).map(cb => cb.value).join(',');
+
+                    // 3. Fetch Preview
+                    const originalText = this.textContent;
+                    this.textContent = "Generating...";
+                    this.disabled = true;
+
+                    try {
+                        const response = await fetch(`/Events/GenerateReportPdf?eventId=${eventId}&reportTypes=${selectedTypes}`);
+                        if (!response.ok) throw new Error("Failed to generate report.");
+                        
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        
+                        if(reportContent) {
+                            reportContent.innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
+                        }
+
+                        // Setup Download Link
+                        if (btnDownloadReport) {
+                            btnDownloadReport.href = url;
+                            // Set filename with date
+                            const dateStr = new Date().toISOString().slice(0,10);
+                            btnDownloadReport.download = `Report_${eventId}_${dateStr}.pdf`;
+                        }
+
+                        if(reportModal) {
+                            reportModal.classList.add('is-open');
+                            document.body.classList.add('has-modal-open');
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred while generating the report.");
+                    } finally {
+                        this.textContent = originalText;
+                        this.disabled = false;
+                    }
+                });
+            }
+
+            function closeReportModal() {
+                if(reportModal) reportModal.classList.remove('is-open');
+                document.body.classList.remove('has-modal-open');
+                // Cleanup Blob URL to free memory
+                 if(reportContent) {
+                    const iframe = reportContent.querySelector('iframe');
+                    if(iframe && iframe.src) URL.revokeObjectURL(iframe.src);
+                    reportContent.innerHTML = '';
+                 }
+            }
+
+            if(btnCloseReportModal) btnCloseReportModal.addEventListener('click', closeReportModal);
+            if(btnCancelReport) btnCancelReport.addEventListener('click', closeReportModal);
+            
+            // --- 8. Archive Event Logic ---
+            const btnArchiveEvent = document.getElementById('btnArchiveEvent');
+            const archiveConfirmModal = document.getElementById('modal-archive-confirm');
+            const btnCancelArchive = document.getElementById('btn-cancel-archive');
+            const btnConfirmArchive = document.getElementById('btn-confirm-archive');
+
+            function openArchiveConfirmModal() {
+                if (archiveConfirmModal) archiveConfirmModal.classList.add('open');
+            }
+
+            function hideArchiveConfirmModal() {
+                if (archiveConfirmModal) archiveConfirmModal.classList.remove('open');
+            }
+
+            if (btnArchiveEvent) {
+                btnArchiveEvent.addEventListener('click', function() {
+                    openArchiveConfirmModal();
+                });
+            }
+
+            if (btnCancelArchive) {
+                btnCancelArchive.addEventListener('click', hideArchiveConfirmModal);
+            }
+
+            if (btnConfirmArchive) {
+                btnConfirmArchive.addEventListener('click', async function() {
+                    hideArchiveConfirmModal(); // Close the modal immediately
+
+                    const originalText = btnArchiveEvent.textContent;
+                    btnArchiveEvent.textContent = "Archiving...";
+                    btnArchiveEvent.disabled = true;
+
+                    try {
+                        const response = await fetch(`/Events/Archive?id=${eventId}`, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            showSuccessModal(data.message || "Event archived successfully.");
+                            setTimeout(() => {
+                                window.location.href = "/Home/Dashboard"; // Redirect to dashboard after archiving
+                            }, 1500);
+                        } else {
+                            showSuccessModal(data.message || "Failed to archive event.");
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showSuccessModal("An error occurred while trying to archive the event.");
+                    } finally {
+                        btnArchiveEvent.textContent = originalText;
+                        btnArchiveEvent.disabled = false;
+                    }
+                });
+            }
+
+            // --- 9. Helper Functions ---
+            function showSuccessModal(msg) {
+                if (successModalOverlay && successModalMessage) {
+                    successModalMessage.textContent = msg;
+                    successModalOverlay.classList.add('open');
+                } else {
+                    alert(msg);
+                }
+            }
+            if (btnCloseSuccess) btnCloseSuccess.addEventListener('click', () => successModalOverlay.classList.remove('open'));
+            if (btnOkSuccess) btnOkSuccess.addEventListener('click', () => successModalOverlay.classList.remove('open'));
+
+            // ===============================================
+            // LIVE TALLY POLLING
+            // ===============================================
+            let tallyInterval = null;
+            const tallyContainer = document.getElementById('live-tally-container');
+            let currentActiveTallyRoundId = null;
+            
+            // Grand Reveal State
+            window.grandRevealActive = false;
+            window.grandRevealData = null; // Will hold the JSON data for winners
+
+            // State object to track open details: { roundId: true/false }
+            window.tallyDetailsState = {};
+
+            // --- Grand Reveal Functions ---
+            window.prepareGrandReveal = function(data) {
+                // Called from the partial view when final round is detected
+                window.grandRevealData = data;
+                
+                // check if already skipped or shown for this round to avoid re-popping
+                const key = `reveal-shown-${eventId}-${data.roundId}`;
+                if (sessionStorage.getItem(key)) return;
+
+                // Show Prompt & Backdrop
+                const prompt = document.getElementById('grand-reveal-prompt');
+                const backdrop = document.getElementById('grand-reveal-backdrop'); // New Backdrop
+                
+                if(prompt) prompt.classList.add('active');
+                if(backdrop) backdrop.classList.add('active'); // Activate blur backdrop
+                
+                window.grandRevealActive = true; // Pause polling while prompt is up
+            };
+
+            window.triggerGrandReveal = function() {
+                if (!window.grandRevealData) return;
+                
+                // 1. Hide Prompt & Backdrop
+                document.getElementById('grand-reveal-prompt').classList.remove('active');
+                document.getElementById('grand-reveal-backdrop').classList.remove('active'); // Hide blur backdrop
+
+                // 2. Populate Overlay
+                const content = document.getElementById('grand-reveal-content');
+                content.innerHTML = ''; // Clear
+
+                const winners = window.grandRevealData.winners; // Array [rank1, rank2, rank3]
+                
+                // --- NEW: Main Container Wrapper with Running Light ---
+                const mainContainer = document.createElement('div');
+                mainContainer.className = 'grand-reveal-wrapper';
+                // Set theme color var for the border
+                const themeColor = window.grandRevealData.themeColor || '#ec4899';
+                mainContainer.style.setProperty('--theme-color', themeColor);
+
+                // Add the running light background element for the container
+                const containerLight = document.createElement('div');
+                containerLight.className = 'container-running-light';
+                mainContainer.appendChild(containerLight);
+
+                // Add the content area (solid background) for the container
+                const containerBody = document.createElement('div');
+                containerBody.className = 'grand-reveal-wrapper-body';
+                mainContainer.appendChild(containerBody);
+
+                // -----------------------------------------------------
+
+                // Helper to create card
+                const createCard = (w, rankClass, title) => {
+                    const div = document.createElement('div');
+                    div.className = `winner-card ${rankClass}`;
+                    
+                    // Specific Rank Colors
+                    let rankColor = '#CD7F32'; // Bronze
+                    if (rankClass === 'rank-1') rankColor = '#FFD700'; // Gold
+                    if (rankClass === 'rank-2') rankColor = '#C0C0C0'; // Silver
+                    div.style.setProperty('--rank-color', rankColor);
+
+                    div.innerHTML = `
+                        <div class="card-running-light"></div>
+                        <div class="card-inner-content">
+                            <div class="winner-photo" style="background-image: url('${w.PhotoUrl || '/images/default pfp.png'}');"></div>
+                            <div class="winner-info">
+                                <div class="winner-title">${title}</div>
+                                <div class="winner-name">${w.Name}</div>
+                                <div class="winner-org">${w.Organization}</div>
+                            </div>
+                        </div>
+                    `;
+                    return div;
+                };
+
+                // Logic to map winners to cards (Center=1, Left=2, Right=3)
+                winners.sort((a, b) => a.Rank - b.Rank);
+
+                const winner = winners.length > 0 ? winners[0] : null;      // Best Rank (usually 1)
+                const runnerUp1 = winners.length > 1 ? winners[1] : null;   // 2nd Best
+                const runnerUp2 = winners.length > 2 ? winners[2] : null;   // 3rd Best
+
+                // Fetch actual event name from DOM
+                const realEventName = document.querySelector('.manage-event-title-text')?.textContent.trim() || window.grandRevealData.eventName;
+
+                if (runnerUp1) containerBody.appendChild(createCard(runnerUp1, 'rank-2', `${realEventName} 1st Runner Up`));
+                if (winner) containerBody.appendChild(createCard(winner, 'rank-1', realEventName));
+                if (runnerUp2) containerBody.appendChild(createCard(runnerUp2, 'rank-3', `${realEventName} 2nd Runner Up`));
+
+                // Append Main Container to Overlay Content
+                content.appendChild(mainContainer);
+
+                // 3. Show Overlay
+                const overlay = document.getElementById('grand-reveal-overlay');
+                overlay.classList.add('active');
+                
+                // 4. Trigger Animations
+                setTimeout(() => {
+                    mainContainer.classList.add('reveal'); // Reveal container
+                    document.querySelectorAll('.winner-card').forEach(c => c.classList.add('reveal')); // Reveal cards
+                }, 100);
+
+                // 5. Save State
+                const key = `reveal-shown-${eventId}-${window.grandRevealData.roundId}`;
+                sessionStorage.setItem(key, 'true');
+                window.grandRevealActive = true; // Ensure polling remains paused
+            };
+
+            window.skipGrandReveal = function() {
+                const prompt = document.getElementById('grand-reveal-prompt');
+                if(prompt) prompt.classList.remove('active');
+                
+                const backdrop = document.getElementById('grand-reveal-backdrop');
+                if(backdrop) backdrop.classList.remove('active');
+
+                if (window.grandRevealData) {
+                    const key = `reveal-shown-${eventId}-${window.grandRevealData.roundId}`;
+                    sessionStorage.setItem(key, 'true'); // Mark as handled so it doesn't pop again
+                }
+                
+                window.grandRevealActive = false; // Resume polling
+                fetchLiveTally(); // Refresh immediately to show table
+            };
+
+            window.closeGrandReveal = function() {
+                const overlay = document.getElementById('grand-reveal-overlay');
+                if(overlay) overlay.classList.remove('active');
+                
+                // Clear content to reset animations for next time if any
+                setTimeout(() => {
+                    const content = document.getElementById('grand-reveal-content');
+                    if(content) content.innerHTML = '';
+                }, 500);
+
+                window.grandRevealActive = false; // Resume polling
+                fetchLiveTally(); // Refresh immediately
+            };
+
+
+            // Global function for tab switching
+            window.switchTallyTab = function(roundId) {
+                currentActiveTallyRoundId = roundId;
+                
+                document.querySelectorAll('.tally-tab-link').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tally-round-pane').forEach(el => el.style.display = 'none');
+                
+                const activeBtn = document.querySelector(`.tally-tab-link[data-round-id="${roundId}"]`);
+                const activePane = document.getElementById(`tally-round-${roundId}`);
+                
+                if(activeBtn) activeBtn.classList.add('active');
+                if(activePane) activePane.style.display = 'block';
+            };
+
+            // Global function for toggling detailed breakdown with state persistence
+            window.toggleDetails = function(roundId) {
+                var el = document.getElementById('details-round-' + roundId);
+                var btn = document.getElementById('btn-toggle-details-' + roundId);
+                
+                if (el) {
+                    const isHidden = el.style.display === 'none';
+                    
+                    if (isHidden) {
+                        el.style.display = 'block';
+                        if (btn) btn.textContent = "Hide result per criteria";
+                        window.tallyDetailsState[roundId] = true;
+                    } else {
+                        el.style.display = 'none';
+                        if (btn) btn.textContent = "Show result per criteria";
+                        window.tallyDetailsState[roundId] = false;
+                    }
+                }
+            };
+
+            function fetchLiveTally() {
+                if (!tallyContainer) return;
+                if (window.grandRevealActive) return; // PAUSE POLLING if Reveal is active
+
+                fetch(`/Events/GetLiveTally?eventId=${eventId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Network response was not ok");
+                        return response.text();
+                    })
+                    .then(html => {
+                        tallyContainer.innerHTML = html;
+                        
+                        // Check for Grand Reveal Data (Script tag inserted by partial)
+                        // innerHTML does not execute scripts, so we manually check for the data block
+                        const revealScript = document.getElementById('grand-reveal-json-data');
+                        if (revealScript && window.prepareGrandReveal) {
+                            try {
+                                const data = JSON.parse(revealScript.textContent);
+                                window.prepareGrandReveal(data);
+                            } catch (e) {
+                                console.error("Error parsing grand reveal data:", e);
+                            }
+                        }
+
+                        // 1. Restore Active Tab
+                        if (currentActiveTallyRoundId) {
+                            const btn = document.querySelector(`.tally-tab-link[data-round-id="${currentActiveTallyRoundId}"]`);
+                            if (btn) {
+                                window.switchTallyTab(currentActiveTallyRoundId);
+                            } else {
+                                // Fallback if round gone
+                                const visiblePane = document.querySelector('.tally-round-pane[style*="block"]');
+                                if (visiblePane) {
+                                    const id = visiblePane.id.replace('tally-round-', '');
+                                    currentActiveTallyRoundId = parseInt(id);
+                                }
+                            }
+                        } else {
+                            // First load default
+                            const activeBtn = document.querySelector('.tally-tab-link.active');
+                            if (activeBtn) {
+                                currentActiveTallyRoundId = parseInt(activeBtn.getAttribute('data-round-id'));
+                            }
+                        }
+
+                        // 2. Restore Detailed View State
+                        for (const [rId, isOpen] of Object.entries(window.tallyDetailsState)) {
+                            if (isOpen) {
+                                const el = document.getElementById('details-round-' + rId);
+                                const btn = document.getElementById('btn-toggle-details-' + rId);
+                                if (el) el.style.display = 'block';
+                                if (btn) btn.textContent = "Hide result per criteria";
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Failed to fetch tally:", err);
+                    });
+            }
+
+            // Start polling when Tally tab is clicked
+            const tallyTabBtn = document.querySelector('.tab-link[data-tab="tally"]');
+            if (tallyTabBtn) {
+                tallyTabBtn.addEventListener('click', function() {
+                    // Fetch immediately
+                    fetchLiveTally();
+                    
+                    // Clear existing if any (debounce)
+                    if (tallyInterval) clearInterval(tallyInterval);
+                    
+                    // Set interval (e.g., every 5 seconds)
+                    tallyInterval = setInterval(fetchLiveTally, 5000);
+                });
+            }
+
+            // Stop polling when switching away
+            tabs.forEach(t => {
+                if (t.getAttribute('data-tab') !== 'tally') {
+                    t.addEventListener('click', function() {
+                        if (tallyInterval) {
+                            clearInterval(tallyInterval);
+                            tallyInterval = null;
+                        }
+                    });
+                }
+            });
+            
+            // Initial check: if tally is active on load (unlikely but possible via hash/logic)
+            if (tallyTabBtn && tallyTabBtn.classList.contains('active')) {
+                 fetchLiveTally();
+                 tallyInterval = setInterval(fetchLiveTally, 5000);
+            }
+
+        });
+    </script>
+}

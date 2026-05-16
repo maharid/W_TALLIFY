@@ -1,0 +1,729 @@
+/* ===================================================================
+   VARS & RESET
+   =================================================================== */
+:root {
+    /* Required Variables */
+    --color-primary: #EC4899;         /* Pink-500 */
+    --color-primary-hover: #db2777;   /* Pink-600 */
+    --color-primary-soft-bg: #FDF2F8; /* Pink-50 */
+    
+    --color-bg: #F3F4F6;              /* Gray-100 */
+    --color-bg-secondary: #F2F2F7;    /* iOS Gray 6 */
+    --color-surface: #FFFFFF;         /* White */
+    --color-surface-glass: rgba(255, 255, 255, 0.9);
+    
+    --color-text: #111827;            /* Gray-900 */
+    --color-text-soft: #4B5563;       /* Gray-600 */
+    --color-text-faint: #9CA3AF;      /* Gray-400 */
+    
+    --color-border: #E5E7EB;          /* Gray-200 */
+    --color-border-glass: rgba(255, 255, 255, 0.5);
+    
+    --radius-md: 10px;                /* Enforced Global Radius 10px */
+    --radius-sm: 8px;
+    --radius-lg: 24px;
+    
+    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+
+    /* Spacing & Fonts */
+    --space-6: 24px;
+    --font-weight-semibold: 600;
+    --font-weight-medium: 500;
+    --font-size-xl: 20px;
+    --font-size-md: 14px;
+    --transition-fast: 0.2s ease;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===================================================================
+   HEADER — Shared for Scorer & Judge
+   =================================================================== */
+
+.scoring-header {
+    width: 100%;
+    background: var(--color-surface);
+    padding: var(--space-6) 120px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.scoring-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Org Avatar (Photo) in Header */
+.scoring-header-left .org-avatar {
+    width: 56px; /* Match old header-logo size */
+    height: 56px;
+    border-radius: var(--radius-md); /* 10px */
+    flex-shrink: 0;
+    background-color: var(--color-bg); /* Neutral background */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 1px solid var(--color-border); /* Subtle border */
+    overflow: hidden; /* To ensure image fits within border-radius */
+}
+
+/* Fallback image inside org-avatar */
+.scoring-header-left .org-avatar .app-brand-logo-fallback {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Org Text in Header */
+.scoring-header-left .org-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /* Ensure text doesn't overflow if org name is too long */
+    min-width: 0; 
+    flex-grow: 1;
+}
+
+/* Org Title in Header */
+.scoring-header-left .org-title {
+    margin: 0; /* Override default h1 margin */
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-xl); /* Use existing font size for consistency */
+    color: var(--color-text);
+    white-space: nowrap; /* Prevent wrapping */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for overflowed text */
+}
+
+/* Org Subtitle in Header */
+.scoring-header-left .org-subtitle {
+    margin: 0; /* Override default p margin */
+    font-size: var(--font-size-md);
+    color: var(--color-text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.scoring-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.header-status {
+    font-size: var(--font-size-md);
+    color: var(--color-text-faint);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-role {
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-md);
+    background: var(--color-surface);
+    cursor: default;
+}
+
+.btn-logout {
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid #f04848;
+    background: #ff5c5c;
+    color: #fff;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background: #e14141;
+}
+
+/* ===================================================================
+   2. MAIN LAYOUT
+   =================================================================== */
+.scoring-page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.judge-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px; /* Reduced padding */
+    overflow: hidden; /* Prevent main container scrolling */
+}
+
+/* ===================================================================
+   3. SCORING CARD (iOS Style)
+   =================================================================== */
+.scoring-card {
+    background-color: var(--color-surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-md); /* Now using radius-md (10px) */
+    box-shadow: var(--shadow-card);
+    width: 100%;
+    max-width: 900px;
+    padding: 24px; /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    gap: 16px; /* Reduced gap */
+    margin-bottom: 16px; /* Reduced bottom margin */
+    border: 1px solid var(--color-border-glass);
+    flex: 1; /* Allow card to grow to fill space */
+    min-height: 0; /* Crucial for nested flex scroll */
+    overflow: hidden; /* Contain the scrollable area */
+}
+
+/* Top Row */
+.card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    width: 100%;             /* Ensure it takes full width of its parent */
+    max-width: 900px;        /* Match the max-width of .scoring-card */
+    margin: 0 auto 16px auto; /* Reduced bottom margin */
+    padding: 0 0 16px 0; /* Reduced padding */
+    
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.event-title {
+    margin: 0;
+    font-size: 18px; /* Reduced font size */
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.5px;
+}
+
+.event-pills {
+    display: flex;
+    gap: 10px;
+}
+
+.info-pill {
+    display: inline-flex;
+    padding: 4px 12px; /* Reduced padding */
+    border-radius: 99px; /* Full pill shape */
+    font-size: 12px; /* Reduced font size */
+    font-weight: 600;
+    background-color: var(--event-primary-soft-bg);
+    color: var(--event-primary);
+}
+
+/* Wizard Steps & Animation */
+.wizard-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.wizard-step {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wizard-step.active {
+    display: flex; /* Changed to flex for internal layout */
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Criteria Header */
+.criteria-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px; /* Reduced margin */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.criteria-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.step-counter {
+    text-transform: uppercase;
+    font-size: 11px; /* Reduced font size */
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--color-text-faint);
+}
+
+.criteria-name {
+    margin: 0;
+    font-size: 24px; /* Reduced font size from 32px */
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -1px;
+    line-height: 1.1;
+}
+
+.criteria-weight-badge {
+    font-size: 14px; /* Reduced font size */
+    font-weight: 700;
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+    padding: 6px 12px; /* Reduced padding */
+    border-radius: 99px; /* Keep pills fully rounded */
+}
+
+/* ------------------------------------------------------------------
+   CONTESTANT LIST (Flexbox Div Layout)
+   ------------------------------------------------------------------ */
+.contestant-list-div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Reduced gap from 16px */
+}
+
+.contestant-row-card {
+    display: flex;
+    justify-content: space-between; /* Pushes left group and right group apart */
+    align-items: center; /* Vertically center everything */
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px; /* Reduced padding from 16px 20px */
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.contestant-row-card:hover {
+    background-color: #FAFAFA;
+}
+
+/* LEFT GROUP: Photo + ID + Name */
+.contestant-info-group {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Reduced spacing from 16px */
+    flex: 1;
+    min-width: 0; /* Prevents overflow */
+}
+
+/* Photo */
+.c-photo-wrapper {
+    flex-shrink: 0;
+}
+
+.contestant-photo-thumb {
+    width: 40px; /* Reduced from 48px */
+    height: 40px; /* Reduced from 48px */
+    object-fit: cover;
+    border-radius: 8px; /* Slightly softer corners */
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.contestant-photo-thumb:hover {
+    transform: scale(1.05);
+    border-color: var(--color-primary);
+}
+
+.contestant-photo-placeholder {
+    width: 40px; /* Reduced from 48px */
+    height: 40px; /* Reduced from 48px */
+    border-radius: 8px;
+    background-color: var(--color-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px; /* Reduced font size */
+    font-weight: 600;
+    color: var(--color-text-faint);
+    cursor: pointer;
+}
+
+/* ID Badge */
+.c-id-wrapper {
+    flex-shrink: 0;
+}
+
+.id-badge {
+    display: inline-block;
+    background-color: var(--color-bg);
+    color: var(--color-text-soft);
+    padding: 4px 10px; /* Reduced padding */
+    border-radius: var(--radius-md);
+    font-size: 12px; /* Reduced font size */
+    font-weight: 700;
+    font-family: monospace;
+    line-height: 1;
+}
+
+/* Name Text */
+.contestant-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.3;
+}
+
+.c-name {
+    font-size: 14px; /* Reduced font size */
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.c-school {
+    font-size: 12px; /* Reduced font size */
+    color: var(--color-text-soft);
+}
+
+/* RIGHT GROUP: Score Input */
+.contestant-score-group {
+    flex-shrink: 0;
+    width: 120px; /* Reduced width */
+}
+
+/* Score Input Styles */
+.score-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.score-input {
+    width: 100%;
+    height: 44px; /* Reduced height from 52px */
+    background-color: var(--color-bg-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 18px; /* Reduced font size */
+    font-weight: 700;
+    text-align: center; /* Center text inside the input box itself */
+    color: var(--color-text);
+    transition: all 0.2s ease;
+    outline: none;
+    padding: 0 8px; /* Reduced padding */
+}
+
+/* Styling for Read-Only Score Inputs */
+.score-input[readonly],
+.score-input:read-only {
+    cursor: default;
+    pointer-events: none; /* Prevent interaction */
+    border-color: transparent !important; /* No border */
+    background-color: transparent !important; /* No background */
+    box-shadow: none !important; /* No shadow */
+    outline: none !important; /* No outline */
+    color: var(--color-text) !important; /* Ensure text is readable */
+    font-weight: 600 !important; /* Make it look like display text */
+    -webkit-text-fill-color: var(--color-text) !important; /* For Safari/iOS to prevent fill color change */
+    opacity: 1 !important; /* Override disabled opacity if present */
+}
+
+/* Override focus styles for read-only inputs */
+.score-input[readonly]:focus,
+.score-input:read-only:focus {
+    border-color: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important; /* Remove any potential hover/active transform */
+}
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.score-input:focus {
+    background-color: var(--color-surface);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft-bg);
+    transform: translateY(-1px);
+}
+
+.score-input.invalid {
+    border-color: #EF4444 !important;
+    background-color: #FEF2F2;
+    color: #B91C1C;
+}
+
+.score-input::placeholder {
+    color: #D1D5DB;
+    font-weight: 400;
+    font-size: 13px; /* Reduced font size */
+}
+
+/* ===================================================================
+   4. NAVIGATION BUTTONS
+   =================================================================== */
+.wizard-navigation {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    flex-shrink: 0; /* Prevent shrinking */
+    margin-top: auto; /* Push to bottom if flex container */
+}
+
+.nav-right {
+    display: flex;
+    gap: 12px; /* Reduced gap */
+}
+
+/* Base Button Style */
+.btn-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Reduced gap */
+    height: 48px; /* Reduced height from 56px */
+    padding: 0 32px; /* Reduced padding */
+    border-radius: var(--radius-md); /* Enforced 10px */
+    font-size: 14px; /* Reduced font size */
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    letter-spacing: -0.3px;
+    box-shadow: none !important; /* No shadows */
+}
+
+.btn-nav:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: rgba(0,0,0,0.05) !important;
+    color: #999 !important;
+    border: none;
+}
+
+/* Variants */
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: white;
+    color: var(--color-text);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.btn-secondary:hover:not(:disabled) {
+    background-color: #FAFAFA;
+}
+
+.btn-success {
+    background-color: var(--event-primary);
+    color: white;
+}
+
+/* ===================================================================
+   5. PHOTO MODAL (REVERTED TO ORIGINAL)
+   =================================================================== */
+.photo-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.photo-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.photo-modal-content {
+    background: var(--color-surface);
+    padding: 24px;
+    border-radius: 20px;
+    position: relative;
+    max-width: 90%;
+    max-height: 90vh;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    text-align: center;
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.photo-modal-content img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 12px;
+    display: block;
+    margin-bottom: 16px;
+    object-fit: contain;
+}
+
+.photo-modal-content h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.btn-close-modal {
+    position: absolute;
+    top: -16px;
+    right: -16px;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 50%;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s;
+}
+.btn-close-modal:active {
+    transform: scale(0.9);
+}
+
+/* ===================================================================
+   6. TOAST NOTIFICATION
+   =================================================================== */
+.score-toast {
+    position: fixed;
+    bottom: 40px; /* Move to bottom */
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background-color: #EF4444; /* Red for error */
+    color: white;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+    z-index: 2000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    min-width: 250px;
+    text-align: center;
+}
+
+.score-toast.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ===================================================================
+   STANDBY CARD (Floating in Middle)
+   =================================================================== */
+.standby-floating-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Ensure it floats above other content */
+    width: 90%; /* Max width for responsiveness */
+    max-width: 600px; /* Max width for larger screens */
+    background: var(--color-surface); /* Use general surface color */
+    padding: 3rem;
+    border-radius: var(--radius-md); /* Use existing radius variable */
+    box-shadow: var(--shadow-card); /* Use existing shadow variable */
+    text-align: center; /* Ensure content is centered */
+    display: flex; /* For internal vertical centering if needed */
+    flex-direction: column; /* Stack content */
+    align-items: center; /* Center horizontally */
+    justify-content: center; /* Center vertically if flex height */
+    margin: 0; /* Override any external margin */
+    /* Add a subtle animation to make it pop up */
+    animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Specific adjustments for content within the floating card */
+/* These are mostly to override potential defaults or to ensure correct layout within the floating card */
+.standby-floating-card .standby-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.standby-floating-card h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--color-text);
+}
+
+.standby-floating-card p {
+    font-size: 1.1rem;
+    color: var(--color-text-soft);
+    margin-bottom: 2rem;
+}
+
+.standby-floating-card .btn-nav {
+    max-width: 200px;
+    margin: 0 auto;
+}

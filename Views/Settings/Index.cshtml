@@ -1,0 +1,632 @@
+@model ProjectTallify.Models.User
+
+@{
+    ViewData["Title"] = "Settings";
+    ViewBag.ActiveNav = "Settings";
+    ViewBag.HideOrgCard = true;
+}
+
+<style>
+    /* Fixed Viewport Layout for Settings Page */
+    html, body {
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    .app-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-header {
+        flex: 0 0 auto;
+        position: static;
+    }
+
+    .app-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        padding-bottom: 24px; /* Reduced bottom padding */
+    }
+
+    .panel-section {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+
+    .panel-header {
+        flex: 0 0 auto;
+    }
+
+    .settings-layout {
+        flex: 1;
+        min-height: 0;
+        height: 100%;
+        align-items: stretch;
+    }
+
+    .settings-sidebar {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .settings-main {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    /* Custom style for disabled email input */
+    .settings-input[disabled] {
+        background-color: #f0f2f5; /* Muted background */
+        cursor: not-allowed;
+        color: var(--color-text); /* Ensure text is legible */
+    }
+</style>
+
+<section class="panel-section">
+    <header class="panel-header">
+        <h2 class="panel-title">Settings</h2>
+    </header>
+
+    <div class="settings-layout">
+        <!-- Sidebar -->
+        <aside class="settings-sidebar">
+            <button class="settings-tab is-active" data-settings-tab="account" type="button">
+                Account
+            </button>
+            <button class="settings-tab" data-settings-tab="organization" type="button">
+                Organization
+            </button>
+            <button class="settings-tab" data-settings-tab="archived-events" type="button">
+                Archived Events
+            </button>
+            <button class="settings-tab" data-settings-tab="about" type="button">
+                About
+            </button>
+        </aside>
+
+        <!-- Main -->
+        <div class="settings-main">
+            <!-- ACCOUNT -->
+            <div class="settings-pane is-active" data-settings-pane="account">
+                <div class="settings-profile-header">
+                    <div class="settings-avatar-circle @(!string.IsNullOrEmpty(Model.ProfilePhotoPath) ? "has-photo" : "")" 
+                         id="accountAvatarCircle"
+                         style="@(!string.IsNullOrEmpty(Model.ProfilePhotoPath) ? $"background-image: url('{Model.ProfilePhotoPath}');" : "")">
+                        @{
+                            var initials = "";
+                            if (!string.IsNullOrEmpty(Model.FirstName)) initials += Model.FirstName[0];
+                            if (!string.IsNullOrEmpty(Model.LastName)) initials += Model.LastName[0];
+                        }
+                        @initials
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.ProfilePhotoPath))
+                    {
+                        <div style="display: flex; gap: 8px;" id="photoPresentButtons">
+                            <button type="button" class="settings-link-button" id="btnChangeProfilePhoto">
+                                Change photo
+                            </button>
+                            <button type="button" class="settings-link-button" id="btnRemoveProfilePhoto" style="color: var(--color-danger-text); border-color: var(--color-danger-text);">
+                                Remove photo
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px; display: none;" id="noPhotoButtons">
+                            <button type="button" class="settings-link-button" id="btnAddProfilePhoto">
+                                Add photo
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display: flex; gap: 8px; display: none;" id="photoPresentButtons">
+                            <button type="button" class="settings-link-button" id="btnChangeProfilePhoto">
+                                Change photo
+                            </button>
+                            <button type="button" class="settings-link-button" id="btnRemoveProfilePhoto" style="color: var(--color-danger-text); border-color: var(--color-danger-text);">
+                                Remove photo
+                            </button>
+                        </div>
+                        <div style="display: flex; gap: 8px;" id="noPhotoButtons">
+                            <button type="button" class="settings-link-button" id="btnAddProfilePhoto">
+                                Add photo
+                            </button>
+                        </div>
+                    }
+                    <input type="file"
+                           id="profilePhotoInput"
+                           class="settings-file-input-hidden"
+                           accept="image/*" />
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">Profile</h3>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Name</label>
+                            <div class="settings-input-with-action">
+                                <input type="text"
+                                       id="profileNameInput"
+                                       class="settings-input"
+                                       value="@(Model.FirstName + " " + (Model.LastName ?? ""))"
+                                       disabled />
+                                <button type="button"
+                                        class="settings-input-action"
+                                        data-edit-target="profileNameInput"
+                                        data-error-target="profileNameError">
+                                    <span>Edit</span>
+                                </button>
+                            </div>
+                            <p class="settings-error" id="profileNameError"></p>
+                        </div>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Email</label>
+                            <input type="email"
+                                   id="profileEmailInput"
+                                   class="settings-input"
+                                   value="@Model.Email"
+                                   disabled />
+                            <p class="settings-error" id="profileEmailError"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">Change password</h3>
+                    </div>
+
+                    <div class="settings-field-row settings-field-row-3">
+                        <div class="settings-field">
+                            <label class="settings-label">Old password</label>
+                            <input type="password"
+                                   class="settings-input"
+                                   placeholder="Enter old password" />
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">New password</label>
+                            <input type="password"
+                                   class="settings-input"
+                                   placeholder="Enter new password" />
+                        </div>
+                        <div class="settings-field">
+                            <label class="settings-label">Confirm new password</label>
+                            <input type="password"
+                                   class="settings-input"
+                                   placeholder="Re-enter new password" />
+                        </div>
+                    </div>
+
+                    <div class="settings-actions-row">
+                        <button type="button" class="settings-primary-button">
+                            Save
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-footer-row">
+                    <button type="button" class="settings-danger-button" id="btnDeactivateAccount">
+                        Deactivate account
+                    </button>
+                    <button type="button" class="settings-secondary-button" id="btnLogout">
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- ORGANIZATION -->
+            <div class="settings-pane" data-settings-pane="organization">
+                <div class="settings-profile-header">
+                    <div class="settings-org-avatar-square" 
+                         id="orgAvatarSquare"
+                         style="@(!string.IsNullOrEmpty(Model.OrganizationPhotoPath) ? $"background-image: url('{Model.OrganizationPhotoPath}');" : "")"></div>
+                    <button type="button" class="settings-link-button" id="btnChangeOrgPhoto">
+                        Change photo
+                    </button>
+                    <input type="file"
+                           id="orgPhotoInput"
+                           class="settings-file-input-hidden"
+                           accept="image/*" />
+                </div>
+
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">Organization</h3>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Organization name</label>
+                            <input type="text"
+                                   id="orgNameInput"
+                                   class="settings-input"
+                                   value="@Model.OrganizationName" />
+                            <p class="settings-error" id="orgNameError"></p>
+                        </div>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Subtitle</label>
+                            <input type="text"
+                                   id="orgSubtitleInput"
+                                   class="settings-input"
+                                   value="@Model.OrganizationSubtitle" />
+                            <p class="settings-error" id="orgSubtitleError"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">Preferences</h3>
+                    </div>
+
+                    <!-- Notification Toggle -->
+                    <div class="settings-subgroup settings-notifications-toggle" style="margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <p class="settings-subgroup-label" style="margin-bottom: 4px;">Notifications</p>
+                                <p class="settings-hint" style="margin: 0;">Receive real-time updates on event activity.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="enableNotificationsToggle" @(Model.EnableNotifications ? "checked" : "")>
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-subgroup">
+                        <p class="settings-subgroup-label">Color scheme</p>
+                        <div class="settings-color-grid">
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#ff007a">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#ff007a;"></span>
+                                    <span style="background:#ff80b5;"></span>
+                                </span>
+                                <span class="settings-color-label">Tallify Pink</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#2563eb">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#2563eb;"></span>
+                                    <span style="background:#60a5fa;"></span>
+                                </span>
+                                <span class="settings-color-label">Royal Blue</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#10b981">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#10b981;"></span>
+                                    <span style="background:#6ee7b7;"></span>
+                                </span>
+                                <span class="settings-color-label">Emerald Green</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#8b5cf6">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#8b5cf6;"></span>
+                                    <span style="background:#c4b5fd;"></span>
+                                </span>
+                                <span class="settings-color-label">Violet</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#f59e0b">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#f59e0b;"></span>
+                                    <span style="background:#fde68a;"></span>
+                                </span>
+                                <span class="settings-color-label">Amber</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option"
+                                    data-color="#111827">
+                                <span class="settings-color-swatch">
+                                    <span style="background:#111827;"></span>
+                                    <span style="background:#4b5563;"></span>
+                                </span>
+                                <span class="settings-color-label">Slate</span>
+                            </button>
+
+                            <button type="button"
+                                    class="settings-color-option settings-color-option-custom"
+                                    data-color="custom">
+                                <span class="settings-color-swatch settings-color-swatch-custom">
+                                    <i class="ri-palette-line"></i>
+                                </span>
+                                <span class="settings-color-label">Custom color</span>
+                            </button>
+                        </div>
+
+                        <input type="color"
+                               id="customColorPicker"
+                               class="settings-color-input-hidden"
+                               value="@Model.ThemeColor" />
+                    </div>
+
+                    <div class="settings-actions-row">
+                        <button type="button"
+                                class="settings-primary-button settings-color-save">
+                            Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ARCHIVED EVENTS -->
+            <div class="settings-pane" data-settings-pane="archived-events">
+                 <div class="panel-section" style="padding:0;">
+                    <header class="panel-header" style="padding-left: 0; padding-right:0;">
+                        <h2 class="panel-title" style="font-size: 1.1em;">Your Archived Events</h2>
+                        <p class="panel-subtitle">
+                            These events are hidden from your main lists. Restore them to make them active again.
+                        </p>
+                    </header>
+                    <div id="archivedEventsContent">
+                        <!-- Archived events list will be loaded here via AJAX -->
+                        <p style="text-align:center; padding: 20px; color: var(--color-text-faint);">Loading archived events...</p>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- ABOUT -->
+            <div class="settings-pane" data-settings-pane="about">
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">About TALLIFY</h3>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Web app name</label>
+                            <div class="settings-display-card">
+                                TALLIFY
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-field-row">
+                        <div class="settings-field">
+                            <label class="settings-label">Description</label>
+                            <div class="settings-display-card settings-display-card-multiline">
+                                Tallify is a web-based judging and scoring system built for
+                                competitions like pageants, talent shows, quiz bees, and more.
+                                Organizers can configure events, criteria, and weights, while
+                                judges submit scores securely on any device. Tallify handles
+                                all the calculations, rankings, and audit logging so results
+                                are accurate, transparent, and easy to review.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-group">
+                    <div class="settings-group-header">
+                        <h3 class="settings-group-title">The team behind the magic.</h3>
+                    </div>
+
+                    <div class="settings-two-column">
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">Developers</p>
+                            <div class="settings-stack">
+                                <div class="settings-display-card">Via Bianca Celis</div>
+                                <div class="settings-display-card">Janna Marion Del Mundo</div>
+                                <div class="settings-display-card">Mark Payo</div>
+                            </div>
+                        </div>
+
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">Email</p>
+                            <div class="settings-stack">
+                                <div class="settings-display-card">viabiancacelis@gmail.com</div>
+                                <div class="settings-display-card">janna.marion18@gmail.com</div>
+                                <div class="settings-display-card">markrabinopayo17@gmail.com</div>
+                            </div>
+                        </div>
+
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">QA Tester</p>
+                            <div class="settings-stack">
+                                <div class="settings-display-card">Jhazeel Dasco</div>
+                            </div>
+                        </div>
+
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">Email</p>
+                            <div class="settings-stack">
+                                <div class="settings-display-card">jazdasco.1996@gmail.com</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-divider"></div>
+
+                <div class="settings-group">
+                    <div class="settings-two-column settings-two-column--stacked-mobile">
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">Developed on</p>
+                            <div class="settings-display-card">
+                                October 2025 – December 2025
+                            </div>
+                        </div>
+
+                        <div class="settings-column">
+                            <p class="settings-subgroup-label">Contact us</p>
+                            <div class="settings-display-card">
+                                <span class="settings-contact-email">
+                                    <i class="ri-mail-fill"></i>
+                                    <span>tallify@gmail.com</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- /about -->
+        </div>
+    </div>
+</section>
+
+<div id="notif-toast" class="notif-toast">
+    <span class="notif-toast-message"></span>
+</div>
+
+    <div id="deactivate-confirm-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Deactivate Account</h3>
+                <button type="button" id="btn-close-deactivate" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p style="margin-bottom: 16px;">Are you sure you want to deactivate your account? This action is irreversible.</p>
+                <form id="deactivateForm">
+                    @Html.AntiForgeryToken()
+                    <div class="settings-field" style="text-align: left; margin-bottom: 0;">
+                        <label class="settings-label" for="deactivatePassword">Enter password to confirm</label>
+                        <input type="password" id="deactivatePassword" name="password" class="settings-input" placeholder="Your password" required />
+                    </div>
+                </form>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnCancelDeactivate" class="btn-screen-cancel">Cancel</button>
+                <button type="submit" form="deactivateForm" class="btn-screen-confirm">
+                    Yes, Deactivate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incorrect Password Modal -->
+    <div id="incorrect-password-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Incorrect Password</h3>
+                <button type="button" id="btn-close-incorrect-password" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p>The password you entered is incorrect. Please try again.</p>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnOkIncorrectPassword" class="btn-screen-primary" style="width:100%">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivation Success Modal -->
+    <div id="deactivate-success-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Account Deactivated</h3>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p>Your account has been successfully deactivated.</p>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnOkDeactivateSuccess" class="btn-screen-primary" style="width:100%">OK</button>
+            </div>
+        </div>
+    </div>
+    <div id="remove-photo-confirm-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Remove Profile Photo</h3>
+                <button type="button" id="btn-close-remove-photo" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p>Are you sure you want to remove your profile photo? This will revert your avatar to your initials.</p>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnCancelRemovePhoto" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btnConfirmRemovePhoto" class="btn-screen-confirm">
+                    Yes, Remove
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Event Modal -->
+    <div id="restore-event-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Restore Event</h3>
+                <button type="button" id="btn-close-restore-event" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p>Are you sure you want to restore this event? It will reappear in your active events lists.</p>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnCancelRestoreEvent" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btnConfirmRestoreEvent" class="btn-screen-primary">Yes, Restore</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Event Modal -->
+    <div id="delete-event-modal-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Delete Event Permanently</h3>
+                <button type="button" id="btn-close-delete-event" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p>WARNING: Are you sure you want to PERMANENTLY DELETE this event? This action cannot be undone.</p>
+            </div>
+            <div class="screen-actions">
+                <button type="button" id="btnCancelDeleteEvent" class="btn-screen-cancel">Cancel</button>
+                <button type="button" id="btnConfirmDeleteEvent" class="btn-screen-confirm">Yes, Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="hidden" id="initial-settings-tab" value="@ViewBag.SettingsTab" />
+
+@section Scripts {
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+}

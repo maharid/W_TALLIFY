@@ -1,0 +1,120 @@
+@using System.Linq
+@{
+    var title = ViewData["Title"] as string ?? "Tallify Scoring";
+    var role = ViewBag.Role as string ?? "JUDGE";
+    var orgName = ViewBag.OrganizationName as string ?? "The Organization";
+    var orgSubtitle = ViewBag.OrganizationSubtitle as string ?? "Subtitle";
+    var orgPhotoPath = ViewBag.OrganizationPhotoPath as string;
+
+    string? orgAvatarStyle = null;
+    if (!string.IsNullOrEmpty(orgPhotoPath))
+    {
+        orgAvatarStyle = $"background-image: url({orgPhotoPath});";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="~/css/general.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/scoring.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    @if (!string.IsNullOrEmpty(ViewBag.ThemeColor))
+    {
+        <style>
+            :root {
+                --color-primary: @Html.Raw(ViewBag.ThemeColor);
+                /* Define event-specific variables which can be directly used */
+                --event-primary: @Html.Raw(ViewBag.ThemeColor);
+                --event-primary-soft: @Html.Raw(ViewBag.ThemeColor)35; /* Example: hex with alpha */
+                --event-primary-soft-bg: @Html.Raw(ViewBag.ThemeColor)12; /* Example: hex with alpha */
+                --event-primary-text: #ffffff; /* Assuming white text on primary theme */
+            }
+        </style>
+    }
+</head>
+
+<body>
+    <!-- Global Loader -->
+    <div id="global-loader">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <header class="scoring-header">
+    <div class="scoring-header-left">
+        <div class="org-avatar" style="@orgAvatarStyle">
+            @if (string.IsNullOrEmpty(orgPhotoPath))
+            {
+                <img src="~/images/default org.png" alt="Default Org Logo" class="app-brand-logo-fallback" />
+            }
+        </div>
+        <div class="org-text">
+            <h1 class="org-title">@orgName</h1>
+            <p class="org-subtitle">@orgSubtitle</p>
+        </div>
+    </div>
+
+    <div class="scoring-header-right">
+        <span class="header-status">Mabuhay! You are signed in as <strong>@ViewBag.JudgeName</strong>!</span>
+
+        <div class="header-actions">
+            <span class="header-role">@role</span>
+            <button type="button" class="btn-logout" id="btnLogout">
+                Logout
+            </button>
+        </div>
+    </div>
+</header>
+
+    <div class="scoring-page">
+        @if (TempData["ScorerMessage"] != null)
+        {
+            <div class="scoring-toast">@TempData["ScorerMessage"]</div>
+        }
+
+        @RenderBody()
+    </div>
+
+    <div id="logout-overlay" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal">
+
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Log Out</h3>
+
+                <button type="button" id="btn-close-logout" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="summary-modal-body screen-body">
+                Are you sure you want to log out?
+            </div>
+
+            <div class="screen-actions">
+                <button type="button" id="btnCancelLogout" class="btn-screen-cancel">Cancel</button>
+
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="logout-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn-screen-confirm">
+                        Yes, Log Out
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
+    <script src="~/js/scoring.js" asp-append-version="true"></script>
+    <script src="~/js/disable-inspect.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

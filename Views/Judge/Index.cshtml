@@ -1,0 +1,523 @@
+@model ProjectTallify.Models.JudgeViewModel
+@{
+    Layout = "_ScoringLayout"; 
+    ViewBag.JudgeName = Model.JudgeName;
+}
+
+<main class="judge-main">
+    
+    <!-- Top Row: Event Title & Info Pills - ALWAYS VISIBLE -->
+    <div class="card-top-row">
+        <div class="event-title-group">
+            <h1 class="event-title">@Model.EventTitle</h1>
+            <span class="event-meta">
+                @{
+                                var metaParts = new List<string>();
+                                // Removed Model.OrganizationSubtitle from event meta per user request
+                                if (!string.IsNullOrEmpty(Model.Venue))
+                                {
+                                    metaParts.Add(Model.Venue);
+                                }
+                                metaParts.Add(Model.EventStartDate.ToString("MMM dd, yyyy")); // Date is always present
+                            }
+                            @Html.Raw(string.Join(" &nbsp;&bull;&nbsp; ", metaParts))
+                        </span>
+                    </div>        <div class="event-pills">
+            <span class="info-pill">@Model.RoundName</span>
+        </div>
+    </div>
+
+    @if (Model.EventStatus == "preparing")
+    {
+        <!-- EVENT NOT STARTED STANDBY -->
+        <div class="standby-container text-center standby-floating-card">
+            <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
+                📅
+            </div>
+            <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
+                Event Not Started
+            </h2>
+            <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
+                This event is currently in preparation. It will start on <strong>@Model.EventStartDate.ToString("MMM dd, yyyy h:mm tt")</strong>.
+            </p>
+            <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
+                Refresh Status
+            </button>
+        </div>
+    }
+    @if (Model.EventStatus == "open")
+    {
+        @if (Model.IsRoundActive)
+        {
+            <!-- 3. The Scoring Card (Wizard Style) -->
+            <div class="scoring-card">
+                
+                <!-- Wizard Container -->
+                @{
+                    var allCriteria = Model.Groups.SelectMany(g => g.Criteria).ToList();
+                    var totalSteps = allCriteria.Count;
+                }
+
+                                <form id="scoring-form" class="wizard-container">
+                                    @Html.AntiForgeryToken()
+                                    @for (int i = 0; i < totalSteps; i++)                        {
+                        var criteria = allCriteria[i];
+                        var stepIndex = i;
+                        var isActive = i == 0 ? "active" : "";
+
+                        <div class="wizard-step @isActive" data-step="@stepIndex">
+                            
+                            <!-- Criteria Row -->
+                            <div class="criteria-header-row">
+                                <div class="criteria-meta">
+                                    <span class="step-counter">Criteria @(i + 1) of @totalSteps</span>
+                                    <h2 class="criteria-name">@criteria.Name</h2>
+                                </div>
+                                <div class="criteria-weight-badge">
+                                    @criteria.WeightPercentage.ToString("F2")%
+                                </div>
+                            </div>
+
+                            <!-- The List (Contestants) -->
+                            <div class="contestant-list-container" style="flex: 1; overflow-y: auto; min-height: 0;">
+                                <div class="contestant-list-div">
+                                    @foreach (var contestant in Model.Contestants)
+                                    {
+                                        <div class="contestant-row-card">
+                                            <!-- LEFT SIDE: Info -->
+                                            <div class="contestant-info-group">
+                                                
+                                                <!-- Photo -->
+                                                <div class="c-photo-wrapper">
+                                                    @if (!string.IsNullOrEmpty(contestant.PhotoPath))
+                                                    {
+                                                        <img src="@contestant.PhotoPath"
+                                                             alt="@contestant.FullName"
+                                                             class="contestant-photo-thumb"
+                                                             data-name="@contestant.FullName"
+                                                             data-url="@contestant.PhotoPath"
+                                                             onclick="showPhoto(this.dataset.name, this.dataset.url)" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="contestant-photo-placeholder" 
+                                                             data-name="@contestant.FullName"
+                                                             onclick="showPhoto(this.dataset.name, '')">N/A</div>
+                                                    }
+                                                </div>
+
+                                                <!-- ID Badge -->
+                                                <div class="c-id-wrapper">
+                                                    <span class="id-badge" style="font-size: 12px;">@contestant.ContestantId</span>
+                                                </div>
+
+                                                <!-- Name Text -->
+                                                <div class="contestant-text">
+                                                    <span class="c-name" style="font-size: 14px;">@contestant.FullName</span>
+                                                    <span class="c-school" style="font-size: 12px;">@contestant.Subtitle</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- RIGHT SIDE: Score Input -->
+                                            <div class="contestant-score-group">
+                                                <div class="score-input-wrapper">
+                                                    <input type="number" 
+                                                           class="score-input" 
+                                                           name="Scores[@contestant.ContestantId][@criteria.Name]" 
+                                                           data-contestant-code="@contestant.ContestantId"
+                                                           data-criteria-name="@criteria.Name"
+                                                           min="@criteria.MinPoints" 
+                                                           max="@criteria.MaxPoints" 
+                                                           step="0.01" 
+                                                           placeholder="@criteria.MinPoints.ToString("0")-@criteria.MaxPoints.ToString("0")"
+                                                           oninput="validateScore(this, @criteria.MinPoints, @criteria.MaxPoints)"
+                                                           style="font-size: 16px; height: 48px;"
+                                                           @(Model.IsSubmitted ? "readonly" : "") />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+                </form>
+            </div>
+
+            <!-- 4. Navigation Buttons -->
+            <div class="wizard-navigation">
+                <button type="button" id="btnPrev" class="btn-nav btn-secondary" @(Model.IsSubmitted ? "disabled" : "")>
+                    Prev Criteria
+                </button>
+                
+                <div class="nav-right">
+                    <button type="button" id="btnNext" class="btn-nav btn-primary" @(Model.IsSubmitted ? "disabled" : "")>
+                        Next Criteria
+                    </button>
+                    <!-- Shown only on last step -->
+                    <button type="button" id="btnSubmit" class="btn-nav btn-success" style="display: none;" @(Model.IsSubmitted ? "disabled" : "")>
+                        Submit All Scores
+                    </button>
+                </div>
+            </div>
+            @* <div class="standby-container text-center" style="margin-top: 1rem; padding: 1rem; background: transparent;">
+                <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 0;">
+                    ✅ Your scores for <strong>@Model.RoundName</strong> have been successfully recorded.
+                </p>
+            </div> *@
+            @* Removed by Gemini: Replaced with success modal and waiting screen logic *@
+            @* Removed the if (Model.IsSubmitted) block *@
+
+        }
+        else
+        {
+            <!-- ROUND NOT STARTED STANDBY (Inside Layout) -->
+            <div class="scoring-card">
+                <div class="standby-container text-center standby-floating-card">
+                    <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
+                        ⏳
+                    </div>
+                    <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
+                        Please Standby
+                    </h2>
+                    <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
+                        The round has not started yet.
+                    </p>
+                    <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
+                        Refresh Status
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- FALLBACK / CLOSED STATE -->
+        <div class="standby-container text-center" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+            <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
+                Event Ended
+            </h2>
+            <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
+                This event has concluded.
+            </p>
+            <a href="/Auth/Logout" class="btn-nav btn-secondary" style="max-width: 200px; margin: 0 auto; display: inline-block; text-decoration: none;">
+                Logout
+            </a>
+        </div>
+    }
+
+</main>
+
+<!-- Photo Modal -->
+<div id="photoModal" class="event-photo-modal-backdrop" onclick="hidePhoto()">
+    <div class="event-photo-modal" onclick="event.stopPropagation()">
+        <div class="event-photo-modal-header">
+            <h3 class="event-photo-modal-title" id="modalTitle"></h3>
+            <button class="event-photo-modal-close" onclick="hidePhoto()">×</button>
+        </div>
+        <div class="event-photo-modal-body">
+            <img id="modalImage" src="" alt="Contestant" />
+        </div>
+    </div>
+</div>
+
+<!-- Score Toast Notification -->
+<div id="scoreToast" class="score-toast"></div>
+
+<!-- Score Submission Success Modal -->
+<div id="submissionSuccessModalOverlay" class="summary-overlay" aria-hidden="true">
+    <div class="summary-modal screen-modal">
+        <div class="summary-modal-header">
+            <h3 class="screen-title">Scores Recorded</h3>
+        </div>
+        <div class="summary-modal-body screen-body">
+            <p>Your scores for <span id="successRoundName"></span> have been successfully recorded.</p>
+            <p>Please wait for the organizer to start the next round.</p>
+        </div>
+        <div class="screen-actions">
+            <button type="button" id="btnOkSubmissionSuccess" class="btn-screen-primary" style="width:100%">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- Waiting Screen (after submission) -->
+<div id="submissionWaitingScreen" class="standby-container text-center hidden" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+    <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
+        ⏳
+    </div>
+    <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
+        Waiting for Next Round
+    </h2>
+    <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
+        Your scores have been submitted. The organizer will notify you when the next round begins.
+    </p>
+    <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
+        Refresh Status
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        let toastTimeout;
+
+        function showToast(message, type = 'error') {
+            const toast = document.getElementById('scoreToast');
+            toast.textContent = message;
+            toast.className = `score-toast ${type} active`; // Add type for styling (e.g., error, success)
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // --- Modal and Waiting Screen Logic ---
+        const submissionSuccessModalOverlay = document.getElementById('submissionSuccessModalOverlay');
+        const successRoundNameSpan = document.getElementById('successRoundName');
+        const btnOkSubmissionSuccess = document.getElementById('btnOkSubmissionSuccess');
+        const submissionWaitingScreen = document.getElementById('submissionWaitingScreen');
+        const scoringCard = document.querySelector('.scoring-card');
+        const wizardNavigation = document.querySelector('.wizard-navigation');
+
+        function openSubmissionSuccessModal(roundName) {
+            if (submissionSuccessModalOverlay) {
+                successRoundNameSpan.textContent = roundName;
+                submissionSuccessModalOverlay.classList.add('open');
+                submissionSuccessModalOverlay.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        function closeSubmissionSuccessModal() {
+            if (submissionSuccessModalOverlay) {
+                submissionSuccessModalOverlay.classList.remove('open');
+                submissionSuccessModalOverlay.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        if (btnOkSubmissionSuccess) {
+            btnOkSubmissionSuccess.addEventListener('click', function() {
+                closeSubmissionSuccessModal();
+                if (scoringCard) scoringCard.classList.add('hidden'); // Hide the scoring card
+                if (wizardNavigation) wizardNavigation.classList.add('hidden'); // Hide navigation
+                if (submissionWaitingScreen) submissionWaitingScreen.classList.remove('hidden'); // Show waiting screen
+            });
+        }
+
+        // Validation Logic
+        function validateScore(input, min, max) {
+            const val = parseFloat(input.value);
+            
+            // Remove error class if input is empty or valid
+            if (input.value === '' || (val >= min && val <= max)) {
+                input.classList.remove('invalid');
+            } else {
+                // Add error class if invalid
+                input.classList.add('invalid');
+            }
+            // Removed: showToast(`Score must be between ${min} and ${max}.`, 'error');
+        }
+
+        // Photo Logic
+        function showPhoto(name, url) {
+            document.getElementById('modalTitle').textContent = name;
+            document.getElementById('modalImage').src = url;
+            document.getElementById('photoModal').classList.add('is-open');
+            document.body.classList.add('has-modal-open');
+        }
+
+        function hidePhoto() {
+            document.getElementById('photoModal').classList.remove('is-open');
+            document.body.classList.remove('has-modal-open');
+        }
+
+        // Wizard Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const steps = document.querySelectorAll('.wizard-step');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const btnSubmit = document.getElementById('btnSubmit');
+            let currentStep = 0;
+            const totalSteps = steps.length;
+
+            function showStep(index) {
+                steps.forEach((step, idx) => {
+                    if (idx === index) step.classList.add('active');
+                    else step.classList.remove('active');
+                });
+
+                // Button states
+                btnPrev.disabled = index === 0;
+                
+                if (index === totalSteps - 1) {
+                    btnNext.style.display = 'none';
+                    btnSubmit.style.display = 'inline-flex';
+                } else {
+                    btnNext.style.display = 'inline-flex';
+                    btnSubmit.style.display = 'none';
+                }
+            }
+
+            btnPrev.addEventListener('click', () => {
+                if (currentStep > 0) {
+                    currentStep--;
+                    showStep(currentStep);
+                    window.scrollTo(0, 0); 
+                }
+            });
+
+            btnNext.addEventListener('click', () => {
+                // Validation for current step
+                const currentStepEl = steps[currentStep];
+                const inputs = currentStepEl.querySelectorAll('.score-input');
+                let stepIsValid = true;
+                let firstInvalidInput = null;
+
+                inputs.forEach(input => {
+                    const val = parseFloat(input.value);
+                    const min = parseFloat(input.getAttribute('min'));
+                    const max = parseFloat(input.getAttribute('max'));
+                    
+                    // Reset invalid state
+                    input.classList.remove('invalid');
+
+                    // Check validation (Empty or Out of Range)
+                    if (isNaN(val) || input.value.trim() === '') {
+                         stepIsValid = false;
+                         input.classList.add('invalid');
+                         if (!firstInvalidInput) firstInvalidInput = input;
+                    } else if (val < min || val > max) {
+                         stepIsValid = false;
+                         input.classList.add('invalid');
+                         if (!firstInvalidInput) firstInvalidInput = input;
+                    }
+                });
+
+                if (!stepIsValid) {
+                    showToast("Please fix the errors in this step before proceeding.", "error");
+                    if (firstInvalidInput) {
+                        firstInvalidInput.focus();
+                    }
+                    return; // Stop navigation
+                }
+
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    showStep(currentStep);
+                    window.scrollTo(0, 0);
+                }
+            });
+            
+            if (totalSteps > 0) showStep(0);
+
+            // ==========================================
+            // SUBMISSION LOGIC
+            // ==========================================
+            if (btnSubmit) {
+                btnSubmit.addEventListener('click', async function() {
+                    // 1. Gather all inputs
+                    const inputs = document.querySelectorAll('.score-input');
+                    const submissions = [];
+                    const contestantMap = {};
+                    let hasError = false;
+                    let firstInvalidInput = null;
+
+                    // 2. Validate & Group
+                    inputs.forEach(input => {
+                        const val = parseFloat(input.value);
+                        const min = parseFloat(input.getAttribute('min'));
+                        const max = parseFloat(input.getAttribute('max'));
+                        const cCode = input.getAttribute('data-contestant-code');
+                        const cName = input.getAttribute('data-criteria-name');
+
+                        // Clear previous invalid state first
+                        input.classList.remove('invalid');
+
+                        if (isNaN(val) || input.value.trim() === '') {
+                            hasError = true;
+                            input.classList.add('invalid');
+                            if (!firstInvalidInput) firstInvalidInput = input;
+                        } else if (val < min || val > max) {
+                            hasError = true;
+                            input.classList.add('invalid');
+                            if (!firstInvalidInput) firstInvalidInput = input;
+                        }
+
+                        // Only add to submission if valid
+                        if (!hasError || input.classList.contains('invalid') === false) { // Add to submission only if not invalid
+                            if (!contestantMap[cCode]) {
+                                contestantMap[cCode] = [];
+                            }
+                            contestantMap[cCode].push({
+                                criteriaName: cName,
+                                score: val
+                            });
+                        }
+                    });
+
+                    if (hasError) {
+                        showToast("Please fix all errors before submitting.", "error");
+                        if (firstInvalidInput) {
+                            const firstInvalidStep = firstInvalidInput.closest('.wizard-step');
+                            if (firstInvalidStep) {
+                                const stepIndex = parseInt(firstInvalidStep.dataset.step);
+                                showStep(stepIndex);
+                                firstInvalidInput.focus();
+                                firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                        return;
+                    }
+
+                    // 3. Construct Payload
+                    for (const [code, scores] of Object.entries(contestantMap)) {
+                        submissions.push({
+                            contestantCode: code,
+                            scores: scores
+                        });
+                    }
+
+                    const payload = {
+                        eventCode: '@Model.EventCode',
+                        roundId: @Model.RoundId,
+                        submissions: submissions
+                    };
+
+                    // 4. Send Request
+                    try {
+                        btnSubmit.disabled = true;
+                        btnSubmit.textContent = "Submitting...";
+                        if (window.showLoader) window.showLoader();
+
+                        const response = await fetch('/Judge/Submit', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0]?.value
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok && result.success) {
+                            // showToast("Scores submitted successfully!", "success"); // Replaced by modal
+                            openSubmissionSuccessModal('@Model.RoundName');
+                            // No window.location.reload() here. Transition to waiting screen instead.
+                        } else {
+                            showToast(result.message || "Submission failed.", "error");
+                            btnSubmit.disabled = false;
+                            btnSubmit.textContent = "Submit All Scores";
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        showToast("Network error. Please try again.", "error");
+                        btnSubmit.disabled = false;
+                        btnSubmit.textContent = "Submit All Scores";
+                    } finally {
+                        if (window.hideLoader) window.hideLoader();
+                    }
+                });
+            }
+        });
+    </script>
+}

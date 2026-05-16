@@ -1,0 +1,53 @@
+@model IEnumerable<ProjectTallify.Models.Event>
+
+@{
+    ViewData["Title"] = "Archived Events";
+    ViewBag.ActiveNav = "Settings";
+    ViewBag.HideOrgCard = true;
+    ViewBag.SettingsTab = "ArchivedEvents"; 
+}
+
+<section class="panel-section">
+    <header class="panel-header">
+        <h2 class="panel-title"></h2>
+        <p class="panel-subtitle"></p>
+    </header>
+</section>
+
+<div class="panel-table-wrapper">
+    <table class="app-table">
+        <thead>
+            <tr>
+                <th style="width:5%;">ID</th>
+                <th style="width:30%;">Event Name</th>
+                <th style="width:20%;">Type</th>
+                <th style="width:20%;">Archived Date</th>
+                <th style="width:25%;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || !Model.Any())
+            {
+                <tr class="table-empty-row"><td colspan="5">No archived events found.</td></tr>
+            }
+            else
+            {
+                @foreach (var ev in Model)
+                {
+                    <tr>
+                        <td>@ev.Id</td>
+                        <td><a href="/Events/Manage/@ev.Id">@ev.Name</a></td>
+                        <td>@(ev.EventType == "criteria" ? "Criteria-Based" : "Objective R/W")</td>
+                        <td>@ev.CreatedAt.ToString("MMM dd, yyyy")</td> 
+                        <td>
+                            <button type="button" class="btn-primary-soft btn-small btn-restore-event" data-event-id="@ev.Id">Restore</button>
+                            <button type="button" class="btn-danger-soft btn-small btn-delete-event" data-event-id="@ev.Id">Delete Permanently</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@Html.AntiForgeryToken()

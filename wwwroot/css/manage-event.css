@@ -1,0 +1,734 @@
+/* ===========================
+   BACK TO EVENTS BUTTON
+   =========================== */
+.back-to-events-row {
+    max-width: var(--content-max-width);
+    margin-bottom: 16px;
+}
+
+.btn-subtle-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--color-text-soft);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    padding: 6px 10px; /* Add padding */
+    border-radius: var(--radius-md); /* Add border-radius */
+    transition: background-color var(--transition-fast), color var(--transition-fast); /* Add transition */
+}
+
+.btn-subtle-back:hover {
+    color: var(--color-primary); /* Changed to primary color on hover */
+    background-color: var(--color-bg);
+    text-decoration: none;
+}
+
+.btn-subtle-back i {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* ===========================
+   EVENT HEADER IMAGE
+   =========================== */
+.manage-header-image-wrapper {
+    width: calc(100% + var(--space-6) * 2); /* Full width of card including padding */
+    margin: calc(var(--space-5) * -1) calc(var(--space-6) * -1) var(--space-5) calc(var(--space-6) * -1); /* Negative margin to pull out of padding */
+    height: 180px; /* Fixed height for header */
+    overflow: hidden;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; /* Top corners rounded */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-bg); /* Placeholder background */
+}
+
+.manage-header-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Cover area without distorting aspect ratio */
+    display: block;
+}
+.manage-event-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+    padding: var(--space-5) var(--space-6);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-5);
+}
+
+.manage-event-main {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-6);
+    align-items: flex-start;
+}
+
+/* Event title + meta */
+.manage-event-title-text {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin: 0 0 6px 0;
+}
+
+.manage-event-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.manage-event-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-faint);
+    margin: 0;
+}
+
+/* Action buttons (Edit event / Start Event) */
+.manage-event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-primary-soft,
+.btn-warning {
+    border-radius: var(--radius-pill);
+    border: none;
+    padding: 8px 18px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    box-shadow: none; /* Removed glow */
+}
+
+.btn-primary-soft {
+    background: var(--color-primary-soft-bg);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    padding: 6px 12px; /* Small button padding */
+    font-size: 11px; /* Slightly smaller than xs */
+    border-radius: var(--radius-md); /* Match btn-small style */
+}
+
+.btn-danger-soft {
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid var(--color-danger-text);
+    padding: 6px 12px; /* Small button padding */
+    font-size: 11px; /* Slightly smaller than xs */
+    border-radius: var(--radius-md); /* Match btn-small style */
+}
+
+.btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    text-decoration: none !important;
+}
+
+.btn-secondary:hover {
+    text-decoration: none !important;
+}
+
+.btn-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}
+
+.btn-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+}
+
+/* Pills (type + status) */
+.pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+}
+
+.pill-type {
+    background: var(--color-primary-soft-bg);
+    color: var(--color-primary);
+}
+
+.pill-status {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-text);
+}
+
+/* Status color variants if you use them */
+.pill-status-preparing {
+    background: var(--color-neutral-bg);
+    color: var(--color-neutral-text);
+}
+
+.pill-status-open {
+    background: var(--color-success-bg);
+    color: var(--color-success-text);
+}
+
+.pill-status-closed {
+    background: var(--color-danger-bg);
+    color: var(--color-danger-text);
+}
+
+/* ===========================
+   TABS
+   =========================== */
+
+.manage-tabs {
+    max-width: var(--content-max-width);
+    margin: 0 auto var(--space-6);
+    padding: 0;
+    display: flex;
+    gap: var(--space-4); /* Adjust gap between tabs to 16px */
+    border-bottom: 1px solid var(--color-border);
+}
+
+.manage-tabs .tab-link {
+    flex: none; /* Prevent tabs from spreading out */
+    text-align: left; /* Align text to the left */
+    padding: 12px var(--space-6); /* Adjust horizontal padding to 24px */
+    border: none;
+    background: transparent;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-soft);
+    cursor: pointer;
+    position: relative;
+    border-bottom: 2px solid transparent; /* Default transparent border for inactive */
+    margin-bottom: -1px; /* Overlap the container's bottom border */
+    transition: color var(--transition-fast), border-bottom-color var(--transition-fast);
+}
+
+.manage-tabs .tab-link:hover:not(.active) {
+    color: var(--color-primary);
+}
+
+/* Active tab style */
+.manage-tabs .tab-link.active {
+    color: var(--color-primary);
+    font-weight: bold; /* Make active text bold */
+    border-bottom-color: var(--color-primary); /* Active bottom border color */
+}
+
+/* Override global button effects for tab links */
+.manage-tabs .tab-link:hover:not(:disabled),
+.manage-tabs .tab-link:active:not(:disabled) {
+    filter: none;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Remove the entire ::after block */
+
+/* ===========================
+   TAB CONTENT CARDS
+   =========================== */
+
+.manage-tab-shell {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    padding: 0 0 var(--space-8);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.content-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-3);
+    color: var(--color-text);
+}
+
+.card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 16px 18px;
+    margin-bottom: 16px;
+}
+
+.card-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-faint);
+    margin: 0 0 6px 0;
+}
+
+.card-text {
+    font-size: 13px;
+    color: var(--color-text);
+}
+
+.card-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+}
+
+.card-hint {
+    font-size: 11px;
+    color: var(--color-text-faint);
+    margin-top: 8px;
+}
+
+/* Overview grid */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.overview-item {
+    padding: 16px 16px;
+}
+
+/* Settings grid */
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+
+
+.table-empty-row td {
+    text-align: center;
+    color: var(--color-text-faint);
+    font-size: var(--font-size-xs);
+}
+
+/* ===========================
+   ACCESS CODE
+   =========================== */
+
+.access-code-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+
+@media (max-width: 900px) {
+    .manage-page {
+        padding: 0 16px;
+        margin-top: 16px;
+    }
+
+    .manage-event-main {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .settings-grid,
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .manage-tabs,
+    .manage-tab-shell {
+        padding: 0 16px 24px;
+    }
+}
+
+
+/* ===========================
+   SETTINGS TAB
+   =========================== */
+
+.settings-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+}
+
+.settings-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: 100%;
+}
+
+.settings-group { /* Targeting the div with class "settings-group card" */
+    padding: 18px 20px; /* Consistent padding for settings cards */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    margin-bottom: 0; /* Override default card margin */
+}
+
+.settings-group-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.settings-group-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+    margin: 0;
+}
+
+.settings-hint {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-faint);
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.settings-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-soft);
+    margin-bottom: 8px; /* Default margin for labels */
+}
+
+.settings-error {
+    font-size: var(--font-size-xs);
+    color: var(--color-danger-text);
+    margin-top: 8px;
+    line-height: 1.4;
+}
+
+.settings-error-hint { /* For informational "error" messages, less aggressive */
+    font-size: var(--font-size-xs);
+    color: var(--color-text-soft); /* Softer color than actual errors */
+    margin-top: -8px; /* Adjust spacing to be closer to title */
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+    .settings-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-grid-container {
+    display: grid;
+    gap: 16px; /* Consistent gap between grid items */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive columns */
+}
+
+/* Report checkboxes */
+.report-option {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Spacing between checkbox and label text */
+    margin-bottom: 8px;
+    font-size: var(--font-size-sm); /* Adjust font size to be readable */
+    color: var(--color-text-soft);
+}
+
+
+
+.settings-primary-button {
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-primary-button:hover {
+    filter: brightness(0.95);
+    box-shadow: var(--shadow-sm);
+}
+
+.settings-danger-button {
+    background: var(--color-danger-primary);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-danger-button:hover {
+    filter: brightness(0.95);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===========================
+   INPUTS AND FORM ELEMENTS
+   =========================== */
+.event-input {
+    /* Base styles for event-related inputs */
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-xs);
+}
+
+.event-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+/* ===========================
+   READ-ONLY / DISABLED INPUTS
+   =========================== */
+
+/* 1. Disabled State (Interactive but blocked) */
+.event-input:disabled {
+    background-color: var(--color-bg); /* Muted gray background */
+    border-color: var(--color-border);
+    color: var(--color-text-faint); /* Faint text */
+    box-shadow: none !important;
+    cursor: not-allowed;
+    opacity: 0.7; /* Slightly more opaque than global to keep readable */
+}
+
+.event-input:disabled:focus {
+    border-color: var(--color-border) !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* 2. Read-only State (Review Mode - Static Text) */
+.event-input[readonly] {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--color-text) !important; /* High readability */
+    cursor: default;
+    padding-left: 0;
+    padding-right: 0;
+    font-weight: 500; /* Slight weight for emphasis as data */
+    resize: none; /* For textareas */
+}
+
+.event-input[readonly]:focus {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+
+.review-contestant-photo-cell {
+    width: 50px;
+    text-align: center;
+}
+.review-contestant-photo-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: #ddd;
+    background-size: cover;
+    background-position: center;
+    display: inline-block;
+}
+
+/* Preview Chips in Review Step */
+.preview-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+}
+.preview-chip.type-chip {
+    background: #e0f2fe; color: #0284c7; /* Light Blue */
+}
+.preview-chip.status-chip--open {
+    background: #dcfce7; color: #166534; /* Green */
+}
+.preview-chip--criteria {
+    background: #fce7f3; color: #be185d; /* Pink */
+}
+.preview-chip--orw {
+    background: #e0f2fe; color: #0284c7; /* Blue */
+}
+
+/* Upload Photo (Header) */
+.header-upload-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.header-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: none;
+}
+
+.header-upload-btn:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-bg);
+    transform: translateY(-1px);
+}
+
+.header-filename {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft);
+    font-style: italic;
+}
+
+/* Button Primary Square (used for Contestant Photo Upload & Generate PIN) */
+.btn-primary-square {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-soft);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 100px;
+}
+
+.btn-primary-square:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+    box-shadow: none;
+}
+
+.btn-primary-square.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-width: auto;
+}
+
+/* Specific Style for Generate PIN Buttons to make them distinct */
+[data-generate-pin] {
+    background-color: var(--color-info-bg);
+    color: var(--color-info-text);
+    border-color: transparent;
+    font-weight: var(--font-weight-medium);
+}
+
+[data-generate-pin]:hover {
+    background-color: #bae6fd; /* slightly darker blue */
+    border-color: var(--color-info-text);
+    color: var(--color-info-text);
+}
+
+/* Add Create/Add Buttons (Dashed) */
+.btn-create-add {
+    background-color: transparent;
+    border: 1px dashed var(--color-border-strong);
+    color: var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-create-add:hover {
+    background-color: var(--color-primary-soft-bg);
+    border-color: var(--color-primary);
+}
+
+/* Upload XLSX Button */
+#btnUploadContestants {
+    background-color: #fff;
+    border: 2px dashed var(--color-border-strong);
+    color: var(--color-text-soft);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition-fast);
+    width: 100%;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+#btnUploadContestants:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+}
+
+#btnUploadContestants i {
+    font-size: 20px;
+    color: #166534; /* Excel green hint */
+}
+
+/* Invalid Input Style (Red Border) */
+.app-page--create-event .event-input.invalid {
+    border-color: #EF4444 !important;
+    background-color: #FEF2F2;
+    color: #B91C1C;
+}
+
+/* Specific styling for the access code input in modals */
+#accessCodeInput {
+    text-align: center;
+    margin-top: 15px;
+}

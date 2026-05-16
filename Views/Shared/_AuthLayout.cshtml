@@ -1,0 +1,37 @@
+@{
+    var title = ViewData["Title"] as string ?? "Tallify – Login";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Global / reusable styles -->
+    <link rel="stylesheet" href="~/css/general.css" asp-append-version="true" />
+
+    <!-- Auth-page specific styles -->
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/floating-labels.css" />
+</head>
+<body class="auth-body">
+
+    @RenderBody()
+
+    <!-- Core scripts required on login/join/signup pages -->
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+    <script src="~/js/auth.js" asp-append-version="true"></script>
+    <script src="~/js/disable-inspect.js" asp-append-version="true"></script>
+
+    <!-- This fixes the Razor error -->
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

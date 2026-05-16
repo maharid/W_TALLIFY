@@ -1,0 +1,185 @@
+@model IEnumerable<ProjectTallify.Models.AuditLog>
+@{
+    ViewData["Title"] = "Audit Logs";
+    ViewBag.ActiveNav = "AuditLogs";
+    
+    string currentSearch = ViewBag.CurrentSearch as string ?? "";
+    string currentSort = ViewBag.CurrentSort as string ?? "desc";
+    
+    string sortLabel = currentSort == "asc" ? "Oldest first" : "Most recent first";
+}
+
+<section class="panel-section">
+    <header class="panel-header">
+        <h2 class="panel-title">Audit Logs</h2>
+        <p class="panel-subtitle">
+            Track system activity across Organizers, Judges, and Scorers.
+        </p>
+    </header>
+
+    <form asp-controller="Home" asp-action="AuditLogs" method="get" id="auditFilterForm" class="filter-row">
+        <div class="filter-row-left">
+            <input type="text"
+                   name="search"
+                   class="filter-input"
+                   value="@currentSearch"
+                   placeholder="Search logs..." />
+            <button type="submit" class="filter-search-btn">
+                Search
+            </button>
+        </div>
+
+        <div class="filter-row-right">
+            <!-- Hidden input to store the actual value -->
+            <input type="hidden" name="sort" id="sortInput" value="@currentSort" />
+            
+            <div class="filter-select filter-select--combo" data-filter-select="sort">
+                <button type="button" class="filter-select-trigger">
+                    <span class="filter-select-label" data-filter-label="sort">
+                        @sortLabel
+                    </span>
+                    <span class="filter-select-icon"><i class="ri-arrow-down-s-line"></i></span>
+                </button>
+                <div class="filter-select-menu">
+                    <button type="button"
+                            class="filter-select-option @(currentSort == "desc" ? "is-selected" : "")"
+                            data-filter-value="desc">
+                        Most recent first
+                    </button>
+                    <button type="button"
+                            class="filter-select-option @(currentSort == "asc" ? "is-selected" : "")"
+                            data-filter-value="asc">
+                        Oldest first
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</section>
+
+<section class="panel-section">
+    <div class="panel-table-wrapper">
+        <table class="app-table">
+            <thead>
+                <tr>
+                    <th style="width: 180px;">Timestamp</th>
+                    <th style="width: 240px;">User</th>
+                    <th style="width: 200px;">Action</th>
+                    <th style="width: 200px;">Event</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var log in Model)
+                    {
+                        // Determine Name and Role
+                        string name = log.UserName ?? (log.User != null ? $"{log.User.FirstName} {log.User.LastName}" : "System");
+                        string role = log.UserRole ?? (log.User != null ? (log.User.Role ?? "Organizer") : "System");
+                        
+                        // Determine Role Badge Color
+                        string badgeStyle = "display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;";
+                        
+                        switch (role.ToLower())
+                        {
+                            case "organizer":
+                            case "admin":
+                                badgeStyle += " background-color: #e0f2fe; color: #0369a1;"; // Blue
+                                break;
+                            case "judge":
+                                badgeStyle += " background-color: #dcfce7; color: #166534;"; // Green
+                                break;
+                            case "scorer":
+                                badgeStyle += " background-color: #fef3c7; color: #b45309;"; // Amber
+                                break;
+                            default:
+                                badgeStyle += " background-color: #f3f4f6; color: #374151;"; // Gray
+                                break;
+                        }
+
+                        <tr>
+                            <td class="audit-time" data-utc="@log.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")Z" style="color: var(--color-text-soft); font-size: 13px;">
+                                @log.CreatedAt.ToString("MMM dd, yyyy h:mm tt")
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 600; color: var(--color-text);">@name</span>
+                                    <span style="@badgeStyle">@role</span>
+                                </div>
+                            </td>
+                            <td style="font-weight: 500; color: var(--color-text);">@log.Action</td>
+                            <td>
+                                @if (log.Event != null)
+                                {
+                                    <span style="color: var(--color-primary); font-weight: 500;">@log.Event.Name</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #9ca3af;">-</span>
+                                }
+                            </td>
+                            <td style="color: var(--color-text-faint); font-size: 13px;">
+                                @if (!string.IsNullOrEmpty(log.Details))
+                                {
+                                    @log.Details
+                                }
+                                else
+                                {
+                                    <span style="color: #d1d5db;">-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr class="table-empty-row">
+                        <td colspan="5" style="padding: 32px; text-align: center; color: var(--color-text-faint);">
+                            No audit logs found matching your criteria.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Format timestamps to local time
+            document.querySelectorAll('.audit-time').forEach(function(el) {
+                const utc = el.getAttribute('data-utc');
+                if (utc) {
+                    const date = new Date(utc);
+                    el.textContent = date.toLocaleString('en-US', {
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                }
+            });
+
+            const form = document.getElementById('auditFilterForm');
+            const sortInput = document.getElementById('sortInput');
+            
+            // Handle custom dropdown click
+            document.querySelectorAll('[data-filter-select="sort"] .filter-select-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const val = this.getAttribute('data-filter-value');
+                    
+                    // Update hidden input
+                    if (sortInput) {
+                        sortInput.value = val;
+                        // Submit form immediately on sort change
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

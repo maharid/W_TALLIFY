@@ -1,0 +1,2856 @@
+/****************************************************
+ * APP.CSS - MAIN APPLICATION STYLES
+ ****************************************************/
+
+
+.app-brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+/* Nav & actions */
+
+/****************************************************
+ * FILTERS / SEARCH ROW
+ ****************************************************/
+.filter-row {
+  /* Filter row: main container for search and filter controls */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+}
+
+.filter-row-left {
+  /* Left side of filter row: inputs and combos */
+  display: flex;
+  flex: 1 1 0;
+  gap: 8px;
+  min-width: 0;
+}
+
+.filter-row-right {
+  /* Right side of filter row: action buttons */
+  display: flex;
+  gap: 8px;
+}
+.filter-input {
+  /* Filter input: text input for searching */
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--color-border); /* Match table border */
+  background-color: var(--color-surface);
+  padding: 12px 16px; /* Slightly more padding */
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.filter-input:focus {
+  /* Filter input (focus state) */
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-soft-bg);
+}
+.filter-search-btn {
+  /* Filter search button: primary search action */
+  border: 0;
+  padding: 0 24px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  border-radius: 10px;
+}
+.filter-search-btn:hover {
+    filter: brightness(0.95); /* Apply darkening effect */
+}
+
+/****************************************************
+ * COMBO / DROPDOWN FILTERS
+ ****************************************************/
+.filter-select {
+  /* Filter select: base container for custom dropdowns */
+  position: relative;
+  display: block;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-xs);
+  width: 100%;
+  transition: border-color 0.15s ease;
+}
+.filter-select:hover {
+    border-color: var(--color-border-strong);
+}
+.filter-select--combo {
+  /* Compact combo variant for dropdowns */
+  width: 180px;
+  min-width: 180px;
+  max-width: 200px;
+}
+.filter-select-trigger {
+  /* Trigger button inside filter-select */
+  width: 100%;
+  height: 42px; /* Taller for touch/clean look */
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  font: inherit;
+  color: #374151;
+  border-radius: 10px; /* Use 10px for consistency with global --radius-md */
+}
+.filter-select-label {
+  /* Label shown in the trigger */
+  white-space: nowrap;
+}
+.filter-select-icon {
+  /* Small icon shown on the trigger */
+  font-size: 16px;
+  color: var(--color-muted);
+  display: inline-flex;
+  align-items: center;
+}
+.filter-select-menu {
+  /* Dropdown menu container for filter-select */
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid #e5e7eb;
+  padding: 4px;
+  display: none;
+  z-index: 30;
+}
+.filter-select--open .filter-select-menu {
+  /* Visible state for the menu */
+  display: block;
+}
+.filter-select-option {
+  /* Individual option inside the menu */
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  color: #374151;
+}
+.filter-select-option:hover {
+  /* Hover state for menu option */
+  background-color: #f3f4f6;
+}
+.filter-select-option.is-selected {
+  /* Selected option state */
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+}
+
+/* End Combo / Dropdown Filters */
+
+/****************************************************
+ * TABLE STYLES
+ ****************************************************/
+.panel-table-wrapper {
+  /* Panel wrapper used around tables */
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  overflow-x: auto; /* Allow horizontal scroll if table is wide */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03); /* Subtle shadow for depth */
+  width: 100%;
+  /* max-height removed to allow page scroll */
+}
+.app-table {
+  /* Generic application table - ONE TABLE TO RULE THEM ALL */
+  width: 100%;
+  border-collapse: separate; /* Allows radius clipping if needed, though collapse is often better for borders */
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+}
+.app-table thead {
+  /* Table head area */
+  background-color: var(--table-header-bg); /* Distinct header background */
+}
+.app-table th,
+.app-table td {
+  /* Table cells */
+  padding: 12px 16px; /* Consistent padding */
+  text-align: left;
+  border: none;
+  vertical-align: middle;
+}
+.app-table th {
+  /* Header cell styles */
+  position: sticky;
+  top: 0;
+  z-index: 10; /* Ensure it stays above content */
+  font-weight: 600; /* Clean bold */
+  font-size: 11px; /* Slightly smaller uppercase header */
+  color: var(--color-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+.app-table tbody tr {
+    background-color: var(--color-surface);
+    transition: background-color 0.1s ease;
+}
+/* Zebra Striping */
+.app-table tbody tr:nth-child(even) {
+    background-color: var(--table-row-alt-bg);
+}
+.app-table tbody tr:hover {
+    background-color: #f3f4f6 !important; /* Highlight on hover */
+}
+.app-table tbody tr:not(:last-child) td {
+    border-bottom: 1px solid var(--color-border); /* Subtle horizontal divider */
+}
+/* Remove the old tr border logic */
+.app-table tbody tr + tr td {
+  border-top: none;
+}
+.table-empty-row td {
+  /* Empty state row for tables */
+  text-align: center;
+  white-space: normal;
+  color: var(--color-text-faint);
+  font-style: italic;
+  padding: 32px;
+}
+/* End Table styles */
+
+/****************************************************
+ * PILLS & BUTTONS
+ ****************************************************/
+.event-type-pill {
+  /* Small circular pill used to show event type */
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-pill {
+  /* Status pill (text badge) */
+  padding: 8px 14px; /* Increased vertical padding */
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex; /* Enable flexbox for centering */
+  align-items: center; /* Vertically center */
+  justify-content: center; /* Horizontally center */
+}
+
+
+
+/****************************************************
+ * MISC STYLES
+ ****************************************************/
+.empty-state {
+  /* Generic empty state card used sparingly */
+  padding: 16px 18px;
+  border-radius: var(--radius-md);
+  background-color: #ffffff;
+  border: 1px dashed #e5e7eb;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+
+/****************************************************
+ * DASHBOARD CREATE EVENT BUTTONS
+ ****************************************************/
+
+.dashboard-create-btn,
+.dashboard-create-event-btn,
+.create-event-button,
+#btnCreateEventDashboard,
+#btnCreateEventEvents {
+  /* Action buttons used to create events from various UI places */
+  width: 100%;
+  border: 0;
+  padding: 14px 24px;
+  margin-bottom: 16px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+/* Event form error line – always reserve space so fields stay aligned */
+.event-error-message {
+    display: block;
+    font-size: 12px;
+    color: #e11d48;
+    min-height: 1.1em;
+}
+
+
+/****************************************************
+ * NOTIFICATIONS POPOVER
+ ****************************************************/
+
+.notifications-popover {
+  position: fixed;
+  top: 70px;
+  right: 20px; /* Adjusted right margin */
+  z-index: 60;
+  display: none;
+  animation: slideDownFade 0.2s ease-out;
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.notifications-popover.is-open {
+  display: block;
+}
+
+.notifications-popover-inner {
+  width: 360px; /* Slightly wider */
+  background-color: #ffffff;
+  border-radius: var(--radius-lg); /* Larger radius */
+  border: 1px solid var(--color-border);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* Softer, larger shadow */
+  padding: 0; /* Remove default padding to handle header/list separately */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 480px; /* Limit height */
+}
+
+.notifications-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: #fcfcfc;
+}
+
+.notifications-popover-header h3 {
+  margin: 0;
+  font-size: 16px; /* Larger header font */
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.notifications-close {
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  color: var(--color-text-faint);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out; /* Standardized transition */
+}
+
+.notifications-close:hover {
+    background-color: rgba(0,0,0,0.05);
+    color: var(--color-text);
+}
+
+.notifications-content {
+    padding: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.notifications-empty {
+  padding: 32px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--color-text-faint);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.notifications-empty::before {
+    content: "🔕"; /* Bell icon or similar */
+    font-size: 24px;
+    opacity: 0.5;
+    margin-bottom: 4px;
+}
+
+/* Specific styling for the notifications toggle in settings */
+.settings-notifications-toggle .settings-subgroup-label {
+    font-size: var(--font-size-sm); /* Slightly larger for main label */
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    margin-bottom: 2px !important; /* Smaller margin to hint it's related to the description */
+}
+
+.settings-notifications-toggle .settings-hint {
+    font-size: var(--font-size-xs); /* Smaller for the hint text */
+    line-height: 1.4;
+    color: var(--color-text-faint);
+}
+
+/****************************************************
+ * SETTINGS PAGE STYLES
+ ****************************************************/
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+}
+
+/****************************************************
+ * SIDEBAR
+ ****************************************************/
+
+.settings-sidebar {
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-tab {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  color: #4b5563;
+  padding: 8px 14px;
+}
+
+.settings-tab.is-active {
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/****************************************************
+ * MAIN SETTINGS AREA
+ ****************************************************/
+
+.settings-main {
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 28px 32px 32px;
+}
+
+.settings-pane {
+  display: none;
+}
+
+.settings-pane.is-active {
+  display: block;
+}
+
+/****************************************************
+ * PROFILE HEADER
+ ****************************************************/
+
+.settings-profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.settings-avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 20px;
+  background-size: cover;
+  background-position: center;
+}
+
+.settings-avatar-circle.has-photo {
+  color: transparent;
+}
+
+.settings-org-avatar-square {
+  width: 80px;
+  height: 80px;
+  border-radius: 16px;
+  background-color: var(--color-primary);
+  background-size: cover;
+  background-position: center;
+}
+
+.settings-link-button {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 6px 16px;
+  font-size: 12px;
+}
+
+.settings-file-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/****************************************************
+ * SETTINGS GROUPS & FIELDS
+ ****************************************************/
+
+.settings-group {
+  margin-bottom: 24px;
+}
+
+.settings-group-header {
+  margin-bottom: 16px;
+}
+
+.settings-group-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-field-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-field-row-3 .settings-field {
+  flex: 1 1 0;
+}
+
+.settings-field {
+  flex: 1;
+}
+
+.settings-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.settings-input,
+.settings-textarea {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  padding: 10px 12px;
+  font-size: 12px;
+  outline: none;
+}
+
+.settings-input:focus,
+.settings-textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.settings-textarea {
+  resize: none;
+}
+
+/****************************************************
+ * INPUTS WITH ACTION BUTTONS
+ ****************************************************/
+
+.settings-input-with-action {
+  display: flex;
+  align-items: stretch;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.settings-input-with-action .settings-input {
+  border: 0;
+  border-radius: 0;
+}
+
+.settings-input-action {
+  border: 0;
+  background: #f9fafb;
+  padding: 0 14px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  border-left: 1px solid var(--color-border);
+  color: #4b5563;
+}
+
+.settings-input-action:hover {
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+  border-left-color: var(--color-primary);
+}
+
+/* When editing (JS adds data-editing="true") */
+.settings-input-action[data-editing="true"] {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border-left-color: var(--color-primary);
+}
+
+/****************************************************
+ * DISPLAY CARDS
+ ****************************************************/
+
+.settings-display-card {
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #111827;
+}
+
+.settings-display-card-multiline {
+  line-height: 1.5;
+}
+
+/****************************************************
+ * ERROR MESSAGES
+ ****************************************************/
+
+.settings-error {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #b91c1c;
+}
+
+/****************************************************
+ * BUTTON ROWS
+ ****************************************************/
+.settings-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.settings-primary-button {
+  border: 0;
+  padding: 9px 22px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.settings-secondary-button {
+  border: 1px solid var(--color-border);
+  padding: 9px 22px;
+  font-size: 12px;
+  background-color: #ffffff;
+}
+
+.settings-danger-button {
+  border: 1px solid #fecaca;
+  padding: 9px 22px;
+  font-size: 12px;
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.settings-warning-button {
+  border: 1px solid var(--color-warning-text); /* Use warning text color for border */
+  padding: 9px 22px;
+  font-size: 12px;
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.settings-footer-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+/****************************************************
+ * DIVIDERS
+ ****************************************************/
+
+.settings-divider {
+  height: 1px;
+  background-color: #f3f4f6;
+  margin: 24px 0;
+}
+
+/****************************************************
+ * COLOR PICKER
+ ****************************************************/
+
+.settings-subgroup {
+  margin-bottom: 20px;
+}
+
+.settings-subgroup-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.settings-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.settings-color-option {
+  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  padding: 10px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-color-option.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* custom color spans whole row */
+.settings-color-option-custom {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.settings-color-swatch {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.settings-color-swatch span {
+  width: 14px;
+  height: 14px;
+  border-radius: 10px;
+}
+
+/* Custom swatch has border */
+.settings-color-swatch-custom {
+  width: 30px;
+  height: 22px;
+  border-radius: 10px;
+  border: 1px dashed var(--color-border);
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-color-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/****************************************************
+ * ABOUT LAYOUTS
+ ****************************************************/
+
+.settings-two-column {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+.settings-two-column--stacked-mobile {
+  align-items: flex-start;
+}
+
+.settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/****************************************************
+ * CONTACT EMAIL ICON
+ ****************************************************/
+
+.settings-contact-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settings-contact-email i {
+  font-size: 16px;
+}
+
+/****************************************************
+ * CREATE EVENT
+ ****************************************************/
+
+/****************************************************
+ * STEP 1 — BASE STYLES
+ ****************************************************/
+.app-page--create-event {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 32px 80px;
+}
+
+/****************************************************
+ * PAGE HEADER
+ ****************************************************/
+
+.app-page--create-event .app-page-header {
+  margin-bottom: 24px;
+}
+
+.app-page--create-event .app-page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.app-page--create-event .app-page-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.app-page--create-event .event-create-steps {
+  margin-bottom: 32px;
+}
+
+.app-page--create-event .event-step-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 20px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+  cursor: default;
+}
+
+.app-page--create-event .event-create-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.app-page--create-event .event-step {
+  display: none;
+}
+
+.app-page--create-event .event-step.is-active {
+  display: block;
+}
+
+/****************************************************
+ * ERROR MESSAGES — INLINE BESIDE LABEL
+ ****************************************************/
+
+.app-page--create-event .event-error-message {
+  display: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-text);
+}
+
+.app-page--create-event .event-field .event-label,
+.app-page--create-event .event-field .event-error-message {
+  display: block;
+}
+
+/* error messages do not affect layout */
+.event-error-message {
+  display: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-text);
+  margin-left: 8px;
+  position: relative;
+}
+
+.event-field .event-label,
+.event-field .event-error-message {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Label + error on a single row inside create-event form */
+.app-page--create-event .event-field-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+/* Error message beside label (not above input) */
+.app-page--create-event .event-field-header .event-error-message {
+  display: none;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-text);
+  margin-left: 0;
+}
+
+/****************************************************
+ * SECTION CARDS & FORM ELEMENTS
+ ****************************************************/
+
+.event-section-title {
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.app-page--create-event .event-section-card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-7);
+  margin-bottom: var(--space-7);
+}
+
+.app-page--create-event .event-section-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.app-page--create-event .event-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px 16px;
+  margin-top: var(--space-4);
+}
+
+.app-page--create-event .event-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto; /* Added to make it grow and fill width */
+  min-width: 0;   /* Allow shrinking */
+}
+
+.app-page--create-event .event-field-full {
+  grid-column: span 12;
+}
+
+.app-page--create-event .event-field-half {
+  grid-column: span 6;
+}
+
+@media (max-width: 900px) {
+  .app-page--create-event .event-field-half {
+    grid-column: span 12;
+  }
+}
+
+/****************************************************
+ * LABELS, INPUTS, DATEPICKERS, TIMEPICKERS
+ ****************************************************/
+
+/* Labels */
+.app-page--create-event .event-label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-soft);
+}
+
+.app-page--create-event .required {
+  color: var(--color-danger-text);
+  margin-left: 2px;
+}
+
+/* Inputs */
+.app-page--create-event .event-input {
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+  color: var(--color-text);
+  background-color: var(--color-surface-alt);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.app-page--create-event .event-input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.app-page--create-event .event-input:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-focus);
+}
+
+/* New style for input + button inline */
+.input-with-button-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between input and button */
+}
+
+.input-with-button-inline .event-input {
+  flex-grow: 1; /* Input takes available space */
+}
+
+/* Textarea */
+.app-page--create-event .event-input-multiline {
+  resize: none;
+  min-height: 96px;
+}
+
+/* Date+time row layout */
+.app-page--create-event .event-datetime-row {
+  display: flex;
+  gap: 12px;
+}
+
+/* Wrapper that gives pill border + background */
+.app-page--create-event .event-input-icon-group {
+  position: relative;
+  flex: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding-right: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.app-page--create-event .event-input-icon-inner {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 12px;
+  box-shadow: none;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.app-page--create-event .event-input-icon-inner:focus-within {
+  box-shadow: none;
+}
+
+.app-page--create-event .event-input-icon-group:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Icon inside the pill */
+.app-page--create-event .event-input-icon-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-faint);
+}
+
+.app-page--create-event .event-input-icon-btn:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text-soft);
+}
+
+/****************************************************
+ * DATE & TIME PICKER WEB CUSTOMIZATION
+ ****************************************************/
+
+.app-page--create-event input[type="date"],
+.app-page--create-event input[type="time"] {
+  appearance: none !important;          /* Standard */
+  -webkit-appearance: none !important;  /* Chrome / Safari */
+  -moz-appearance: textfield !important;/* Firefox */
+  background-color: transparent;
+}
+
+/* Remove Chrome/Edge native icon */
+.app-page--create-event input[type="date"]::-webkit-calendar-picker-indicator,
+.app-page--create-event input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Remove inner spin buttons (Firefox/Chrome) */
+.app-page--create-event input[type="time"]::-webkit-inner-spin-button,
+.app-page--create-event input[type="time"]::-webkit-clear-button {
+  display: none !important;
+}
+
+.app-page--create-event input[type="time"]::-moz-focus-inner {
+  border: 0;
+}
+
+/****************************************************
+ * EVENT TYPE TOGGLE (RADIO BUTTON CHIPS)
+ ****************************************************/
+
+.app-page--create-event .event-type-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.app-page--create-event .chip-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.app-page--create-event .chip-toggle input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-page--create-event .chip-toggle-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  font-size: var(--font-size-sm);
+}
+
+.app-page--create-event .chip-toggle input[type="radio"]:hover + .chip-toggle-inner {
+  border-color: var(--color-border-strong);
+  cursor: pointer;
+}
+
+/* Checked state */
+.app-page--create-event .chip-toggle input[type="radio"]:checked + .chip-toggle-inner {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+}
+
+/* Helper text under event type */
+.app-page--create-event .event-helper,
+.app-page--create-event .event-type-info {
+  margin-top: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+/****************************************************
+ * CONTESTANTS TABLE
+ ****************************************************/
+
+/* Contestants section header */
+.app-page--create-event .event-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.app-page--create-event .event-section-actions {
+  display: flex; /* Changed from inline-flex */
+  gap: 8px;
+  width: 100%; /* Ensure it spans the full width */
+}
+
+/* contestant photo */
+
+.contestant-photo-cell {
+  padding: 12px 8px !important;
+  vertical-align: middle;
+}
+
+.contestant-photo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.contestant-photo-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-primary) center/cover no-repeat;
+  border: 2px solid var(--color-primary-soft);
+  flex-shrink: 0;
+}
+
+.contestant-photo-thumb.has-photo {
+  border-color: var(--color-primary);
+}
+
+.contestant-photo-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.contestant-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contestant-photo-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 100px;
+}
+
+.contestant-photo-actions button {
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    padding: 6px 10px;
+}
+
+.contestant-actions-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.contestant-photo-thumb-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* Contestant photo modal */
+
+.event-photo-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-backdrop-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.event-photo-modal-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.event-photo-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+}
+
+.event-photo-modal-body img {
+  width: 100%;
+  border-radius: 12px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.event-photo-modal-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.event-photo-modal-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+
+.event-photo-modal-close {
+  font-size: 26px;
+  color: var(--color-text-faint);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+}
+
+.event-photo-modal-close:hover {
+  background-color: var(--color-bg);
+}
+
+body.has-modal-open {
+  overflow: hidden !important; /* Prevents background content from scrolling */
+}
+
+/* Contestants helper text */
+.app-page--create-event .event-subtext {
+  margin: 8px 0 12px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+
+/****************************************************
+ * BUTTONS
+ ****************************************************/
+
+.app-page--create-event .btn-primary-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  background-color: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.app-page--create-event .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.app-page--create-event .btn-small {
+  padding: 10px 12px;
+  font-size: var(--font-size-xs);
+}
+
+.app-page--create-event .btn-danger-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.app-page--create-event .btn-primary {
+  background-color: var(--color-primary) !important;
+  color: var(--color-primary-text) !important;
+  border: none !important;
+  padding: 10px 24px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  align-items: center;
+  box-shadow: none;
+}
+
+.app-page--create-event .btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Full-width, subtle add button for tables */
+.btn-create-add {
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 12px 12px;
+  border-radius: 8px; /* Specific, not 10px */
+  width: 100%;
+}
+
+.btn-create-add:hover {
+  background: var(--color-primary-soft-bg);
+}
+
+.btn-create-add i {
+  margin-right: 6px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.btn-full-width {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.rank-config-btn {
+  width: 100%;
+  display: block;
+}
+
+.combo-full-width {
+  width: 100%;
+}
+
+
+/****************************************************
+ * CRITERIA SYSTEMS CARD
+ ****************************************************/
+
+.criteria-system-toggle {
+  display: inline-flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* Helper text spacing */
+.criteria-system-helper {
+  margin-top: 4px;
+}
+
+.event-section-actions--bottom {
+    margin-top: 12px;
+}
+
+/****************************************************
+ * EVENTS TABLE STYLES
+ ****************************************************/
+
+.app-page--create-event .event-table-wrapper {
+  overflow: visible !important;
+}
+
+/* Outside border line + radius for table area */
+.app-page--create-event .event-table-wrapper--bordered {
+  overflow: visible !important;
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+}
+
+/* Table styling */
+.app-page--create-event .event-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+}
+
+/* Header cells */
+.app-page--create-event .event-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-soft);
+  background-color: var(--color-bg);
+}
+
+/* Body cells */
+.app-page--create-event .event-table tbody td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+/* Light row separators */
+.app-page--create-event .event-table tbody tr + tr td {
+  border-top: 1px solid var(--color-bg);
+}
+
+/* Action buttons in last column */
+.event-table td:last-child {
+    display: flex;
+    gap: 8px;
+}
+
+.event-table td:last-child button {
+    flex: 1 1 0;
+    justify-content: center;
+}
+
+/* Inputs inside table cells */
+.app-page--create-event .event-input-cell {
+  background-color: var(--color-surface);
+}
+
+/* ================================================
+   EVENT WIZARD FOOTER
+   ================================================ */
+.event-step-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1.5px solid var(--color-border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 999;
+  box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.08);
+  transition: all 0.3s ease;
+}
+
+.event-step-progress {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-faint);
+}
+
+.event-step-progress span {
+  font-weight: 700;
+  color: var(--color-text);
+  font-size: 16px;
+}
+
+/* BUTTON GROUP — CLEAN & CONSISTENT */
+.event-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.event-step-actions button {
+  height: 48px;
+  min-width: 120px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  padding: 0 24px;
+}
+
+.event-step-actions .btn-outline {
+  background: white;
+  color: var(--color-text-soft);
+  border: 1.8px solid var(--color-border);
+}
+
+.event-step-actions .btn-outline:hover {
+  background: var(--color-bg);
+  border-color: var(--color-text-faint);
+  transform: translateY(-1px);
+}
+
+.event-step-actions .btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  box-shadow: var(--btn-primary-shadow);
+}
+
+.event-step-actions .btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Make sure text is perfectly centered */
+.event-step-actions button {
+    text-align: center !important;
+}
+
+.event-table-empty td {
+  text-align: center !important;
+  padding: 24px !important;
+  color: var(--color-text-faint);
+  font-style: italic;
+}
+
+/****************************************************
+ * STEP 2 — SCORING CRITERIA STYLES
+ ****************************************************/
+
+/* ROUND CARD */
+.event-round-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+/* ROUND HEADER */
+.event-round-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+}
+
+.event-round-index {
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  width: 24px;
+  height: 24px;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.event-round-name {
+  flex: 1;
+}
+
+.event-round-header-left {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.event-round-header-left .event-field-full {
+  flex: 1;
+}
+
+.event-field-full {
+  margin-bottom: 16px;
+}
+
+.event-round-header-left .event-input {
+  width: 100%;
+}
+
+.round-name-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.event-round-name {
+  width: 100%;
+}
+
+/* CRITERIA BLOCK */
+.criteria-block {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+/* HEADERS */
+.criteria-separator,
+.subcriteria-separator {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-soft);
+  margin: 18px 0 10px;
+}
+
+/* CRITERIA FIELDS */
+.event-criteria-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 12px;
+  margin-top: 10px;
+  align-items: flex-end;
+}
+
+/* SUB-CRITERIA */
+.event-subcriteria-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1.5fr); /* Removed auto column */
+  gap: 12px;
+  margin-top: 10px;
+  align-items: flex-end;
+}
+.subcriteria-block {
+  padding-top: 8px;
+  margin-bottom: 12px;
+}
+
+/* CONFIG BUTTON (original styling) */
+.event-field-config {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* "Add" buttons (original soft link style) */
+.btn-add-criteria,
+.btn-add-subcriteria {
+  margin-top: 8px;
+  align-items: center;
+}
+
+.criteria-derived-field {
+  margin-top: 12px;
+  max-width: 260px;
+}
+
+/*  */
+
+/* Thin divider under the round header */
+.event-round-divider {
+  height: 1px;
+  background: var(--color-bg);
+  margin: 12px 0;
+}
+
+/* "Criteria" title row with link on the right */
+.criteria-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.criteria-header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* "+ Add Criteria" link style (matches the pink text in screenshot) */
+.criteria-add-link {
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.criteria-add-link:hover {
+  background: var(--color-primary-soft-bg);
+}
+
+.criteria-add-plus {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/****************************************************
+* JUDGES MANAGEMENT STYLES
+****************************************************/
+
+.judges-pin-cell {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.judge-pin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: var(--color-bg);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* Actions: buttons snug, no extra empty space */
+.judges-actions-cell {
+  white-space: nowrap;
+  display: flex; /* Use flexbox for layout */
+  gap: 8px;      /* Spacing between buttons */
+  width: 100%;   /* Ensure cell takes full width */
+}
+
+.judges-actions-cell button {
+  min-width: 0;  /* Allow flex-grow to work properly */
+  flex: 1;       /* Buttons share available space equally */
+}
+
+/* Ensure text inside "Generate" button is centered */
+.judges-actions-cell button[data-generate-pin] {
+    justify-content: center;
+}
+
+/****************************************************
+ * STEP 2 — ORW (OBJECTIVE RIGHT / WRONG)
+ ****************************************************/
+
+/* ORW scoring row (points per correct, wrong, etc.) */
+.event-orw-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Tie-breaker list */
+.orw-tiebreaker-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orw-tiebreaker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  cursor: grab;
+}
+
+.orw-tiebreaker-item.is-dragging {
+  opacity: 0.7;
+}
+
+.orw-tiebreaker-handle {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-round-helper {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-faint);
+  margin-left: 6px;
+}
+
+/* ORW scorers table: make the multi-select fill the cell */
+#orwScorersTable .filter-select--combo {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.criteria-separator,
+.criteria-separator span,
+.orw-tiebreaker-item span {
+    font-size: 12px !important;
+}
+
+/******************************************
+ * TOKEN SELECT (multi-select chips)
+ ******************************************/
+
+.token-select {
+    position: relative;
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: #fff;
+    padding: 6px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    cursor: text;
+}
+
+.token-select:focus-within {
+    border-color: var(--color-primary);
+}
+
+.token-select-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.token-select-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--color-primary-soft-bg);
+    color: var(--color-primary);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.token-select-chip-remove {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--color-primary);
+}
+
+.token-select-input {
+    flex: 1;
+    min-width: 100px;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    padding: 4px;
+}
+
+.token-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    margin-top: 4px;
+    z-index: 40;
+    display: none;
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+}
+
+.token-select-dropdown.is-open {
+    display: block;
+}
+
+.token-select-option {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.token-select-option:hover {
+    background: var(--color-bg);
+}
+
+/* Make button inside tfoot span 100% */
+.app-table tfoot td button {
+    width: 100%;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure consistent padding for Send Verification */
+.app-table tfoot td:last-child button {
+    padding: 10px 12px; 
+}
+
+/****************************************************
+ * STEP 2 — ORW (OBJECTIVE RIGHT / WRONG)
+ ****************************************************/
+
+/* ORW scoring row (points per correct, wrong, etc.) */
+.event-orw-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Tie-breaker list */
+.orw-tiebreaker-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orw-tiebreaker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  cursor: grab;
+}
+
+.orw-tiebreaker-item.is-dragging {
+  opacity: 0.7;
+}
+
+.orw-tiebreaker-handle {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-round-helper {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--color-text-faint);
+  margin-left: 6px;
+}
+
+/* ORW scorers table: make the multi-select fill the cell */
+#orwScorersTable .filter-select--combo {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.criteria-separator,
+.criteria-separator span,
+.orw-tiebreaker-item span {
+    font-size: 12px !important;
+}
+
+/******************************************
+ * TOKEN SELECT (multi-select chips)
+ ******************************************/
+
+.token-select {
+    position: relative;
+    width: 100%;
+    min-height: 40px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: #fff;
+    padding: 6px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    cursor: text;
+}
+
+.token-select:focus-within {
+    border-color: var(--color-primary);
+}
+
+.token-select-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.token-select-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--color-primary-soft-bg);
+    color: var(--color-primary);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.token-select-chip-remove {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--color-primary);
+}
+
+.token-select-input {
+    flex: 1;
+    min-width: 100px;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    padding: 4px;
+}
+
+.token-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    margin-top: 4px;
+    z-index: 40;
+    display: none;
+    max-height: 180px;
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+}
+
+.token-select-dropdown.is-open {
+    display: block;
+}
+
+.token-select-option {
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.token-select-option:hover {
+    background: var(--color-bg);
+}
+
+/****************************************************
+ * RANK CONFIG MODAL
+ ****************************************************/
+
+#rankConfigModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--modal-backdrop-bg);
+  z-index: 80;
+}
+
+#rankConfigModal.is-open {
+  display: flex;
+}
+
+.event-rank-modal {
+  background: var(--color-surface);
+  width: 100%;
+  max-width: 680px;
+
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow-xl);
+  font-family: inherit;
+}
+
+.event-rank-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.event-rank-modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.event-rank-modal-subtitle {
+  font-size: 13.5px;
+  color: var(--color-text-faint);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modal-close-x {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 24px;
+  cursor: pointer;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.modal-close-x:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Rank rows */
+.rank-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 48px;
+  gap: 14px;
+  align-items: center;
+  padding: 10px;
+}
+
+.rank-row input {
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background: var(--color-surface);
+  transition: all 0.15s ease;
+}
+
+.rank-row input::placeholder {
+  color: var(--color-text-faint);
+}
+
+/* Scrollable area for rank rows */
+.rank-row-list {
+  margin-top: 4px;
+  margin-bottom: 16px;
+
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* show nicer scroll when many ranks */
+.rank-row-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rank-row-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+/* Remove button — now crisp and beautiful */
+.rank-remove {
+  width: 48px;
+  height: 48px;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-bg);
+  border-radius: var(--radius-md);
+  color: var(--color-danger-text);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rank-remove:hover {
+  opacity: 0.8;
+}
+
+/* Add Rank button — matches your app perfectly */
+#btnAddRankRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  margin: 20px 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft-bg);
+  color: var(--color-primary);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#btnAddRankRow:hover {
+  background: var(--color-primary-soft);
+}
+
+/* Action buttons at bottom — now sharp and perfectly sized */
+.event-rank-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-bg);
+  margin-top: 8px;
+}
+
+.event-rank-modal-actions button {
+  min-width: 120px;
+  padding: 11px 24px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.event-rank-modal-actions .btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-soft);
+}
+
+.event-rank-modal-actions .btn-outline:hover {
+  background: var(--color-bg);
+  border-color: var(--color-text-faint);
+}
+
+.event-rank-modal-actions .btn-primary {
+  background: var(--color-primary);
+  border: none;
+  color: white;
+}
+
+.event-rank-modal-actions .btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px var(--color-primary-soft);
+} 
+
+/****************************************************
+    THEME PRESETS – NEW BEAUTIFUL DESIGN
+****************************************************/
+
+.theme-label {
+  font-size: var(--font-size-xs);
+}
+
+.theme-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.theme-preset-option {
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-surface);
+  padding: 12px 14px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  color: var(--color-text-soft);
+}
+
+.theme-preset-option:hover {
+  border-color: var(--color-text-faint);
+}
+
+.theme-preset-option.is-selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+  background-color: var(--color-surface);
+}
+
+.theme-swatch {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.theme-swatch span {
+  width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-xs);
+}
+
+/* Custom color option – spans full row */
+.theme-preset-option-custom {
+  grid-column: 1 / -1;
+  justify-content: center;
+  background-color: var(--color-surface);
+  border-style: dashed;
+}
+
+.theme-swatch-custom {
+  width: 36px;
+  height: 26px;
+  border-radius: var(--radius-md);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--color-text-faint);
+}
+
+/* Hidden native picker */
+.theme-color-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.preview-header {
+  width: 100%;
+  height: 180px;
+  background: var(--color-primary); /* default */
+  background-size: cover;
+  background-position: center;
+}
+
+.preview-body {
+  padding: 18px 20px;
+}
+
+.preview-title {
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.preview-chip-type {
+    margin-left: 4px;
+    margin-right: 4px;
+    font-size: 11px;
+}
+
+/* CB vs ORW colors */
+.preview-chip--criteria {
+    background-color: #eef2ff;  /* light indigo */
+    color: #4338ca;
+}
+
+.preview-chip--orw {
+    background-color: #e0f2fe;  /* light blue */
+    color: #0369a1;
+}
+
+/* status chip "Preparing" */
+.preview-chip-status {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+
+/****************************************************
+ * CREATE EVENT STEP 3 - HEADER UPLOAD
+ ****************************************************/
+
+.header-upload-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-upload-btn {
+  cursor: pointer; 
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--color-bg);
+  border: 1.5px dashed var(--color-border);
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-size: var(--font-size-xs);
+}
+
+.header-upload-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft-bg);
+}
+
+.header-filename {
+  font-size: 0.925rem;
+  color: var(--color-text);
+  font-weight: 500;
+  padding: 10px 16px;
+}
+
+/* Base chip */
+.preview-chip {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  color: var(--color-text-soft);
+}
+
+/* Type chip colors (already discussed) */
+.preview-chip.type-chip--criteria {
+  background: #fdf2f8;   /* light pink */
+  color: #be185d;        /* deep pink */
+}
+.preview-chip.type-chip--orw {
+  background: #dbeafe;   /* light blue */
+  color: #1d4ed8;        /* blue */
+}
+
+/* Status chips */
+.preview-chip.status-chip--open {
+  background: var(--color-success-bg);   /* green */
+  color: var(--color-success-text);
+}
+
+.preview-chip.status-chip--upcoming,
+.preview-chip.status-chip--scheduled {
+  background: var(--color-info-bg);   /* blue-ish */
+  color: var(--color-info-text);
+}
+
+.preview-chip.status-chip--ongoing,
+.preview-chip.status-chip--live {
+  background: var(--color-warning-bg);   /* amber */
+  color: var(--color-warning-text);
+}
+
+.preview-chip.status-chip--completed,
+.preview-chip.status-chip--finished {
+  background: var(--color-neutral-bg);   /* gray */
+  color: var(--color-neutral-text);
+}
+
+.preview-chip.status-chip--cancelled,
+.preview-chip.status-chip--canceled {
+  background: var(--color-danger-bg);   /* red */
+  color: var(--color-danger-text);
+}
+
+.preview-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  padding-bottom: 8px;
+}
+
+/* REVIEW STEP HELPERS  ------------------------------------ */
+
+.event-section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.event-section-meta {
+    font-size: 12px;
+    color: var(--color-text-faint);
+}
+
+/* make icon groups non-interactive, just visual */
+.review-input-icon-group {
+    pointer-events: none;
+}
+
+.review-input-icon-group .event-input-icon-inner {
+    background-color: var(--color-bg);
+}
+
+/* fake select style used for Live Feed preview */
+.review-select-preview {
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    border-radius: 10px;
+    width: 100%;
+}
+
+/* rounds & scoring row layout (matches your sample) */
+.scoring-row {
+    display: flex;
+    gap: 12px;
+}
+
+.scoring-col {
+    flex: 1;
+    text-align: center;
+}
+
+.scoring-col .event-label {
+    font-size: 11px;
+    color: var(--color-text-faint);
+    text-align: center;
+}
+
+/* preview wrapper in review step */
+.preview-wrapper {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Review – Contestants table styling */
+/* Review – Contestants table layout */
+.review-contestants-table {
+    table-layout: fixed;          /* equal column widths */
+    width: 100%;
+}
+
+.review-contestants-table th,
+.review-contestants-table td {
+    width: 25%;                   /* 4 columns = 25% each */
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* Center the photo column */
+.review-contestants-table th.col-photo,
+.review-contestants-table td.review-contestant-photo-cell {
+    text-align: center;
+}
+
+/* Make the circular photo thumb stay centered */
+.review-contestant-photo-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background-size: cover;
+    background-position: center;
+    margin: 0 auto;               /* center inside the cell */
+}
+
+/* ----- Review Preview Card ----- */
+.preview-heading {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 32px 0 16px 0;
+}
+
+.preview-wrapper {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.preview-header-bar {
+    background-color: var(--color-primary);
+    height: 50px;
+}
+
+.preview-footer {
+    background-color: var(--color-surface);
+    padding: 15px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f1f1;
+}
+
+.preview-text-group {
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.tag {
+    padding: 4px 10px;
+    margin-left: 10px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ORW/CB chip */
+.tag-orw {
+    background-color: var(--color-info-bg);   /* light blue */
+    color: var(--color-info-text);              /* blue text */
+}
+
+/* Preparing chip */
+.tag-preparing {
+    background-color: var(--color-warning-bg);   /* light orange */
+    color: var(--color-warning-text);              /* orange text */
+}
+
+/* Optional: if you want a different color for criteria-based (CB) */
+.tag-cb {
+    background-color: #ede9fe;   /* soft violet */
+    color: #4f46e5;
+}
+
+/* ORGANIZATION HEADER CARD */
+.org-header-card {
+    background:var(--color-surface);
+    border-radius:var(--radius-lg);
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:32px;
+    box-shadow:var(--shadow-md);
+}
+
+.org-header-icon {
+    width:40px;
+    height:40px;
+    border-radius:14px;
+    background:var(--color-primary-soft-bg);
+}
+
+.org-header-title {
+    font-size:18px;
+    font-weight:600;
+}
+
+.org-header-subtitle {
+    font-size:12px;
+    color:var(--color-text-faint);
+}
+
+/* PAGE SECTION HEADERS */
+.page-section-title {
+    font-size:18px;
+    font-weight:600;
+}
+
+.page-section-subtitle {
+    font-size:12px;
+    color:var(--color-text-faint);
+}
+
+/* FILTER BAR */
+.events-filter-row {
+    display:grid;
+    grid-template-columns: 1.7fr auto 1fr 1fr;
+    gap:12px;
+    margin:16px 0;
+}
+
+.filter-input {
+    height:40px;
+}
+
+.filter-select {
+    height:40px;
+    border-radius:var(--radius-pill);
+}
+
+.filter-search-btn {
+    height:40px;
+    padding:0 28px;
+}
+
+.create-event-btn {
+    width:100%;
+    height:42px;
+    border-radius:var(--radius-pill);
+    text-align:center;
+    padding-top:11px;
+    display:block;
+    margin-bottom:28px;
+    box-shadow:var(--btn-primary-shadow);
+}
+
+/* TABLE CARD */
+.event-table-card {
+    border-radius:var(--radius-lg) !important;
+    box-shadow:var(--shadow-md);
+}
+
+/* PILLS */
+.pill {
+    padding:4px 10px;
+    border-radius:var(--radius-pill);
+    font-size:11px;
+    font-weight:600;
+}
+
+.pill-type-cb {
+    background:var(--color-primary-soft-bg);
+    color:var(--color-primary);
+}
+
+.pill-type-orw {
+    background:var(--color-info-bg);
+    color:var(--color-info-text);
+}
+
+.pill-status-preparing {
+    background:var(--color-warning-bg);
+    color:var(--color-warning-text);
+}
+
+.btn-manage {
+    padding:6px 18px;
+    border-radius:10px;
+    font-size:11px;
+}
+
+
+
+
+
+
+

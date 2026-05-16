@@ -1,0 +1,229 @@
+@model ProjectTallify.Models.Judge
+@{
+    ViewData["Title"] = "Verify Account";
+    Layout = null; // Standalone page for perfect centering control
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify Account</title>
+    <style>
+        /* iOS-inspired Reset & Variables */
+        :root {
+            --color-primary: #EC4899; /* Pink-500 */
+            --color-primary-active: #DB2777;
+            --color-bg: #F2F2F7;      /* iOS System Gray 6 */
+            --color-surface: #FFFFFF;
+            --color-text: #000000;
+            --color-text-secondary: #8E8E93; /* iOS System Gray */
+            
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            
+            --radius-xl: 24px;
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-stack);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding: 20px;
+        }
+
+        .verify-card {
+            background: var(--color-surface);
+            width: 100%;
+            max-width: 420px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 48px 32px;
+            text-align: center;
+            animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: center center;
+        }
+
+        @@keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Icon */
+        .icon-wrapper {
+            width: 88px;
+            height: 88px;
+            background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%); /* Soft Pink Gradient */
+            color: var(--color-primary);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 20px rgba(236, 72, 153, 0.15);
+        }
+
+        .icon-wrapper svg {
+            width: 40px;
+            height: 40px;
+            stroke-width: 2.5;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0 0 12px 0;
+            color: var(--color-text);
+        }
+
+        .subtitle {
+            font-size: 17px;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            margin: 0 0 32px 0;
+            font-weight: 400;
+        }
+
+        .user-highlight {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* Event Badge */
+        .event-badge {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 32px;
+            letter-spacing: -0.2px;
+        }
+
+        /* Button */
+        .btn-verify {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 56px;
+            background-color: var(--color-text); /* Black button implies primary action in iOS style sometimes, or use Brand Color */
+            background: var(--color-primary);
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+            text-decoration: none;
+        }
+
+        .btn-verify:active {
+            transform: scale(0.98);
+        }
+
+        .btn-verify:hover {
+            opacity: 0.9;
+        }
+
+        .footer-link {
+            display: block;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+        }
+        .footer-link:hover {
+            color: var(--color-primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="verify-card">
+        @if (ViewBag.Verified == true)
+        {
+             <!-- SUCCESS STATE -->
+            <div class="icon-wrapper" style="background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%); color: #059669;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <h1>Verified!</h1>
+            
+            <div class="event-badge">
+                Event: @Model.Event.Name
+            </div>
+
+            <p class="subtitle">
+                Thank you, <span class="user-highlight">@Model.Name</span>.<br>
+                Your email has been successfully verified.
+            </p>
+
+            <div style="background-color: #F3F4F6; padding: 20px; border-radius: 12px; margin-bottom: 24px; font-size: 15px; color: #374151;">
+                <p style="margin:0; font-weight:500;">What happens next?</p>
+                <p style="margin:8px 0 0 0; font-size:14px; color:#6B7280;">
+                    Please wait for the organizer to send you the <strong>Access Code</strong> and your personal <strong>PIN</strong> to enter the judging room.
+                </p>
+            </div>
+            
+            <p class="subtitle" style="font-size:14px; margin-bottom:0;">
+                We are excited to have you in our event!
+            </p>
+        }
+        else
+        {
+            <!-- VERIFY ACTION STATE -->
+            <div class="icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+
+            <h1>Verify Account</h1>
+            
+            <div class="event-badge">
+                Event: @Model.Event.Name
+            </div>
+
+            <p class="subtitle">
+                Hi <span class="user-highlight">@Model.Name</span>, <br>
+                Tap the button below to verify your identity.
+            </p>
+
+            <form asp-action="VerifyJudgeConfirm" asp-controller="Events" method="post">
+                <input type="hidden" name="judgeId" value="@Model.Id" />
+                <input type="hidden" name="token" value="@Model.VerificationToken" />
+                
+                <button type="submit" class="btn-verify">
+                    Verify Now
+                </button>
+            </form>
+        }
+
+        <!-- Footer -->
+        @if (ViewBag.Verified != true)
+        {
+            <a href="@Url.Action("Login", "Auth")" class="footer-link">Not you? Return to Login</a>
+        }
+    </div>
+
+</body>
+</html>

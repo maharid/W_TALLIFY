@@ -1,0 +1,127 @@
+/* 
+   MATERIAL DESIGN OUTLINED INPUT STYLE
+   (Enclosed box with floating label on border)
+*/
+
+/* Outer spacing container */
+.auth-floating-group {
+  margin-bottom: 10px;
+}
+
+/* 
+   Positioning Context:
+   Can be the group itself, or the wrapper (used for password toggles).
+   Ensure relative positioning so absolute label stays inside.
+*/
+.auth-floating-group,
+.auth-input-wrapper {
+  position: relative;
+}
+
+/* INPUT FIELD STYLING */
+.auth-input {
+  width: 100%;
+  height: auto;
+  padding: 11px 14px; /* Match auth.css */
+  font-size: 16px;
+  color: var(--color-text);
+  background-color: transparent; /* Allow card bg to show, or transparent */
+  border: 1px solid #ccc; /* Full 4-sided border */
+  border-radius: 6px; /* Rounded corners */
+  outline: none;
+  appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Input with toggle needs space on right */
+.auth-input-with-toggle {
+  padding-right: 48px;
+}
+
+/* Focus State */
+.auth-input:focus {
+  border-color: var(--color-primary);
+  border-width: 2px; /* Material thickens border on focus */
+  padding: 10px 13px; /* Adjust padding to prevent shift due to border width change */
+}
+
+.auth-input.auth-input-with-toggle:focus {
+  padding-right: 47px; /* 48px - 1px extra border */
+}
+
+/* Error State (if needed in future) */
+.input-validation-error {
+  border-color: #dc3545 !important;
+}
+
+/* LABEL STYLING */
+.auth-floating-label {
+  position: absolute;
+  left: 10px; /* Align with input padding */
+  top: 50%; /* Vertically centered */
+  transform: translateY(-50%);
+  
+  /* Styling */
+  font-size: 16px;
+  color: #666; /* Inactive gray */
+  pointer-events: none; /* Clicks pass through to input */
+  background-color: var(--color-surface, #ffffff); /* MASK THE BORDER */
+  padding: 0 6px; /* Breathing room for mask */
+  
+  /* Animation */
+  transition: top 0.2s ease, font-size 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  z-index: 1;
+}
+
+/* 
+   FLOATING STATE
+   Triggered when input is focused OR has content (placeholder trick)
+*/
+.auth-input:focus + .auth-floating-label,
+.auth-input:not(:placeholder-shown) + .auth-floating-label {
+  top: 0; /* Move to top border line */
+  transform: translateY(-50%); /* Keep centered relative to the line */
+  font-size: 0.85rem; /* Shrink text */
+  color: var(--color-primary); /* Accent color */
+  font-weight: 500;
+}
+
+/* inactive but filled: keep gray, but floating */
+.auth-input:not(:placeholder-shown):not(:focus) + .auth-floating-label {
+  color: #666;
+}
+
+/* Hide standard placeholder */
+.auth-input::placeholder {
+  opacity: 0;
+}
+
+/* PASSWORD TOGGLE BUTTON */
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: default; /* Change cursor to default to indicate no interaction */
+  color: #666; /* Default color, no change on hover */
+  z-index: 2;
+  font-size: 1.2rem;
+  padding: 4px;
+  line-height: 1;
+  transition: none !important; /* Absolutely no animation */
+  filter: none !important; /* No global filter effect */
+  box-shadow: none !important; /* No global box-shadow effect */
+}
+
+/* Ensure no hover/active effects beyond the base style */
+.password-toggle:hover,
+.password-toggle:active {
+    color: #666 !important; /* Keep default color */
+    filter: none !important;
+    box-shadow: none !important;
+    transform: translateY(-50%) !important; /* Keep original transform */
+    transition: none !important;
+    cursor: default !important;
+}

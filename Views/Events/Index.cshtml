@@ -1,0 +1,209 @@
+@model IEnumerable<ProjectTallify.Models.Event>
+
+<link rel="stylesheet" href="~/css/events.css" />
+
+@{
+    ViewData["Title"] = "Events";
+    ViewBag.ActiveNav = "Events";
+    
+    string currentSearch = ViewBag.Search as string ?? "";
+    string currentType   = ViewBag.Type   as string ?? "all";
+    string currentStatus = ViewBag.Status as string ?? "all";
+
+    // Helper for labels
+    string GetTypeLabel(string val) => val switch {
+        "criteria" => "CB",
+        "orw" => "ORW",
+        _ => "All Types"
+    };
+
+    string GetStatusLabel(string val) => val switch {
+        "open" => "Open",
+        "preparing" => "Preparing",
+        "closed" => "Closed",
+        _ => "All Status"
+    };
+}
+
+<section class="panel-section">
+    <header class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 class="panel-title">Events</h2>
+            <p class="panel-subtitle">
+                View, manage, and track all events in your organization.
+            </p>
+        </div>
+        <a href="/Events/Create" style="text-decoration:none;">
+            <button type="button" class="dashboard-create-event-btn" style="width: max-content; margin-bottom: 0;">
+                Create Event
+            </button>
+        </a>
+    </header>
+</section>
+
+<div class="events-page" style="margin-top: 0;">
+
+    <!-- FILTER FORM -->
+    <form asp-controller="Events"
+          asp-action="Index"
+          method="get"
+          class="filter-row"
+          id="eventsFilterForm">
+
+        <div class="filter-row-left">
+            <!-- Search text -->
+            <input class="filter-input"
+                   type="text"
+                   name="search"
+                   value="@currentSearch"
+                   placeholder="Search event" />
+
+            <button type="submit" class="filter-search-btn">Search</button>
+
+            <!-- Type Filter -->
+            <input type="hidden" name="type" id="filterTypeInput" value="@currentType" />
+            <div class="filter-select filter-select--combo" data-filter-select="type">
+                <button type="button" class="filter-select-trigger">
+                    <span class="filter-select-label">@GetTypeLabel(currentType)</span>
+                    <span class="filter-select-icon"><i class="ri-arrow-down-s-line"></i></span>
+                </button>
+                <div class="filter-select-menu">
+                    <button type="button" class="filter-select-option @(currentType == "all" ? "is-selected" : "")" 
+                            data-value="all">All Types</button>
+                    <button type="button" class="filter-select-option @(currentType == "criteria" ? "is-selected" : "")" 
+                            data-value="criteria">CB</button>
+                    <button type="button" class="filter-select-option @(currentType == "orw" ? "is-selected" : "")" 
+                            data-value="orw">ORW</button>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <input type="hidden" name="status" id="filterStatusInput" value="@currentStatus" />
+            <div class="filter-select filter-select--combo" data-filter-select="status">
+                <button type="button" class="filter-select-trigger">
+                    <span class="filter-select-label">@GetStatusLabel(currentStatus)</span>
+                    <span class="filter-select-icon"><i class="ri-arrow-down-s-line"></i></span>
+                </button>
+                <div class="filter-select-menu">
+                    <button type="button" class="filter-select-option @(currentStatus == "all" ? "is-selected" : "")" 
+                            data-value="all">All Status</button>
+                    <button type="button" class="filter-select-option @(currentStatus == "open" ? "is-selected" : "")" 
+                            data-value="open">Open</button>
+                    <button type="button" class="filter-select-option @(currentStatus == "preparing" ? "is-selected" : "")" 
+                            data-value="preparing">Preparing</button>
+                    <button type="button" class="filter-select-option @(currentStatus == "closed" ? "is-selected" : "")" 
+                            data-value="closed">Closed</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- RECENT ACTIVITIES -->
+    <h3 class="recent-header" style="margin-top:28px; font-size:18px; font-weight:600; margin-bottom:16px;">Recent Activities</h3>
+
+    <div class="panel-table-wrapper">
+        <table class="app-table">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Type</th>
+                    <th>Event Date &amp; Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    string emptyMsg = "No events found.";
+                    if (currentType == "orw") { emptyMsg = "No ORW data available."; }
+                    else if (currentType == "criteria") { emptyMsg = "No CB data available."; }
+                    
+                    <tr class="table-empty-row">
+                        <td colspan="5" style="text-align:center; padding: 32px; color: var(--color-text-faint); font-style: italic;">
+                            @emptyMsg
+                        </td>
+                    </tr>
+                }
+                @foreach (var ev in Model)
+                {
+                    var typeLabel = ev.EventType == "criteria" ? "CB" : "ORW";
+                    var typeClass = ev.EventType == "criteria" ? "pill pill-type-cb" : "pill pill-type-orw";
+
+                    // Derive status from ev.Status (fallback using start date if null/empty)
+                    string statusText;
+                    if (string.IsNullOrWhiteSpace(ev.Status))
+                    {
+                        // Fallback: if no status saved, decide based on current time vs start
+                        var now = DateTime.Now;
+                        statusText = now < ev.StartDateTime ? "Preparing" : "Open";
+                    }
+                    else
+                    {
+                        var s = ev.Status.ToLower();
+                        statusText = s switch
+                        {
+                            "open"      => "Open",
+                            "preparing" => "Preparing",
+                            "closed"    => "Closed",
+                            _           => ev.Status
+                        };
+                    }
+
+                    var statusClass = statusText == "Open"
+                        ? "pill pill-status-open" // green
+                        : statusText == "Preparing"
+                            ? "pill pill-status-preparing" // orange
+                            : "pill pill-status-closed"; // gray
+
+                    <tr>
+                        <td class="events-cell-event" style="font-weight:600;">@ev.Name</td>
+
+                        <td>
+                            <span class="@typeClass" style="@(ev.EventType == "criteria" ? "background:#fee2f3; color:#fb0a74;" : "background:#e5ecff; color:#4f46e5;")">@typeLabel</span>
+                        </td>
+
+                        <td>@ev.StartDateTime.ToString("MMM dd, yyyy h:mm tt")</td>
+
+                        <td>
+                            <span class="@statusClass" style="@(statusText=="Open"?"background:#dcfce7;color:#16a34a;" : statusText=="Preparing"?"background:#fef3c7;color:#d97706;" : "background:#f3f4f6;color:#374151;")">@statusText</span>
+                        </td>
+
+                        <td>
+                            <a href="/Events/Manage/@ev.Id" class="events-btn-manage" style="border-radius:10px;">Manage</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("eventsFilterForm");
+            
+            // Handle custom dropdown clicks
+            document.querySelectorAll(".filter-select-option").forEach(option => {
+                option.addEventListener("click", function(e) {
+                    const container = this.closest(".filter-select");
+                    const type = container.getAttribute("data-filter-select"); // "type" or "status"
+                    const value = this.getAttribute("data-value");
+                    
+                    // Update hidden input
+                    if (type === "type") {
+                        document.getElementById("filterTypeInput").value = value;
+                    } else if (type === "status") {
+                        document.getElementById("filterStatusInput").value = value;
+                    }
+                    
+                    // Submit form
+                    form.submit();
+                });
+            });
+        });
+    </script>
+}

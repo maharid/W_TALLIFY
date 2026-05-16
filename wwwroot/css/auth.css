@@ -1,0 +1,408 @@
+/* AUTH PAGE LAYOUT */
+
+.auth-body {
+  min-height: 100vh;
+}
+
+/* Change this URL to your background image; it will affect all auth screens */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background-image: url("/images/BG 1.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+/* for "Where is my code and pin?" */
+
+.auth-link-pink {
+  color: var(--color-primary);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.auth-link-pink:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* FULL-PAGE MODAL OVERLAY */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 999;                 /* above everything */
+  display: none;                /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.20); /* light overlay */
+}
+
+.auth-modal.is-open {
+  display: flex;
+}
+
+.auth-modal-inner {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--space-5) var(--space-6);
+  max-width: 320px;
+  width: calc(100% - 48px);
+  text-align: left;
+  box-shadow: var(--shadow-lg);
+}
+
+.auth-modal-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-faint);
+  margin: 0 0 var(--space-4);
+}
+
+/* make the close button sit nicely */
+.auth-modal-inner .auth-button-primary {
+  margin-top: 0;
+}
+
+/* Main white card */
+.auth-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  padding: 40px 48px 32px;
+  position: relative;
+  box-shadow: var(--shadow-xl);
+}
+
+.auth-logo-wrapper {
+  margin-bottom: var(--space-7);
+}
+
+.auth-logo {
+  height: 40px;
+  width: auto;
+}
+
+/* Typography */
+
+.auth-title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 var(--space-2);
+  color: var(--color-text);
+}
+
+.auth-subtitle {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  line-height: var(--line-height-normal);
+}
+
+/* Forms */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.auth-label {
+  font-size: var(--font-size-xs);
+  margin-bottom: 6px;
+  display: block;
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.auth-input,
+.auth-button,
+.auth-button-secondary {
+  font-size: var(--font-size-sm);
+}
+
+.auth-input {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: 11px 14px;
+  background-color: var(--color-surface-alt);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.auth-input:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Autofill background override */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover, 
+.auth-input:-webkit-autofill:focus, 
+.auth-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--color-surface-alt) inset !important; /* Matches auth-input background */
+    box-shadow: 0 0 0 30px var(--color-surface-alt) inset !important;
+    -webkit-text-fill-color: var(--color-text) !important; /* Ensures text color is not changed */
+    caret-color: var(--color-text) !important; /* Ensures cursor color is not changed */
+    border-color: var(--color-border) !important; /* Preserve normal border */
+}
+
+/* Optional: To handle focus state with autofill */
+.auth-input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset, var(--shadow-focus) !important; /* Matches focus background + shadow */
+    box-shadow: 0 0 0 30px var(--color-surface) inset, var(--shadow-focus) !important;
+    border-color: var(--color-primary) !important; /* Preserve focus border */
+}
+
+/* Input with password toggle */
+
+.auth-input-wrapper {
+  position: relative;
+}
+
+.auth-input-with-toggle {
+  padding-right: 40px;
+}
+
+/* group label + input */
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--color-text-soft);
+}
+
+/* becomes visible once there is text */
+
+.password-toggle.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Use this class whenever you want a small right-aligned link row */
+
+.auth-row-right {
+  margin-top: 4px;
+  text-align: right;
+}
+
+.auth-row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+
+
+/* Buttons */
+
+.auth-button {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 0;
+  padding: 11px 16px;
+  cursor: pointer;
+}
+
+.auth-button-primary {
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--btn-primary-shadow);
+}
+
+.auth-button-secondary {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  border: 1px solid var(--color-border);
+}
+
+.auth-button-secondary:hover {
+  background-color: var(--color-bg); /* Use a slightly darker background on hover */
+  border-color: var(--color-border-strong); /* Make border slightly more prominent */
+}
+
+/* Action groups */
+
+.auth-actions {
+  margin-top: var(--space-4);
+}
+
+.auth-actions-single {
+  margin-top: var(--space-4);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: var(--space-4) 0;
+}
+
+/* Divider */
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.auth-divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.auth-divider-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+/* Helper & bottom texts */
+
+.auth-helper-text {
+  margin: 6px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+}
+
+.auth-bottom-text {
+  margin-top: 20px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  text-align: center;
+}
+
+/* Links */
+
+.auth-link-small {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-faint);
+  text-decoration: none;
+}
+
+/* no underline on hover anywhere */
+.auth-link-small:hover {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.auth-link-inline {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--color-link);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Screen visibility */
+
+.auth-screen {
+  display: none;
+}
+
+.auth-screen.is-active {
+  display: block;
+}
+
+/* Validation errors */
+
+.auth-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-text);
+}
+
+.auth-input-error {
+  border-color: var(--color-danger-text);
+}
+
+/* Responsive adjustments */
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 32px 24px 28px;
+  }
+
+  .auth-title {
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* ----- Auth center message popup ----- */
+
+.auth-message-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-backdrop-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.auth-message-modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+}
+
+.auth-message-text {
+  margin: 0 0 16px;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+/* error vs success colors */
+.auth-message-error .auth-message-text {
+  color: var(--color-danger-text);
+}
+
+.auth-message-success .auth-message-text {
+  color: var(--color-success-text);
+}

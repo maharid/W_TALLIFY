@@ -1,0 +1,197 @@
+@model ProjectTallify.Models.Judge
+@{
+    ViewData["Title"] = "Access Event";
+    Layout = null; // Standalone page for perfect centering control
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Access Event</title>
+    <style>
+        /* iOS-inspired Reset & Variables */
+        :root {
+            --color-primary: #EC4899; /* Pink-500 */
+            --color-primary-active: #DB2777;
+            --color-bg: #F2F2F7;      /* iOS System Gray 6 */
+            --color-surface: #FFFFFF;
+            --color-text: #000000;
+            --color-text-secondary: #8E8E93; /* iOS System Gray */
+            
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            
+            --radius-xl: 24px;
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: var(--font-stack);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            padding: 20px;
+        }
+
+        .verify-card { /* Renamed from verify-card to access-card if needed, but styling applies */
+            background: var(--color-surface);
+            width: 100%;
+            max-width: 420px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 48px 32px;
+            text-align: center;
+            animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: center center;
+        }
+
+        @@keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Icon */
+        .icon-wrapper {
+            width: 88px;
+            height: 88px;
+            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%); /* Green Success Gradient */
+            color: #059669; /* Green icon color */
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 20px rgba(5, 150, 105, 0.15); /* Green shadow */
+        }
+
+        .icon-wrapper svg {
+            width: 40px;
+            height: 40px;
+            stroke-width: 2.5;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin: 0 0 12px 0;
+            color: var(--color-text);
+        }
+
+        .subtitle {
+            font-size: 17px;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            margin: 0 0 32px 0;
+            font-weight: 400;
+        }
+
+        .user-highlight {
+            color: var(--color-text);
+            font-weight: 600;
+        }
+
+        /* Event Badge */
+        .event-badge {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 8px 16px;
+            border-radius: 99px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 32px;
+            letter-spacing: -0.2px;
+        }
+
+        /* Button */
+        .btn-access { /* Renamed class for clarity */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 56px;
+            background: var(--color-primary); /* Use primary color for access */
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3); /* Match primary shadow */
+            text-decoration: none;
+        }
+
+        .btn-access:active {
+            transform: scale(0.98);
+        }
+
+        .btn-access:hover {
+            opacity: 0.9;
+        }
+
+        .footer-link {
+            display: block;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+        }
+        .footer-link:hover {
+            color: var(--color-primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="verify-card"> <!-- Keeping verify-card class name for now for styling consistency -->
+        <!-- ACCESS EVENT STATE -->
+        <div class="icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+
+        <h1>Access Event</h1>
+        
+        <div class="event-badge">
+            Event: @Model.Event.Name
+        </div>
+
+        <p class="subtitle">
+            Hello <span class="user-highlight">@Model.Name</span>,<br>
+            Your access to the event scoring has been granted.
+        </p>
+
+        <div style="background-color: #F3F4F6; padding: 20px; border-radius: 12px; margin-bottom: 24px; font-size: 15px; color: #374151;">
+            <p style="margin:0; font-weight:500;">Ready to Score!</p>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#6B7280;">
+                Click the button below to enter the scoring interface.
+            </p>
+            <p style="margin:8px 0 0 0; font-size:14px; color:#6B7280;">
+                Your Event Code: <strong>@Model.Event.AccessCode</strong><br>
+                Your Personal PIN: <strong>@Model.Pin</strong>
+            </p>
+        </div>
+        
+        <a href="@Url.Action("Login", "Auth", new { mode = "join", code = Model.Event.AccessCode, pin = Model.Pin })" class="btn-access">
+            Access Event
+        </a>
+
+        <!-- Footer -->
+        <a href="@Url.Action("Login", "Auth")" class="footer-link">Return to Login</a>
+    </div>
+
+</body>
+</html>

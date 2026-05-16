@@ -1,0 +1,406 @@
+@using ProjectTallify.Models
+@using System.Drawing 
+
+@functions {
+    public static Color HexToColor(string hex)
+    {
+        if (string.IsNullOrEmpty(hex) || !(hex.StartsWith("#") && (hex.Length == 7 || hex.Length == 4)))
+            return Color.Black; // Default if invalid
+
+        // Handle #RGB short form
+        if (hex.Length == 4)
+        {
+            hex = $"#{hex[1]}{hex[1]}{hex[2]}{hex[2]}{hex[3]}{hex[3]}";
+        }
+        return ColorTranslator.FromHtml(hex);
+    }
+
+    public static string ColorToHex(Color color)
+    {
+        return "#" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2");
+    }
+
+    // Adjusts brightness: factor < 1 darkens, factor > 1 lightens.
+    // Factor 1.0 means no change. 0.7 darkens by 30%, 1.3 lightens by 30%.
+    public static string AdjustBrightness(string hexColor, float factor)
+    {
+        var color = HexToColor(hexColor);
+        
+        int r = (int)Math.Min(255, Math.Max(0, color.R * factor));
+        int g = (int)Math.Min(255, Math.Max(0, color.G * factor));
+        int b = (int)Math.Min(255, Math.Max(0, color.B * factor));
+
+        return ColorToHex(Color.FromArgb(color.A, r, g, b));
+    }
+}
+ 
+@model List<LiveRoundTallyViewModel>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div style="padding: 3rem; text-align: center; color: var(--color-text-soft);">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">📭</div>
+            <h3>No Active Rounds</h3>
+            <p>Rounds will appear here once they are started.</p>
+        </div>
+    </div>
+}
+else
+{
+    var activeRoundId = 0;
+    // Default active: The last ongoing round, or the last round in the list if none ongoing
+    var ongoing = Model.LastOrDefault(r => r.Status == "ongoing");
+    if (ongoing != null) {
+        activeRoundId = ongoing.RoundId;
+    } else {
+        activeRoundId = Model.Last().RoundId;
+    }
+
+    <!-- 1. Tabs Navigation -->
+    <div class="tally-tabs-nav" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border); padding-bottom: 0px; overflow-x: auto;">
+        @foreach (var round in Model)
+        {
+            var isActive = round.RoundId == activeRoundId ? "active" : "";
+            var isPending = string.IsNullOrEmpty(round.Status) || round.Status == "pending";
+            var disabledClass = isPending ? "disabled" : "";
+            
+            <button type="button" 
+                    class="tally-tab-link @isActive @disabledClass" 
+                    data-round-id="@round.RoundId"
+                    onclick="switchTallyTab(@round.RoundId)"
+                    style="background: none; border: none; padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--color-text-soft); border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;">
+                @round.RoundName
+            </button>
+        }
+    </div>
+
+    <!-- 2. Tab Content -->
+    <div class="tally-content-wrapper">
+        @foreach (var round in Model)
+        {
+            var displayStyle = round.RoundId == activeRoundId ? "block" : "none";
+            var isPending = string.IsNullOrEmpty(round.Status) || round.Status == "pending";
+
+            <div id="tally-round-@round.RoundId" class="tally-round-pane" style="display: @displayStyle;">
+                
+                @if (isPending)
+                {
+                    <div class="card">
+                        <div style="padding: 3rem; text-align: center; color: var(--color-text-soft);">
+                            <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+                            <h3>Round Not Started</h3>
+                            <p>Once the event organizer starts this round, its live tally will be displayed here.</p>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Header Status -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 18px;">Judge Scores</h3>
+                            <p class="text-muted" style="margin: 0; font-size: 13px;">Real-time submission monitor</p>
+                        </div>
+                        <div>
+                            @if (round.Status == "ongoing")
+                            {
+                                <span class="status-pill" style="background:#dcfce7; color:#166534;">Ongoing</span>
+                            }
+                            else
+                            {
+                                <span class="status-pill" style="background:#dbeafe; color:#1e40af;">Finished</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- JUDGE SCORES TABLE -->
+                    <div class="card" style="margin-bottom: 24px; padding: 0; overflow: hidden;">
+                        <div style="overflow-x: auto;">
+                            <table class="app-table" style="margin-bottom: 0;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 250px; position: sticky; left: 0; background: #fff; z-index: 2; border-right: 1px solid #eee;">Contestant</th>
+                                        @foreach (var judge in round.Judges)
+                                        {
+                                            <th style="text-align: center; min-width: 120px;">
+                                                @judge.Name
+                                            </th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (!round.Rows.Any())
+                                    {
+                                        <tr><td colspan="@(round.Judges.Count + 1)" style="text-align:center; padding: 2rem;">No active contestants in this round.</td></tr>
+                                    }
+                                    else
+                                    {
+                                        foreach (var row in round.Rows)
+                                        {
+                                            <tr>
+                                                <td style="font-weight: 600; position: sticky; left: 0; background: #fff; border-right: 1px solid #eee; z-index: 1;">
+                                                    @row.ContestantName
+                                                </td>
+                                                @foreach (var judge in round.Judges)
+                                                {
+                                                    var val = row.JudgeScores.ContainsKey(judge.Id) ? row.JudgeScores[judge.Id] : "-";
+                                                    var isPendingVal = val == "-";
+                                                    
+                                                    <td style="text-align: center;">
+                                                        @if (isPendingVal)
+                                                        {
+                                                            <span style="color: #9ca3af; font-size: 12px; background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">Pending</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span style="font-weight: 700; color: #166534;">@val</span>
+                                                        }
+                                                    </td>
+                                                }
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SUMMARY TABLE (CONDITIONAL) -->
+                    @if (round.IsComplete)
+                    {
+                        <div style="margin-top: 32px;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 18px; color: var(--color-text);">Round Results (Overall)</h3>
+                            <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                <div style="overflow-x: auto;">
+                                    <table class="app-table" style="margin-bottom: 0;">
+                                        <thead style="background: #f1f5f9;">
+                                            <tr>
+                                                <th>Contestant</th>
+                                                <th style="color: #64748b;">Organization</th>
+                                                
+                                                <!-- Dynamic Criteria Headers -->
+                                                @foreach (var col in round.CriteriaColumns)
+                                                {
+                                                    <th style="text-align: center; font-size: 12px; color: #64748b;">
+                                                        <div>@col.Name @(col.IsDerived ? "(Derived)" : "")</div>
+                                                        <div style="font-weight: 400;">(@col.Weight.ToString("0")%)</div>
+                                                    </th>
+                                                }
+
+                                                <th style="text-align: right; width: 120px; background: #f8fafc;">Total Score</th>
+                                                <th style="text-align: center; width: 60px; background: #f8fafc;">Rank</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var sRow in round.SummaryRows)
+                                            {
+                                                string baseColor = round.ThemeColor ?? "#007bff"; // Fallback to primary blue
+                                                
+                                                // Generate dynamic colors for rank highlights
+                                                string rank1MainColor = AdjustBrightness(baseColor, 0.75f); // Slightly darker
+                                                string rank1LightColor = baseColor;
+                                                string rank1Background = $"linear-gradient(135deg, {rank1MainColor} 0%, {rank1LightColor} 100%)";
+                                                string rank1TextColor = "white";
+
+                                                string rank2MainColor = baseColor;
+                                                string rank2LightColor = AdjustBrightness(baseColor, 1.25f); // Slightly lighter
+                                                string rank2Background = $"linear-gradient(135deg, {rank2MainColor} 0%, {rank2LightColor} 100%)";
+                                                string rank2TextColor = "white";
+
+                                                string rank3MainColor = AdjustBrightness(baseColor, 1.25f);
+                                                string rank3LightColor = AdjustBrightness(baseColor, 1.5f); // Even lighter
+                                                string rank3Background = $"linear-gradient(135deg, {rank3MainColor} 0%, {rank3LightColor} 100%)";
+                                                string rank3TextColor = "black";
+
+                                                // Default styles
+                                                string nameCellStyle = "font-weight: 600;";
+                                                string rankCellStyle = "text-align: center; vertical-align: middle; font-weight: 700;";
+                                                string rankText = sRow.Rank.ToString("0.##");
+
+                                                if (sRow.Rank >= 1 && sRow.Rank < 2) 
+                                                { 
+                                                    nameCellStyle += $"background: {rank1Background}; color: {rank1TextColor};";
+                                                    rankCellStyle += $"background: {rank1Background}; color: {rank1TextColor};";
+                                                }
+                                                else if (sRow.Rank >= 2 && sRow.Rank < 3) 
+                                                { 
+                                                    nameCellStyle += $"background: {rank2Background}; color: {rank2TextColor};";
+                                                    rankCellStyle += $"background: {rank2Background}; color: {rank2TextColor};";
+                                                }
+                                                else if (sRow.Rank >= 3 && sRow.Rank < 4) 
+                                                { 
+                                                    nameCellStyle += $"background: {rank3Background}; color: {rank3TextColor};"; 
+                                                    rankCellStyle += $"background: {rank3Background}; color: {rank3TextColor};"; 
+                                                }
+                                                else 
+                                                { 
+                                                    rankCellStyle += "color: #000;"; // Lower Ranks: Black text
+                                                }
+                                                
+                                                <tr style="background-color: #fff;">
+                                                    <td style="@nameCellStyle">@sRow.ContestantName</td>
+                                                    <td style="color: #64748b;">@sRow.Organization</td>
+                                                    
+                                                    <!-- Dynamic Criteria Scores -->
+                                                    @foreach (var col in round.CriteriaColumns)
+                                                    {
+                                                        var val = sRow.CriteriaScores.ContainsKey(col.Id) ? sRow.CriteriaScores[col.Id] : 0;
+                                                        <td style="text-align: center; color: #475569;">
+                                                            @if (col.IsDerived && val == 0 && !sRow.CriteriaScores.ContainsKey(col.Id))
+                                                            {
+                                                                // If derived and no score exists (e.g., previous round not computed yet)
+                                                                <span>—</span> 
+                                                            }
+                                                            else if (col.IsDerived)
+                                                            {
+                                                                // If derived and score exists
+                                                                <span title="Automatically computed">@val.ToString("F3")</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                // Standard criteria
+                                                                @val.ToString("F3")
+                                                            }
+                                                        </td>
+                                                    }
+
+                                                    <td style="text-align: right; font-weight: 700; color: var(--color-primary); font-size: 1.1em; background: #f8fafc;">
+                                                        @sRow.TotalScore.ToString("F3")
+                                                    </td>
+                                                    <td style="@rankCellStyle">
+                                                        @rankText
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Toggle Button -->
+                            <div style="margin-top: 24px; margin-bottom: 24px;">
+                                <button type="button" id="btn-toggle-details-@round.RoundId" class="btn-create-add" onclick="toggleDetails(@round.RoundId)" style="width: 100%; justify-content: center;">
+                                    Show result per criteria
+                                </button>
+                            </div>
+
+                            @if (round == Model.LastOrDefault() && round.IsComplete)
+                            {
+                                var winners = round.SummaryRows
+                                    .Where(r => r.Rank <= 3)
+                                    .OrderBy(r => r.Rank)
+                                    .Select(r => new { 
+                                        r.Rank, 
+                                        Name = r.ContestantName, 
+                                        r.Organization, 
+                                        r.PhotoUrl 
+                                    })
+                                    .ToList();
+                                
+                                var revealData = new {
+                                    eventId = activeRoundId, // Using activeRoundId effectively as event-round identifier
+                                    roundId = round.RoundId,
+                                    eventName = "Final Result", // Could fetch event name if available, fallback generic
+                                    winners = winners,
+                                    themeColor = round.ThemeColor ?? "#ec4899" // Pass theme color or default pink
+                                };
+
+                                                                    <script id="grand-reveal-json-data" type="application/json">
+                                                                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(revealData))
+                                                                    </script>                            }
+
+                            <!-- DETAILED BREAKDOWN TABLES (HIDDEN) -->
+                            <div id="details-round-@round.RoundId" style="display: none;">
+                                @foreach (var detail in round.DetailedTables)
+                                {
+                                    var currentDetailCriteria = round.CriteriaColumns.FirstOrDefault(c => c.Id == detail.CriteriaId);
+                                    <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden; border: 1px solid #e5e7eb;">
+                                        <div style="background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between;">
+                                            <span style="font-weight: 700; color: #334155;">Table: @detail.CriteriaName @(currentDetailCriteria?.IsDerived == true ? "(Derived)" : "")</span>
+                                            <span style="color: #64748b;">Weight: @detail.Weight.ToString("0")%</span>
+                                        </div>
+                                        <div style="overflow-x: auto;">
+                                            <table class="app-table" style="margin-bottom: 0;">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 50px; text-align: center;">Rank</th>
+                                                        <th>Contestant</th>
+                                                        @if (currentDetailCriteria?.IsDerived == true)
+                                                        {
+                                                            <th colspan="@(round.Judges.Count)" style="text-align: center;">Automatically Computed (N/A for Judges)</th>
+                                                        }
+                                                        else
+                                                        {
+                                                            @foreach (var judge in round.Judges)
+                                                            {
+                                                                <th style="text-align: center; min-width: 80px; font-size: 12px;">@judge.Name</th>
+                                                            }
+                                                        }
+                                                        <th style="text-align: right; width: 100px; background: #f8fafc;">
+                                                            @(currentDetailCriteria?.IsDerived == true ? "Total Score" : "Average")
+                                                        </th>
+                                                        <th style="text-align: right; width: 100px; background: #f1f5f9; font-weight: 600;">W. Score</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var dRow in detail.Rows)
+                                                    {
+                                                        <tr>
+                                                            <td style="text-align: center;">@dRow.Rank</td>
+                                                            <td style="font-weight: 500;">@dRow.ContestantName</td>
+                                                            @if (currentDetailCriteria?.IsDerived == true)
+                                                            {
+                                                                <td colspan="@(round.Judges.Count)" style="text-align: center; color: #64748b;">—</td>
+                                                                <td style="text-align: right; background: #f8fafc;">@dRow.Average.ToString("F3")</td> 
+                                                                <td style="text-align: right; background: #f1f5f9; font-weight: 700;">@dRow.Weighted.ToString("F3")</td>
+                                                            }
+                                                            else
+                                                            {
+                                                                @foreach (var judge in round.Judges)
+                                                                {
+                                                                    var raw = dRow.JudgeRawScores.ContainsKey(judge.Id) ? dRow.JudgeRawScores[judge.Id].ToString("F2") : "-";
+                                                                    <td style="text-align: center; color: #64748b;">@raw</td>
+                                                                }
+                                                                <td style="text-align: right; background: #f8fafc;">@dRow.Average.ToString("F3")</td>
+                                                                <td style="text-align: right; background: #f1f5f9; font-weight: 700;">@dRow.Weighted.ToString("F3")</td>
+                                                            }
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                         <div style="margin-top: 32px; padding: 24px; text-align: center; border: 2px dashed #e5e7eb; border-radius: 12px; color: #9ca3af;">
+                            <p style="margin: 0; font-size: 14px;">Results will appear here when all judges have submitted their scores.</p>
+                        </div>
+                    }
+                }
+
+            </div>
+        }
+    </div>
+
+    <style>
+        .tally-tab-link.active {
+            color: var(--color-primary) !important;
+            border-bottom-color: var(--color-primary) !important;
+        }
+        .tally-tab-link.disabled {
+            color: #d1d5db !important;
+            cursor: pointer;
+        }
+        .tally-tab-link:hover {
+            color: var(--color-text);
+        }
+        .tally-tab-link.disabled:hover {
+            color: #9ca3af;
+        }
+    </style>
+}

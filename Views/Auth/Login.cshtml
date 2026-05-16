@@ -1,0 +1,381 @@
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_AuthLayout";
+
+    // Which screen to show first: "login" | "join" | "signup"
+    var authMode = ViewBag.AuthMode as string ?? "login";
+}
+
+<div class="auth-page" data-auth-mode="@authMode">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo-wrapper">
+      <img src="~/images/LOGO TEXT.png" alt="Logo" class="auth-logo" />
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <section class="auth-screen @(authMode == "login" ? "is-active" : "")"
+            id="screen-login"
+            aria-label="Login screen">
+      <h1 class="auth-title">Mabuhay!</h1>
+      <p class="auth-subtitle">Welcome back! Please sign in to your account.</p>
+
+      <form id="loginForm"
+            class="auth-form"
+            method="post"
+            asp-controller="Auth"
+            asp-action="Login">
+          @Html.AntiForgeryToken()
+
+          <div class="auth-floating-group">
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                class="auth-input"
+                placeholder=" "
+                required />
+              <label class="auth-floating-label" for="login-email">Email</label>
+          </div>
+
+          <div class="auth-floating-group">
+            <div class="auth-input-wrapper">
+              <input
+                id="login-password"
+                name="password"
+                type="password"
+                class="auth-input auth-input-with-toggle auth-password"
+                placeholder=" "
+                required />
+              <label class="auth-floating-label" for="login-password">Password</label>
+              <button
+                type="button"
+                class="password-toggle"
+                data-target="login-password"
+                data-visible="false"
+                aria-label="Toggle password visibility">
+                🙉
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-row-between">
+            <label class="auth-remember">
+              <input type="checkbox" name="rememberMe" value="true" />
+              <span>Remember me</span>
+            </label>
+
+            <a asp-controller="Auth"
+              asp-action="ForgotPassword"
+              class="auth-link-small">
+              Forgot password?
+            </a>
+          </div>
+
+          <div class="auth-actions">
+            <button type="submit" class="auth-button auth-button-primary">
+              Login
+            </button>
+
+            <div class="auth-divider">
+              <span class="auth-divider-line"></span>
+              <span class="auth-divider-text">or</span>
+              <span class="auth-divider-line"></span>
+            </div>
+
+            <button
+              type="button"
+              class="auth-button auth-button-secondary"
+              id="goToJoinFromLogin">
+              Enter room with code
+            </button>
+          </div>
+      </form>
+
+      <p class="auth-bottom-text">
+        Don’t have an account?
+        <button class="auth-link-inline" id="goToSignupFromLogin" type="button">
+          Sign Up
+        </button>
+      </p>
+    </section>
+
+    <!-- JOIN EVENT WITH CODE SCREEN -->
+    <section class="auth-screen @(authMode == "join" ? "is-active" : "")"
+             id="screen-join"
+             aria-label="Join event with code screen">
+      <h1 class="auth-title">Join Event with Code</h1>
+      <p class="auth-subtitle">
+        Welcome! Please use the unique code and pin sent to you by the event organizer.
+      </p>
+
+      <form id="joinForm"
+            class="auth-form"
+            method="post"
+            asp-controller="Auth"
+            asp-action="JoinEvent">
+        
+        <div class="auth-floating-group">
+          <input
+            id="join-code"
+            name="eventCode"
+            type="text"
+            class="auth-input"
+            placeholder=" "
+            value="@ViewBag.JoinCodeFromLink"
+            required
+          />
+          <label class="auth-floating-label" for="join-code">Event Code</label>
+        </div>
+
+        <div class="auth-floating-group">
+          <div class="auth-input-wrapper">
+            <input
+              id="join-pin"
+              name="personalPin"
+              type="password"
+              class="auth-input auth-input-with-toggle auth-password"
+              placeholder=" "
+              value="@ViewBag.JoinPinFromLink"
+              required
+            />
+            <label class="auth-floating-label" for="join-pin">Personal Pin</label>
+            <button
+              type="button"
+              class="password-toggle"
+              data-target="join-pin"
+              data-visible="false"
+              aria-label="Toggle pin visibility"
+            >
+              🙉
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-actions">
+          <button type="submit" class="auth-button auth-button-primary">
+            Join Event
+          </button>
+
+          <div class="auth-divider">
+            <span class="auth-divider-line"></span>
+            <span class="auth-divider-text">or</span>
+            <span class="auth-divider-line"></span>
+          </div>
+
+          <button
+            type="button"
+            class="auth-button auth-button-secondary"
+            id="goToLoginFromJoin"
+          >
+            Login
+          </button>
+        </div>
+      </form>
+
+      <p class="auth-bottom-text">
+        <a
+          href="#"
+          class="auth-link-small auth-link-pink"
+          id="codeHelpLink"
+        >
+          Where is my code and pin?
+        </a>
+      </p>
+    </section>
+
+    <!-- SIGN UP SCREEN -->
+    <section class="auth-screen @(authMode == "signup" ? "is-active" : "")"
+            id="screen-signup"
+            aria-label="Sign up screen">
+      <h1 class="auth-title">Mabuhay!</h1>
+      <p class="auth-subtitle">Create your account.</p>
+
+      <form id="signupForm"
+            class="auth-form"
+            method="post"
+            asp-controller="Auth"
+            asp-action="RegisterOrganizer">
+        @Html.AntiForgeryToken()
+
+        <div class="auth-floating-group">
+          <input
+            id="signup-firstname"
+            name="firstName"
+            type="text"
+            class="auth-input"
+            placeholder=" "
+            required
+          />
+          <label class="auth-floating-label" for="signup-firstname">First Name</label>
+        </div>
+
+        <div class="auth-floating-group">
+          <input
+            id="signup-lastname"
+            name="lastName"
+            type="text"
+            class="auth-input"
+            placeholder=" "
+          />
+          <label class="auth-floating-label" for="signup-lastname">Last Name (optional)</label>
+        </div>
+
+        <div class="auth-floating-group">
+          <input
+            id="signup-email"
+            name="email"
+            type="email"
+            class="auth-input"
+            placeholder=" "
+            required
+          />
+          <label class="auth-floating-label" for="signup-email">Email</label>
+        </div>
+
+        <div class="auth-floating-group">
+          <div class="auth-input-wrapper">
+            <input
+              id="signup-password"
+              name="password"
+              type="password"
+              class="auth-input auth-input-with-toggle auth-password"
+              placeholder=" "
+              required
+            />
+            <label class="auth-floating-label" for="signup-password">Create Password</label>
+            <button
+              type="button"
+              class="password-toggle"
+              data-target="signup-password"
+              data-visible="false"
+              aria-label="Toggle password visibility"
+            >
+              🙉
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-floating-group">
+          <div class="auth-input-wrapper">
+            <input
+              id="signup-password-confirm"
+              name="confirmPassword"
+              type="password"
+              class="auth-input auth-input-with-toggle auth-password"
+              placeholder=" "
+              required
+            />
+            <label class="auth-floating-label" for="signup-password-confirm">Confirm Password</label>
+            <button
+              type="button"
+              class="password-toggle"
+              data-target="signup-password-confirm"
+              data-visible="false"
+              aria-label="Toggle password visibility"
+            >
+              🙉
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-actions-single">
+          <button type="submit" class="auth-button auth-button-primary">
+            Sign Up
+          </button>
+        </div>
+      </form>
+
+      <p class="auth-bottom-text">
+        Already have an account?
+        <button class="auth-link-inline" id="goToLoginFromSignup" type="button">
+          Sign In
+        </button>
+      </p>
+    </section>
+
+    @* ---------- REACTIVATE ACCOUNT MODAL ---------- *@
+    @if (ViewBag.ShowReactivationModal == true && ViewBag.ReactivationUserId != null)
+    {
+        <div class="auth-message-overlay" id="reactivateMessageOverlay" aria-hidden="false" style="display:flex;">
+            <div class="auth-message-modal auth-message-error">
+                <h3 style="margin-top:0; font-size:18px; font-weight:600; color:#1f2937;">Account Deactivated</h3>
+                <p class="auth-message-text" style="margin-bottom:20px;">
+                    This email has been deactivated. Do you want to reactivate your account?
+                </p>
+
+                <div style="display:flex; gap:10px; width:100%;">
+                    <button type="button" 
+                            class="auth-button auth-button-secondary auth-message-close"
+                            onclick="document.getElementById('reactivateMessageOverlay').style.display='none'"
+                            style="flex:1;">
+                        No
+                    </button>
+                    
+                    <form asp-controller="Auth" asp-action="ReactivateAccount" method="post" style="flex:1;">
+                        <input type="hidden" name="userId" value="@ViewBag.ReactivationUserId" />
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="auth-button auth-button-primary" style="width:100%;">
+                            Yes, Reactivate
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ---------- CENTERED MESSAGE POPUP (for errors / success) ---------- *@
+    @{
+        var errorFromTemp =
+            TempData["AuthError"] as string
+            ?? TempData["Error"] as string;
+
+        var successFromTemp =
+            TempData["AuthSuccess"] as string
+            ?? TempData["RegisterSuccess"] as string;
+
+        // also support ViewBag-based messages (same-request returns)
+        var errorFromViewBag =
+            ViewBag.LoginError as string
+            ?? ViewBag.RegisterError as string;
+
+        var authError = errorFromTemp ?? errorFromViewBag;
+        var authSuccess = successFromTemp;
+        var hasMessage = !string.IsNullOrEmpty(authError) || !string.IsNullOrEmpty(authSuccess);
+    }
+
+    @if (hasMessage)
+    {
+        <div class="auth-message-overlay" id="authMessageOverlay" aria-hidden="false">
+            <div class="auth-message-modal @(authError != null ? "auth-message-error" : "auth-message-success")">
+                <p class="auth-message-text">
+                    @(authError ?? authSuccess)
+                </p>
+
+                <button type="button"
+                        class="auth-button auth-button-primary auth-message-close"
+                        id="authMessageClose">
+                    OK
+                </button>
+            </div>
+        </div>
+    }
+
+  </div> <!-- /.auth-card -->
+</div>   <!-- /.auth-page -->
+
+<div class="auth-modal" id="codeHelpModal" aria-hidden="true">
+  <div class="auth-modal-inner">
+    <p class="auth-modal-text">
+      Your event code and personal pin are provided by your event organizer.
+      Please check your invitation email or contact your organizer directly.
+    </p>
+    <button
+      type="button"
+      class="auth-button auth-button-primary auth-modal-close"
+    >
+      Close
+    </button>
+  </div>
+</div>

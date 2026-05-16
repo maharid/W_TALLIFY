@@ -1,0 +1,1147 @@
+/* ==========================================================================
+   GLOBAL DESIGN TOKENS — WITH COLOR NAME COMMENTS
+   ========================================================================== */
+:root {
+  /* ------------------------------------------------------------------------
+     COLORS – Core App Palette
+     ------------------------------------------------------------------------ */
+
+  --color-bg: #f5f6fa;               /* very light grayish blue background */
+  --color-surface: #ffffff;          /* white card/panel background */
+  --color-surface-alt: #f9fafb;      /* soft off-white (inputs) */
+
+  --color-border: #e5e7eb;           /* light gray border */
+  --color-border-strong: #d1d5db;    /* medium gray border (table header) */
+
+  --color-text: #111827;             /* almost black – main text */
+  --color-text-soft: #4b5563;        /* medium gray – labels */
+  --color-text-faint: #6b7280;       /* light gray – helper text */
+
+  /* ------------------------------------------------------------------------
+     PRIMARY THEME COLOR – USER-CONTROLLED (Settings)
+     ------------------------------------------------------------------------ */
+  --color-primary: #ff007a;          /* vibrant hot pink (main brand theme) */
+  --color-primary-soft: rgba(255,0,122,0.35);   /* soft pink glow/shadow */
+  --color-primary-soft-bg: rgba(255,0,122,0.12);/* faint pink background */
+  --color-primary-text: #ffffff;     /* white text on primary */
+  --color-link: var(--color-primary); /* link color matches theme */
+
+  /* ------------------------------------------------------------------------
+     STATUS COLORS
+     ------------------------------------------------------------------------ */
+  --color-success-bg: #dcfce7;       /* mint green background */
+  --color-success-text: #166534;     /* deep green text */
+
+  --color-warning-bg: #fef3c7;       /* pale yellow background */
+  --color-warning-text: #b45309;     /* dark amber text */
+
+  --color-danger-bg: #fee2e2;        /* soft red background */
+  --color-danger-text: #b91c1c;      /* strong red text */
+  --color-danger-primary: #ef4444; /* Standard red for buttons */
+  --color-danger-hover: #dc2626;   /* Darker red for hover */
+
+  --color-info-bg: #e0f2fe;          /* icy blue background */
+  --color-info-text: #075985;        /* deep ocean blue text */
+
+  --color-neutral-bg: #e5e7eb;       /* light gray neutral background */
+  --color-neutral-text: #374151;     /* standard gray text */
+
+  /* ------------------------------------------------------------------------
+     EVENT-THEME (Preset per competition)
+     Fallbacks to the system theme above
+     ------------------------------------------------------------------------ */
+  --event-primary: var(--color-primary);         /* event main color */
+  --event-primary-soft: var(--color-primary-soft);
+  --event-primary-soft-bg: var(--color-primary-soft-bg);
+  --event-primary-text: var(--color-primary-text);
+
+  /* ------------------------------------------------------------------------
+     TYPOGRAPHY – Desktop first
+     ------------------------------------------------------------------------ */
+  --font-size-xs: 12px;              /* small meta text */
+  --font-size-sm: 14px;              /* labels, table header */
+  --font-size-md: 16px;              /* main body text */
+  --font-size-lg: 18px;              /* section titles */
+  --font-size-xl: 22px;              /* modal / page titles */
+  --font-size-2xl: 26px;             /* large dashboard headers */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.65;
+
+  /* ------------------------------------------------------------------------
+     SPACING — 4/8 system
+     ------------------------------------------------------------------------ */
+  --space-1: 4px;                    /* smallest gap */
+  --space-2: 8px;                    /* compact spacing */
+  --space-3: 12px;                   
+  --space-4: 16px;                   
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;                   /* largest gap */
+
+  /* ------------------------------------------------------------------------
+     RADII
+     ------------------------------------------------------------------------ */
+  --radius-xs: 4px;                  /* small chips, tight corners */
+  --radius-sm: 6px;                  
+  --radius-md: 10px;                 /* inputs, buttons, cards */
+  --radius-lg: 14px;                 /* larger cards */
+  --radius-xl: 18px;                 /* modals */
+  --radius-2xl: 22px;
+  --radius-pill: 999px;              /* full pill */
+
+  /* ------------------------------------------------------------------------
+     SHADOWS – Soft Apple-like shadows
+     ------------------------------------------------------------------------ */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.06);    /* tiny elevation */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);    /* small cards */
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10);   /* normal cards */
+  --shadow-lg: 0 6px 20px rgba(0,0,0,0.14);   /* large surfaces */
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.18);  /* modals */
+  --shadow-focus: 0 0 0 3px var(--color-primary-soft); /* focus ring */
+
+  /* ------------------------------------------------------------------------
+     INPUTS
+     ------------------------------------------------------------------------ */
+  --input-bg: var(--color-surface-alt);   /* light off-white */
+  --input-bg-focus: #ffffff;              /* pure white on focus */
+
+  --input-border: var(--color-border);
+  --input-border-focus: var(--color-primary);
+
+  --input-padding-y: 10px;
+  --input-padding-x: 14px;
+  --input-font-size: var(--font-size-md);
+  --input-radius: var(--radius-md);
+
+  /* ------------------------------------------------------------------------
+     BUTTONS
+     ------------------------------------------------------------------------ */
+  --btn-radius: var(--radius-md);       /* Standard button radius (10px) */
+  --btn-font-size: var(--font-size-md);
+
+  --btn-padding-y: 10px;
+  --btn-padding-x: 18px;
+
+  --btn-primary-bg: var(--color-primary);         /* hot pink button */
+  --btn-primary-text: var(--color-primary-text);  /* white text */
+  --btn-primary-shadow: none;
+
+  --btn-secondary-bg: #ffffff;              /* white */  
+  --btn-secondary-text: #374151;            /* dark gray */
+  --btn-secondary-border: var(--color-border);
+
+  --btn-danger-bg: #ef4444;                /* bright red */
+  --btn-danger-text: #ffffff;              /* white text */
+
+  /* Small buttons */
+  --btn-sm-padding-y: 6px;
+  --btn-sm-padding-x: 14px;
+  --btn-sm-font-size: var(--font-size-sm);
+
+  /* ------------------------------------------------------------------------
+     TABLES
+     ------------------------------------------------------------------------ */
+  --table-font-size: var(--font-size-sm);
+  --table-header-bg: #f3f4f6;              /* light gray header */
+  --table-row-alt-bg: #fafbfc;             /* subtle striped rows */
+
+  --table-cell-padding-y: 12px;
+  --table-cell-padding-x: 20px;
+  --table-border-color: var(--color-border-strong);
+
+  /* ------------------------------------------------------------------------
+     COMBO BOXES
+     ------------------------------------------------------------------------ */
+  --combo-height: 38px;
+  --combo-font-size: var(--font-size-sm);
+  --combo-bg: #ffffff;                     /* white dropdown */
+  --combo-border: var(--color-border);
+  --combo-radius: var(--radius-md);
+
+  /* ------------------------------------------------------------------------
+     MODALS
+     ------------------------------------------------------------------------ */
+  --modal-backdrop-bg: rgba(15,23,42,0.45); /* deep navy transparent */
+  --modal-bg: var(--color-surface);         /* white modal card */
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-xl);
+  --modal-padding: 24px;
+  --modal-max-width: 480px;
+
+  /* ------------------------------------------------------------------------
+     LAYOUT SIZES
+     ------------------------------------------------------------------------ */
+  --content-max-width: 1280px;             /* max width of pages */
+  --sidebar-width: 260px;
+  --navbar-height: 64px;
+
+  /* ------------------------------------------------------------------------
+     TRANSITIONS & Z-INDEX
+     ------------------------------------------------------------------------ */
+  --transition-fast: 0.12s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  --z-header: 50;
+  --z-dropdown: 55;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-popover: 75;
+
+  /* ==========================================================================
+     GLOBAL FORM ELEMENT STYLES
+     ========================================================================== */
+  input::placeholder, textarea::placeholder {
+    color: #9CA3AF !important;
+    opacity: 1; /* Firefox fix */
+  }
+  
+  /* Standardize appearance for form elements */
+  input, select, textarea, button {
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  
+  /* Custom Checkbox Styling (Material Design Mimic) */
+  input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+
+      width: 18px;
+      height: 18px;
+      border: 2px solid #757575; /* Material Gray 600 */
+      border-radius: 2px;        /* Standard Material radius */
+      background-color: transparent;
+      
+      display: inline-block;
+      position: relative;
+      vertical-align: middle;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0;
+
+      transition: background-color 0.1s ease-in-out, 
+                  border-color 0.1s ease-in-out,
+                  box-shadow 0.1s ease-in-out;
+  }
+
+  /* Checked State */
+  input[type="checkbox"]:checked {
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+  }
+
+  /* Checkmark Icon */
+  input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 1px;
+      width: 5px;
+      height: 10px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+  }
+
+  /* Hover State (Unchecked) */
+  input[type="checkbox"]:hover:not(:checked):not(:disabled) {
+      border-color: #202124;
+      background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  /* Hover State (Checked) */
+  input[type="checkbox"]:hover:checked:not(:disabled) {
+      filter: brightness(0.95);
+  }
+
+  /* Focus State */
+  input[type="checkbox"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--color-primary-soft);
+      border-color: var(--color-primary);
+  }
+}
+
+/* ==========================================================================
+   GLOBAL DISABLED STATES
+   ========================================================================== */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+.btn-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+    filter: grayscale(100%);
+    pointer-events: none; /* Optional: prevents hover states from triggering */
+}
+
+/* Specific overrides for buttons to ensure they look 'flat' */
+button:disabled {
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* ==========================================================================
+   GLOBAL BUTTON STYLES (Soft & Small variants)
+   ========================================================================== */
+
+/* Soft Primary Button */
+.btn-primary-soft {
+    background-color: var(--color-primary-soft-bg);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-soft);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    font-size: var(--btn-font-size);
+    border-radius: var(--btn-radius);
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary-soft {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    font-size: var(--btn-font-size);
+    border-radius: var(--btn-radius);
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary-soft:hover {
+    background-color: var(--color-primary-soft);
+    filter: none; /* Override global brightness filter for specific hover */
+}
+
+/* Soft Danger Button */
+.btn-danger-soft {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid var(--color-danger-text);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    font-size: var(--btn-font-size);
+    border-radius: var(--btn-radius);
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-danger-soft:hover {
+    background-color: var(--color-danger-text);
+    color: #fff;
+    filter: none; /* Override global brightness filter for specific hover */
+}
+
+/* Small Button Size */
+.btn-small {
+    padding: var(--btn-sm-padding-y) var(--btn-sm-padding-x);
+    font-size: var(--btn-sm-font-size);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "SF Pro Text", "SF Pro Display", "Poppins",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  color: var(--color-text);
+}
+
+/* Links: no underline anywhere */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  text-decoration: none;
+}
+
+/* AUTH EXCEPTION:
+   Login / auth pages should ALWAYS use Tallify pink,
+   regardless of color scheme chosen in settings. */
+body.auth-body {
+  --color-primary: #ff007a;
+  --color-primary-soft: rgba(255, 0, 122, 0.35);
+  --color-primary-soft-bg: rgba(255, 0, 122, 0.12);
+  --color-primary-text: #ffffff;
+  --color-link: #ff007a;
+}
+
+/* Utilities */
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.button-reset {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+}
+
+/* App shell */
+
+.app-body {
+  margin: 0;
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* Header */
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px max(32px, calc((100% - var(--content-max-width)) / 2)) 16px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+/* Brand */
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+/* Nav & actions */
+
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.app-nav-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  color: #4b5563;
+  position: relative;
+  text-decoration: none; /* Removed underline */
+}
+
+.app-nav-link:hover {
+  color: var(--color-primary);
+}
+
+.app-nav-link.is-active {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.app-nav-link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -10px;
+  height: 2px;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.app-icon-button:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.app-icon-button-settings--active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-text);
+}
+
+.app-icon-button-settings--active:hover {
+  background-color: var(--color-primary);
+  opacity: 0.9;
+  color: var(--color-primary-text);
+  border-color: var(--color-primary);
+}
+
+/* Profile pill in header */
+.app-profile-pill {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background-color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.app-profile-pill-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Style for initials in header */
+.app-profile-initials-circle {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit; /* Inherit from .app-profile-pill */
+  background-color: var(--color-primary); /* Use theme color */
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600; /* Slightly less bold than settings */
+  font-size: 14px; /* Smaller font size for header */
+}
+
+/* Main */
+
+.app-main {
+  background-color: var(--color-bg);
+  padding: 32px max(32px, calc((100% - var(--content-max-width)) / 2)) 40px;
+}
+
+/* Org card */
+
+.org-section {
+  margin-bottom: 32px;
+}
+
+.org-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  padding: 24px 28px;
+}
+
+.org-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  background-color: #ffe4f1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.org-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.org-title {
+  font-size: 20px;
+  margin: 0;
+}
+
+.org-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Panels */
+
+.panel-section {
+  margin-bottom: 32px;
+}
+
+.panel-header {
+  margin-bottom: 16px;
+}
+
+.panel-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.panel-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Page visibility helpers */
+
+.app-page {
+  display: none;
+}
+
+.app-page.is-active {
+  display: block;
+}
+
+/****************************************************
+ * GLOBAL NOTIFICATION TOAST
+ ****************************************************/
+.notif-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 12px 20px;
+    background: #ef4444; /* default danger toast */
+    color: #fff;
+    border-radius: 10px;
+    font-size: 14px;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.3);
+}
+
+.notif-toast.is-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.notif-toast-message {
+    display: inline-block;
+}
+
+/* Responsive */
+
+@media (max-width: 960px) {
+  .app-header {
+    padding: 16px 20px 12px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .app-main {
+    padding: 24px 16px 32px;
+  }
+}
+
+/* ==========================================================================
+   CUSTOM SCROLLBAR (Hidden but scrollable)
+   ========================================================================== */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 0px;
+    height: 0px;
+    background: transparent;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;  /* IE 10+ */
+}
+
+/* ===================================================================
+   SUMMARY MODAL (Generic)
+   =================================================================== */
+
+.summary-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--modal-backdrop-bg);
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal); /* Ensure it's above other content */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.summary-overlay.open {
+    display: flex; /* Show when 'open' class is present */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.summary-modal {
+    background: var(--modal-bg);
+    border-radius: var(--modal-radius);
+    padding: var(--modal-padding);
+    width: 90vw;
+    max-width: var(--modal-max-width);
+    max-height: 80vh; /* Should use a variable or be specific if other modals exist */
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--modal-shadow);
+}
+
+.summary-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.summary-modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0; /* Remove default h3 margin */
+}
+
+.screen-modal { 
+    max-width: 350px; /* Smaller modal */
+    padding: 24px;
+    border-radius: 24px; /* iOS-like rounded corners */
+    background-color: rgba(255, 255, 255, 0.95); /* Slightly translucent */
+    backdrop-filter: blur(20px); /* Blur effect */
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); /* Soft, deep shadow */
+}
+
+.screen-title { 
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text);
+    text-align: center;
+}
+
+/* X button -------------------------------------------------------- */
+.screen-close-btn { 
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%; /* Circular close button */
+    color: var(--color-text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(0,0,0,0.05);
+}
+
+.screen-close-btn:hover {
+    background-color: rgba(0,0,0,0.1);
+    color: var(--color-text);
+}
+
+/* Body text ------------------------------------------------------- */
+.screen-body { 
+    margin: 16px 0 24px 0;
+    font-size: 15px;
+    color: var(--color-text-soft);
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* Buttons --------------------------------------------------------- */
+.screen-actions { 
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+/* Ensure both take equal width */
+.screen-actions button,
+.screen-actions .logout-form {
+    flex: 1 1 0; 
+    min-width: 0;
+}
+
+.screen-actions .logout-form button {
+    width: 100%;
+}
+
+/* Buttons style */
+.btn-screen-cancel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 12px 20px; 
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-screen-cancel:hover {
+    background: var(--color-bg);
+    border-color: var(--color-border-strong);
+}
+
+.btn-screen-confirm {
+    background: var(--color-danger-primary); 
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px; 
+    font-size: 15px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); /* Red glow */
+}
+
+.btn-screen-confirm:hover {
+    background: var(--color-danger-hover); 
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* For generic primary action in modal (not danger) */
+.btn-screen-primary {
+    background: var(--color-primary);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-size: 15px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-screen-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Fix overflowing since form grows */
+.logout-form {
+    margin: 0;
+}
+
+/* ===================================================================
+   UNIFIED TABLE STYLES (.app-table)
+   =================================================================== */
+
+.app-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--table-font-size);
+    text-align: left;
+    background-color: var(--color-surface);
+}
+
+.app-table thead th {
+    background-color: var(--table-header-bg);
+    color: var(--color-text-soft);
+    font-weight: var(--font-weight-semibold);
+    padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: var(--font-size-xs);
+}
+
+.app-table tbody td {
+    padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+    vertical-align: middle;
+}
+
+.app-table tbody tr:nth-child(even) {
+    background-color: var(--table-row-alt-bg);
+}
+
+.app-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--color-primary);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* ==========================================================================
+   GLOBAL BUTTON HOVER/CLICK EFFECTS
+   ========================================================================== */
+button:not(:disabled):not(.password-toggle):not(.tab-link):not(.tally-tab-link):not(.manage-event-actions button):not(.event-input-icon-btn),.button-like:not(:disabled),
+a.button:not(:disabled),
+.btn:not(:disabled),
+.btn-primary:not(:disabled),
+.btn-secondary:not(:disabled),
+.btn-danger:not(:disabled),
+.btn-warning:not(:disabled),
+.btn-info:not(:disabled),
+.btn-success:not(:disabled),
+.auth-button:not(:disabled),
+.auth-button-primary:not(:disabled),
+.auth-button-secondary:not(:disabled),
+.dashboard-create-btn:not(:disabled),
+.btn-nav:not(:disabled),
+.btn-logout:not(:disabled),
+.app-icon-button:not(:disabled) {
+    cursor: pointer;
+    position: relative;
+    /* Common transitions */
+    transition: background-color 0.2s ease-in-out, 
+                color 0.2s ease-in-out, 
+                border-color 0.2s ease-in-out,
+                box-shadow 0.2s ease-in-out,
+                transform 0.2s ease-in-out;
+    
+    /* Default rounded corners */
+    border-radius: var(--radius-md); /* Use 10px from --radius-md */
+}
+
+/* Hover State */
+button:not(:disabled):not(.password-toggle):not(.tab-link):not(.tally-tab-link):not(.event-input-icon-btn):not(.manage-event-actions button):hover,
+.button-like:not(:disabled):hover,
+a.button:not(:disabled):hover,
+.btn:not(:disabled):hover,
+.btn-primary:not(:disabled):hover,
+.btn-secondary:not(:disabled):hover,
+.btn-danger:not(:disabled):hover,
+.btn-warning:not(:disabled):hover,
+.btn-info:not(:disabled):hover,
+.btn-success:not(:disabled):hover,
+.auth-button:not(:disabled):hover,
+.auth-button-primary:not(:disabled):hover,
+.auth-button-secondary:not(:disabled):hover,
+.dashboard-create-btn:not(:disabled):hover,
+.btn-nav:not(:disabled):hover,
+.btn-logout:not(:disabled):hover,
+.app-icon-button:not(:disabled):hover {
+    /* Slightly lifted effect by a subtle shadow, and slight darken */
+    filter: brightness(0.95); /* Darken effect */
+    box-shadow: var(--shadow-sm); /* Lifted effect */
+}
+
+button:not(:disabled):not(.password-toggle):not(.tab-link):not(.tally-tab-link):not(.event-input-icon-btn):not(.manage-event-actions button):active,
+.button-like:not(:disabled):active,
+a.button:not(:disabled):active,
+.btn:not(:disabled):active,
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-danger:not(:disabled):active,
+.btn-warning:not(:disabled):active,
+.btn-info:not(:disabled):active,
+.btn-success:not(:disabled):active,
+.auth-button:not(:disabled):active,
+.auth-button-primary:not(:disabled):active,
+.auth-button-secondary:not(:disabled):active,
+.dashboard-create-btn:not(:disabled):active,
+.btn-nav:not(:disabled):active,
+.btn-logout:not(:disabled):active,
+.app-icon-button:not(:disabled):active {
+    transform: scale(0.98); /* Press effect */
+}
+
+/* Focus State for accessibility */
+button:not(:disabled):not(.password-toggle):not(.tab-link):not(.tally-tab-link):not(.event-input-icon-btn):not(.manage-event-actions button):focus-visible,
+.button-like:not(:disabled):focus-visible,
+a.button:not(:disabled):focus-visible {
+    outline: 2px solid var(--color-primary-soft); /* Visible outline */
+    outline-offset: 2px;
+}
+
+/* Apply border-radius to inputs acting as buttons as well, if applicable */
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled) {
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease-in-out;
+}
+
+input[type="submit"]:not(:disabled):hover,
+input[type="button"]:not(:disabled):hover {
+    filter: brightness(0.95);
+    box-shadow: var(--shadow-sm);
+}
+
+input[type="submit"]:not(:disabled):active,
+input[type="button"]:not(:disabled):active {
+    transform: scale(0.98);
+}
+
+input[type="submit"]:not(:disabled):focus-visible,
+input[type="button"]:not(:disabled):focus-visible {
+    outline: 2px solid var(--color-primary-soft);
+    outline-offset: 2px;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Judge Input Invalid Styling */
+input.score-input.invalid {
+    color: var(--color-danger-text);
+    border-color: var(--color-danger-primary);
+}
+
+/* ==========================================================================
+   GLOBAL LOADER OVERLAY
+   ========================================================================== */
+#global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.75);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#global-loader.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--color-primary-soft-bg);
+    border-top: 5px solid var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,233 @@
+/* ============================================================
+   EVENTS PAGE STYLING
+   Applied ONLY on Events/Index
+   ============================================================ */
+
+/* Note: Core colors are inherited from general.css */
+
+/* Page Container */
+.events-page {
+    margin: 0; /* Refactored to 0 to match panel layout */
+    padding: 0;
+    font-size: var(--font-size-sm);
+    width: 100%; /* Ensure it takes full width */
+}
+
+.events-page table thead{
+    /* Handled by .app-table */
+}
+
+/* Table Card */
+.events-table-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 4px 0;
+    margin-top: var(--space-4);
+}
+
+
+
+.panel-table-wrapper {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-top: var(--space-4);
+    width: 100%; /* Force wrapper to take full width */
+    min-width: 0; /* Allow shrinking in flex/grid contexts */
+}
+
+/* Pills - DEPRECATED - Uses global .pill classes now but keeping for backup */
+.pill {
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: var(--font-weight-semibold);
+}
+
+/* ... rest of specific table styles ... */
+/* Table styles have been unified into .app-table in general.css */
+
+/* last column (Actions) aligns to the right */
+
+
+.events-btn-manage {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    background-color: var(--color-surface); /* White background */
+    color: var(--color-text-soft);          /* Gray text */
+    border: 1px solid var(--color-border);  /* Light gray border */
+    border-radius: var(--radius-md);        /* Slightly rounded corners */
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    box-shadow: var(--shadow-xs);
+}
+
+.events-btn-manage:hover {
+    background-color: var(--color-primary-soft-bg);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ============================================================
+   CREATE EVENT WIZARD STYLES
+   (Added for Upload/Generate buttons)
+   ============================================================ */
+
+/* Upload XLSX Button */
+#btnUploadContestants {
+    background-color: #fff;
+    border: 2px dashed var(--color-border-strong);
+    color: var(--color-text-soft);
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all var(--transition-fast);
+    width: 100%;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+#btnUploadContestants:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+}
+
+#btnUploadContestants i {
+    font-size: 20px;
+    color: #166534; /* Excel green hint */
+}
+
+/* Upload Photo (Header) */
+.header-upload-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.header-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-upload-btn:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-bg);
+    transform: translateY(-1px);
+}
+
+.header-filename {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-soft);
+    font-style: italic;
+}
+
+/* Button Primary Square (used for Contestant Photo Upload & Generate PIN) */
+.btn-primary-square {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-soft);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 100px;
+}
+
+.btn-primary-square:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: var(--color-primary-soft-bg);
+    box-shadow: var(--shadow-xs);
+}
+
+.btn-primary-square.btn-small {
+    padding: 6px 12px;
+    font-size: 13px;
+    min-width: auto;
+}
+
+/* Specific Style for Generate PIN Buttons to make them distinct */
+[data-generate-pin] {
+    background-color: var(--color-info-bg);
+    color: var(--color-info-text);
+    border-color: transparent;
+    font-weight: var(--font-weight-medium);
+}
+
+[data-generate-pin]:hover {
+    background-color: #bae6fd; /* slightly darker blue */
+    border-color: var(--color-info-text);
+    color: var(--color-info-text);
+}
+
+/* Add Create/Add Buttons (Dashed) */
+.btn-create-add {
+    background-color: transparent;
+    border: 1px dashed var(--color-border-strong);
+    color: var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    width: 100%;
+    text-align: center;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-create-add:hover {
+    background-color: var(--color-primary-soft-bg);
+    border-color: var(--color-primary);
+}
+
+/* Button Danger Soft (used for Remove actions) */
+.btn-danger-soft {
+    background-color: var(--color-danger-bg);
+    color: var(--color-danger-text);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    transition: background-color 0.2s;
+}
+
+.btn-danger-soft:hover {
+    background-color: #fca5a5; /* slightly darker red bg */
+}
+
+.btn-danger-soft.btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+}

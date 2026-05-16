@@ -1,0 +1,98 @@
+@* @{
+    ViewData["Title"] = "Events";
+    ViewBag.ActiveNav = "Events";
+}
+
+<section class="panel-section">
+    <header class="panel-header">
+        <h2 class="panel-title">Events</h2>
+        <p class="panel-subtitle">
+            View and manage all events in your organization.
+        </p>
+    </header>
+
+    <div class="filter-row">
+        <div class="filter-row-left">
+            <input type="text"
+                   class="filter-input"
+                   placeholder="Search event" />
+            <button type="button" class="filter-search-btn">
+                Search
+            </button>
+        </div>
+
+        <div class="filter-row-right">
+            <div class="filter-select filter-select--combo" data-filter-select="type">
+                <button type="button" class="filter-select-trigger">
+                    <span class="filter-select-label" data-filter-label="type">All Types</span>
+                    <span class="filter-select-icon"><i class="ri-arrow-down-s-line"></i></span>
+                </button>
+                <div class="filter-select-menu">
+                    <button type="button"
+                            class="filter-select-option is-selected"
+                            data-filter-value="all">All Types</button>
+                    <button type="button"
+                            class="filter-select-option"
+                            data-filter-value="cb">Criteria-Based</button>
+                    <button type="button"
+                            class="filter-select-option"
+                            data-filter-value="ob">Objective-Based</button>
+                </div>
+            </div>
+
+            <div class="filter-select filter-select--combo" data-filter-select="status">
+                <button type="button" class="filter-select-trigger">
+                    <span class="filter-select-label" data-filter-label="status">All Status</span>
+                    <span class="filter-select-icon"><i class="ri-arrow-down-s-line"></i></span>
+                </button>
+                <div class="filter-select-menu">
+                    <button type="button"
+                            class="filter-select-option is-selected"
+                            data-filter-value="all">All Status</button>
+                    <button type="button"
+                            class="filter-select-option"
+                            data-filter-value="open">Open</button>
+                    <button type="button"
+                            class="filter-select-option"
+                            data-filter-value="preparing">Preparing</button>
+                    <button type="button"
+                            class="filter-select-option"
+                            data-filter-value="closed">Closed</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="button"
+        id="btnCreateEventEvents"
+        class="dashboard-create-event-btn">
+        Create Event
+    </button>
+
+</section>
+
+<section class="panel-section">
+    <header class="panel-header">
+        <h3 class="panel-title">Recent Activities</h3>
+    </header>
+
+    <div class="panel-table-wrapper">
+        <table class="app-table">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>Type</th>
+                    <th>Created At</th>
+                    <th>Event Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="table-empty-row">
+                    <td colspan="6">No events created yet.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section> *@
