@@ -43,7 +43,7 @@
         <div class="events-grid">
             @foreach (var ev in Model)
             {
-                var typeLabel = ev.EventType == "criteria" ? "CB" : "ORW";
+                var typeLabel = ev.EventType == "criteria" ? "WA" : "PB";
                 var typeClass = ev.EventType == "criteria" ? "pill-type-cb" : "pill-type-orw";
                 
                 var statusText = string.IsNullOrWhiteSpace(ev.Status) ? "Preparing" : ev.Status;

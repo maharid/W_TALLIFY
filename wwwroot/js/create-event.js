@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
      * STATE
      * =======================================================*/
     let currentStep = 1;
-    const totalSteps = 5;
+    const totalSteps = 6;
     let eventThemeColor = "#ff007a";
     window.selectedHeaderImageFileName = "";
     let usedJudgePins = new Set();
@@ -101,11 +101,12 @@ document.addEventListener("DOMContentLoaded", function () {
      * =======================================================*/
     function stepLabel(step) {
         switch (step) {
-            case 1: return "Event Identity";
-            case 2: return "Scoring Logic";
-            case 3: return "Contestant Roster";
-            case 4: return "Judging Panel";
-            case 5: return "Branding & Review";
+            case 1: return "Event Details";
+            case 2: return "Scoring Logic & Rounds";
+            case 3: return "Contestants";
+            case 4: return "Judges and Access Code";
+            case 5: return "Branding";
+            case 6: return "Review";
             default: return "";
         }
     }
@@ -113,8 +114,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateStepUI(step) {
         if (stepPillText) stepPillText.textContent = stepLabel(step);
         if (btnNext) {
-            if (step === 5) {
-                btnNext.textContent = "Finalize & Send Judge Invites";
+            if (step === 6) {
+                btnNext.textContent = "Publish Event";
                 btnNext.style.backgroundColor = "var(--color-primary)";
             } else {
                 btnNext.textContent = "Next";
@@ -134,8 +135,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         if (stepIndexEl) stepIndexEl.textContent = step;
         updateStepUI(step);
-        if (step === 5) populateReview();
+        
+        // Update Preview on Step 5
+        if (step === 5) {
+            updateLivePreview();
+        }
+        
+        if (step === 6) populateReview();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateLivePreview() {
+        const data = getDraftData();
+        const previewTitle = document.getElementById("previewTitle");
+        if (previewTitle) previewTitle.textContent = data.eventName || "Your Competition Title";
+
+        const typeChip = document.querySelector("#eventPreviewCard .type-chip");
+        if (typeChip) {
+            typeChip.textContent = data.eventType === "pointing" ? "PB" : "WA";
+        }
+        
+        const previewHeader = document.getElementById("previewHeader");
+        if (previewHeader) {
+            previewHeader.style.backgroundColor = data.themeColor;
+            if (data.headerImage) {
+                const path = data.headerImage.startsWith("/uploads/") ? data.headerImage : "/uploads/" + data.headerImage;
+                previewHeader.style.backgroundImage = `url('${path}')`;
+                previewHeader.style.backgroundSize = "cover";
+                previewHeader.style.backgroundPosition = "center";
+            } else {
+                previewHeader.style.backgroundImage = "none";
+            }
+        }
     }
 
     /* =========================================================
@@ -247,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <label class="event-label" style="font-size:11px;">Weight %</label>
                     <input type="number" class="event-input criteria-weight" placeholder="0" min="1" max="100" value="${data ? data.weight : ''}" />
                 </div>
-                <button type="button" class="btn-danger-soft criteria-remove" style="height:42px; width:42px; display:flex; align-items:center; justify-content:center;"><i class="ri-close-line"></i></button>
+                <button type="button" class="btn-danger-soft criteria-remove" style="height:42px; width:42px; display:flex; align-items:center; justify-content:center;"><i class="ri-delete-bin-line"></i></button>
             </div>
             <div class="criteria-points-row" style="display:${data && data.derivedFrom ? 'none' : 'flex'}; gap:10px; margin-top:8px;">
                 <div class="event-field" style="flex:1;"><label class="event-label" style="font-size:11px;">Min Score</label><input type="number" class="event-input min-point" value="${data ? data.min : '0'}" /></div>
@@ -405,8 +436,11 @@ document.addEventListener("DOMContentLoaded", function () {
             <td><input class="event-input contestant-org" placeholder="e.g. Science Club" /></td>
             <td>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="contestant-photo-thumb" style="width:40px; height:40px; border-radius:8px; background:#FF007F; background-size:cover; background-position:center; border:1px solid #e5e7eb;" data-photo-url=""></div>
+                    <div class="contestant-photo-thumb" style="width:40px; height:40px; border-radius:8px; background:#f3f4f6; background-size:cover; background-position:center; border:1px solid #e5e7eb;" data-photo-url=""></div>
                     <button type="button" class="btn-outline btn-small btn-upload-photo" style="font-size:11px; padding:4px 8px; border-radius:8px;">Upload photo</button>
+                    <button type="button" class="btn-outline btn-small btn-remove-photo" style="display:none; padding:4px 8px; border:none; color:#6b7280; background:transparent; font-size:16px;" title="Remove Photo">
+                        <i class="ri-close-line"></i>
+                    </button>
                     <input type="file" accept="image/*" class="contestant-photo-input" hidden />
                 </div>
             </td>
@@ -416,6 +450,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const nameInput = tr.querySelector(".contestant-name");
         const orgInput = tr.querySelector(".contestant-org");
         const photoBtn = tr.querySelector(".btn-upload-photo");
+        const removePhotoBtn = tr.querySelector(".btn-remove-photo");
         const photoInput = tr.querySelector(".contestant-photo-input");
         const thumb = tr.querySelector(".contestant-photo-thumb");
 
@@ -440,10 +475,26 @@ document.addEventListener("DOMContentLoaded", function () {
                     const path = "/uploads/" + data.fileName;
                     thumb.style.backgroundImage = `url('${path}')`;
                     thumb.dataset.photoUrl = path;
+                    photoBtn.textContent = "Replace photo";
+                    removePhotoBtn.style.display = "inline-flex";
                     saveDraft();
-                } else { showToast(data.message); }
-            } catch (e) { showToast("Upload failed."); }
+                } else { 
+                    showToast(data.message); 
+                    photoBtn.textContent = "Upload photo";
+                }
+            } catch (e) { 
+                showToast("Upload failed."); 
+                photoBtn.textContent = "Upload photo";
+            }
+        });
+
+        removePhotoBtn.addEventListener("click", () => {
+            thumb.style.backgroundImage = "none";
+            thumb.dataset.photoUrl = "";
             photoBtn.textContent = "Upload photo";
+            removePhotoBtn.style.display = "none";
+            photoInput.value = "";
+            saveDraft();
         });
 
         tr.querySelector(".btn-remove-contestant").addEventListener("click", () => {
@@ -513,16 +564,28 @@ document.addEventListener("DOMContentLoaded", function () {
             <td><span class="judge-pin" style="font-family:monospace; font-weight:700; color:var(--color-primary); background:var(--color-primary-soft-bg); padding:4px 8px; border-radius:4px; letter-spacing:2px;">-----</span></td>
             <td>
                 <div style="display:flex; gap:8px;">
-                    <button type="button" class="btn-outline btn-small btn-gen-pin" title="Generate PIN">Pin</button>
+                    <button type="button" class="btn-outline btn-small btn-gen-pin" title="Generate PIN">Generate PIN</button>
                     <button type="button" class="btn-danger-soft btn-small btn-remove-judge"><i class="ri-delete-bin-line"></i></button>
                 </div>
             </td>
         `;
         
+        const nameInput = tr.querySelector(".judge-name");
+        const emailInput = tr.querySelector(".judge-email");
+
+        // REMOVE RED HIGHLIGHT ON TYPING
+        nameInput.addEventListener("input", () => nameInput.classList.remove("is-invalid-red"));
+        emailInput.addEventListener("input", () => emailInput.classList.remove("is-invalid-red"));
+
         tr.querySelector(".btn-gen-pin").addEventListener("click", () => {
-            const name = tr.querySelector(".judge-name").value.trim();
-            const email = tr.querySelector(".judge-email").value.trim();
-            if (!name || !email) { showToast("Name and Email required before generating PIN."); return; }
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            if (!name || !email) { 
+                if (!name) nameInput.classList.add("is-invalid-red");
+                if (!email) emailInput.classList.add("is-invalid-red");
+                showToast("Name and Email required before generating PIN."); 
+                return; 
+            }
             
             const pin = generatePin();
             tr.querySelector(".judge-pin").textContent = pin;
@@ -554,63 +617,192 @@ document.addEventListener("DOMContentLoaded", function () {
         const code = document.getElementById("eventAccessCode").value.trim();
         if (!code) { setError("eventAccessCode", "Required"); showToast("Event Access Code is required."); return false; }
         
-        const rows = judgesBody.querySelectorAll("tr[data-judge-row]");
+        const rows = Array.from(judgesBody.querySelectorAll("tr[data-judge-row]"));
         if (rows.length === 0) { showToast("Please add at least one judge."); return false; }
         
-        let valid = true;
-        rows.forEach(r => {
-            const name = r.querySelector(".judge-name").value.trim();
-            const email = r.querySelector(".judge-email").value.trim();
-            const pin = r.querySelector(".judge-pin").textContent;
-            if (!name || !email || pin === "-----") valid = false;
-        });
-        if (!valid) showToast("Ensure all judges have a name, email, and generated PIN.");
-        return valid;
+        for (let r of rows) {
+            const nameEl = r.querySelector(".judge-name");
+            const emailEl = r.querySelector(".judge-email");
+            const pinEl = r.querySelector(".judge-pin");
+            const name = nameEl.value.trim();
+            const email = emailEl.value.trim();
+            const pin = pinEl.textContent;
+
+            if (!name) {
+                showToast("Name is required");
+                nameEl.classList.add("is-invalid-red");
+                return false;
+            }
+            if (!email) {
+                showToast("Email is required");
+                emailEl.classList.add("is-invalid-red");
+                return false;
+            }
+            if (pin === "-----") {
+                showToast("Ensure all judges have a generated PIN.");
+                return false;
+            }
+        }
+        return true;
     }
 
     /* =========================================================
      * STEP 5 — BRANDING & REVIEW
      * =======================================================*/
+    /* =========================================================
+     * STEP 6 — REVIEW
+     * =======================================================*/
+    /* =========================================================
+     * STEP 6 — REVIEW
+     * =======================================================*/
     function populateReview() {
         const data = getDraftData();
-        
-        // Identity
+
+        // 1. Event Details
         document.getElementById("reviewIdentity").innerHTML = `
-            <div style="font-size:14px; color:#374151;">
-                <p style="margin-bottom:8px;"><strong>Event Name:</strong> ${data.eventName || "—"}</p>
-                <p style="margin-bottom:8px;"><strong>Venue:</strong> ${data.eventVenue || "—"}</p>
-                <p><strong>Start Date:</strong> ${data.eventStartDate} at ${data.eventStartTime}</p>
+            <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151;">
+                <div style="font-weight:700; color:#6b7280;">Event Name:</div>
+                <div style="font-weight:600;">${data.eventName || "—"}</div>
+
+                <div style="font-weight:700; color:#6b7280;">Venue:</div>
+                <div>${data.eventVenue || "—"}</div>
+
+                <div style="font-weight:700; color:#6b7280;">Start Date:</div>
+                <div>${data.eventStartDate} at ${data.eventStartTime}</div>
+
+                <div style="font-weight:700; color:#6b7280;">Description:</div>
+                <div style="white-space:pre-wrap;">${data.eventDescription || "No description provided."}</div>
             </div>
         `;
 
-        // Scoring
-        document.getElementById("reviewScoring").innerHTML = data.rounds.map(r => `
-            <div style="margin-bottom:16px; border-bottom:1px solid #f3f4f6; padding-bottom:12px;">
-                <p style="font-weight:600; margin-bottom:6px;">${r.roundName}</p>
-                <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                    ${r.criteria.map(c => `<span style="background:#eff6ff; color:#1d4ed8; padding:2px 10px; border-radius:20px; font-size:12px;">${c.name}: ${c.weight}%</span>`).join("")}
+        // 2. Scoring Logic & Rounds
+        const logicName = data.eventType === "averaging" ? "Weighted Average" : "Point-Based";
+        let roundsHtml = `
+            <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
+                <div style="font-weight:700; color:#6b7280;">Logic Type:</div>
+                <div>${logicName}</div>
+            </div>
+        `;
+
+        data.rounds.forEach(r => {
+            roundsHtml += `
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:700; color:#6b7280; font-size:13px; margin-bottom:8px;">${r.roundName}</div>
+                    <div class="panel-table-wrapper" style="border:1px solid #e5e7eb; border-radius:8px;">
+                        <table class="app-table" style="font-size:13px; table-layout: fixed; width: 100%;">
+                            <thead style="background:#f9fafb;">
+                                <tr>
+                                    <th style="padding:10px; width:40%;">Criteria</th>
+                                    <th style="padding:10px; width:20%;">Weight</th>
+                                    <th style="padding:10px; width:20%;">Min</th>
+                                    <th style="padding:10px; width:20%;">Max</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            r.criteria.forEach((c) => {
+                roundsHtml += `
+                    <tr>
+                        <td style="padding:10px; font-weight:500;">${c.name}</td>
+                        <td style="padding:10px;">${c.weight + "%"}</td>
+                        <td style="padding:10px;">${c.derivedFrom ? "—" : (c.min !== undefined ? c.min : "—")}</td>
+                        <td style="padding:10px;">${c.derivedFrom ? "—" : (c.max !== undefined ? c.max : "—")}</td>
+                    </tr>
+                `;
+            });
+            roundsHtml += "</tbody></table></div></div>";
+        });
+        document.getElementById("reviewScoring").innerHTML = roundsHtml;
+
+        // 3. Contestants
+        let contHtml = `
+            <div class="panel-table-wrapper" style="border:1px solid #e5e7eb; border-radius:8px;">
+                <table class="app-table" style="font-size:13px; table-layout: fixed; width: 100%;">
+                    <thead style="background:#f9fafb;">
+                        <tr>
+                            <th style="padding:10px; width:10%;">ID</th>
+                            <th style="padding:10px; width:40%;">Name</th>
+                            <th style="padding:10px; width:30%;">Organization</th>
+                            <th style="padding:10px; width:20%;">Photo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        data.contestants.forEach((c, i) => {
+            contHtml += `
+                <tr>
+                    <td style="padding:10px; font-weight:600; color:#6b7280;">C${String(i + 1).padStart(3, "0")}</td>
+                    <td style="padding:10px;">${c.name}</td>
+                    <td style="padding:10px;">${c.org}</td>
+                    <td style="padding:10px;">
+                        <div style="width:40px; height:40px; border-radius:6px; background:#f3f4f6 url('${c.photo || ''}') center/cover no-repeat; border:1px solid #e5e7eb;"></div>
+                    </td>
+                </tr>
+            `;
+        });
+        contHtml += "</tbody></table></div>";
+        document.getElementById("reviewContestants").innerHTML = contHtml;
+
+        // 4. Judges and Access Code
+        let judgeHtml = `
+            <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
+                <div style="font-weight:700; color:#6b7280;">Event Access Code:</div>
+                <div>
+                    <span style="font-family:monospace; font-weight:700; color:var(--color-primary); background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px;">${data.accessCode}</span>
                 </div>
             </div>
-        `).join("") || "No rounds configured.";
+            <div class="panel-table-wrapper" style="border:1px solid #e5e7eb; border-radius:8px;">
+                <table class="app-table" style="font-size:13px; table-layout: fixed; width: 100%;">
+                    <thead style="background:#f9fafb;">
+                        <tr>
+                            <th style="padding:10px; width:10%;">ID</th>
+                            <th style="padding:10px; width:40%;">Name</th>
+                            <th style="padding:10px; width:35%;">Email</th>
+                            <th style="padding:10px; width:15%;">PIN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        data.judges.forEach((j, i) => {
+            judgeHtml += `
+                <tr>
+                    <td style="padding:10px; font-weight:600; color:#6b7280;">J${String(i + 1).padStart(3, "0")}</td>
+                    <td style="padding:10px;">${j.name}</td>
+                    <td style="padding:10px; word-break: break-all;">${j.email}</td>
+                    <td style="padding:10px; font-family:monospace; font-weight:700;">${j.pin}</td>
+                </tr>
+            `;
+        });
+        judgeHtml += "</tbody></table></div>";
+        document.getElementById("reviewJudges").innerHTML = judgeHtml;
 
-        document.getElementById("reviewContestants").innerHTML = `<p style="font-size:14px;">Total of <strong>${data.contestants.length}</strong> participants added.</p>`;
-        document.getElementById("reviewJudges").innerHTML = `<p style="font-size:14px;">Total of <strong>${data.judges.length}</strong> judges assigned.</p>`;
-        
-        // Update Preview Window
-        const previewTitle = document.getElementById("previewTitle");
-        if (previewTitle) previewTitle.textContent = data.eventName || "Your Competition Title";
-        const previewHeader = document.getElementById("previewHeader");
-        if (previewHeader) {
-            previewHeader.style.backgroundColor = data.themeColor;
-            if (data.headerImage) {
-                previewHeader.style.backgroundImage = `url('${data.headerImage}')`;
-                previewHeader.style.backgroundSize = "cover";
-            } else {
-                previewHeader.style.backgroundImage = "none";
-            }
-        }
+        // 5. Branding
+        const headerInfo = data.headerImage ? "Photo Uploaded" : "No photo uploaded";
+        const upperThemeColor = (data.themeColor || "").toUpperCase();
+        document.getElementById("reviewBranding").innerHTML = `
+            <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
+                <div style="font-weight:700; color:#6b7280;">Theme Color:</div>
+                <div>
+                    <span style="font-family:monospace; font-weight:700; color:#000; background-color:${data.themeColor}; padding:4px 10px; border-radius:6px; letter-spacing:1px;">${upperThemeColor}</span>
+                </div>
+
+                <div style="font-weight:700; color:#6b7280;">Header Image:</div>
+                <div>${headerInfo}</div>
+            </div>
+            <div style="transform: scale(0.9); transform-origin: top left; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                <div class="preview-card" style="margin:0; box-shadow:none;">
+                    <div class="preview-header" style="background-color:${data.themeColor}; ${data.headerImage ? `background-image:url('${data.headerImage.startsWith("/uploads/") ? data.headerImage : "/uploads/" + data.headerImage}'); background-size:cover; background-position:center;` : ''}"></div>
+                    <div class="preview-body">
+                        <h3 class="preview-title">${data.eventName || "Your Competition Title"}</h3>
+                        <div class="preview-tags">
+                            <span class="preview-chip type-chip">${data.eventType === "pointing" ? "PB" : "WA"}</span>
+                            <span class="preview-chip status-chip--open">Preparing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
-
     /* =========================================================
      * DRAFTING SYSTEM
      * =======================================================*/
@@ -631,7 +823,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     name: b.querySelector(".criteria-name").value.trim(),
                     weight: parseFloat(b.querySelector(".criteria-weight").value) || 0,
                     min: parseFloat(b.querySelector(".min-point").value) || 0,
-                    max: parseFloat(b.querySelector(".max-point").value) || 100
+                    max: parseFloat(b.querySelector(".max-point").value) || 100,
+                    derivedFrom: b.querySelector(".criteria-derived-from")?.value || ""
                 }))
             })),
             contestants: Array.from(contestantsBody.querySelectorAll("tr[data-contestant-row]")).map(tr => ({
@@ -689,12 +882,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         const container = card.querySelector(".criteria-blocks");
                         container.innerHTML = "";
                         r.criteria.forEach(c => {
-                            addCriteriaBlock(container);
-                            const b = container.lastElementChild;
-                            b.querySelector(".criteria-name").value = c.name;
-                            b.querySelector(".criteria-weight").value = c.weight;
-                            b.querySelector(".min-point").value = c.min;
-                            b.querySelector(".max-point").value = c.max;
+                            addCriteriaBlock(container, c);
                         });
                         updateWeightTracker(card);
                     });
@@ -708,8 +896,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         tr.querySelector(".contestant-name").value = c.name;
                         tr.querySelector(".contestant-org").value = c.org;
                         const thumb = tr.querySelector(".contestant-photo-thumb");
+                        const photoBtn = tr.querySelector(".btn-upload-photo");
+                        const removePhotoBtn = tr.querySelector(".btn-remove-photo");
                         thumb.dataset.photoUrl = c.photo || "";
-                        if (c.photo) thumb.style.backgroundImage = `url('${c.photo}')`;
+                        if (c.photo) {
+                            thumb.style.backgroundImage = `url('${c.photo}')`;
+                            photoBtn.textContent = "Replace photo";
+                            removePhotoBtn.style.display = "inline-flex";
+                        }
                     });
                 }
 
@@ -727,6 +921,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 eventThemeColor = data.themeColor || "#ff007a";
                 window.selectedHeaderImageFileName = data.headerImage || "";
+                
+                // Restore Theme UI
+                document.querySelectorAll(".theme-preset-option").forEach(o => o.classList.remove("is-selected"));
+                const presetOpt = document.querySelector(`.theme-preset-option[data-color="${eventThemeColor}"]`);
+                if (presetOpt) {
+                    presetOpt.classList.add("is-selected");
+                } else {
+                    const customOpt = document.querySelector('.theme-preset-option[data-color="custom"]');
+                    if (customOpt) customOpt.classList.add("is-selected");
+                    const customInput = document.getElementById("eventThemeCustom");
+                    if(customInput) customInput.value = eventThemeColor;
+                }
+
+                // Restore Header Image UI
+                if (window.selectedHeaderImageFileName) {
+                    document.getElementById("headerFileName").textContent = window.selectedHeaderImageFileName;
+                    const btnText = document.getElementById("headerImageBtnText");
+                    if (btnText) btnText.textContent = "Replace photo";
+                    const rmBtn = document.getElementById("btnRemoveHeaderImage");
+                    if (rmBtn) rmBtn.style.display = "inline-flex";
+                }
                 
                 modal.hide();
                 showToast("Your progress has been restored.", "success");
@@ -750,6 +965,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("eventThemeCustom").click();
             } else {
                 eventThemeColor = opt.dataset.color;
+                updateLivePreview();
                 saveDraft();
             }
         });
@@ -757,6 +973,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("eventThemeCustom")?.addEventListener("input", (e) => {
         eventThemeColor = e.target.value;
+        updateLivePreview();
         saveDraft();
     });
 
@@ -771,9 +988,25 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.success) {
                 window.selectedHeaderImageFileName = data.fileName;
                 document.getElementById("headerFileName").textContent = data.fileName;
+                const btnText = document.getElementById("headerImageBtnText");
+                if (btnText) btnText.textContent = "Replace photo";
+                const rmBtn = document.getElementById("btnRemoveHeaderImage");
+                if (rmBtn) rmBtn.style.display = "inline-flex";
+                updateLivePreview();
                 saveDraft();
             }
         } catch (e) { showToast("Logo upload failed."); }
+    });
+
+    document.getElementById("btnRemoveHeaderImage")?.addEventListener("click", () => {
+        window.selectedHeaderImageFileName = "";
+        document.getElementById("headerFileName").textContent = "";
+        const btnText = document.getElementById("headerImageBtnText");
+        if (btnText) btnText.textContent = "Upload photo";
+        document.getElementById("btnRemoveHeaderImage").style.display = "none";
+        document.getElementById("eventHeaderImage").value = ""; 
+        updateLivePreview();
+        saveDraft();
     });
 
     /* =========================================================
@@ -785,7 +1018,8 @@ document.addEventListener("DOMContentLoaded", function () {
         else if (currentStep === 2) valid = validateStep2();
         else if (currentStep === 3) valid = validateStep3();
         else if (currentStep === 4) valid = validateStep4();
-        else if (currentStep === 5) { finalizeEvent(); return; }
+        else if (currentStep === 5) valid = true; 
+        else if (currentStep === 6) { finalizeEvent(); return; }
         
         if (valid) showStep(currentStep + 1);
     });
@@ -830,8 +1064,36 @@ document.addEventListener("DOMContentLoaded", function () {
     /* =========================================================
      * INITIALIZATION
      * =======================================================*/
+    const reviewAccordionToggleBtn = document.getElementById("btnToggleReviewAccordion");
+    
+    function updateReviewAccordionButtonText() {
+        if (!reviewAccordionToggleBtn) return;
+        const totalItems = document.querySelectorAll(".review-item").length;
+        const openItems = document.querySelectorAll(".review-item.is-open").length;
+        
+        if (openItems === totalItems) {
+            reviewAccordionToggleBtn.textContent = "Collapse All";
+        } else {
+            reviewAccordionToggleBtn.textContent = "Expand All";
+        }
+    }
+
+    reviewAccordionToggleBtn?.addEventListener("click", () => {
+        const totalItems = document.querySelectorAll(".review-item").length;
+        const openItems = document.querySelectorAll(".review-item.is-open").length;
+        const shouldExpand = openItems < totalItems;
+
+        document.querySelectorAll(".review-item").forEach(item => {
+            item.classList.toggle("is-open", shouldExpand);
+        });
+        updateReviewAccordionButtonText();
+    });
+
     document.querySelectorAll(".review-toggle").forEach(btn => {
-        btn.onclick = () => btn.closest(".review-item").classList.toggle("is-open");
+        btn.onclick = () => {
+            btn.closest(".review-item").classList.toggle("is-open");
+            updateReviewAccordionButtonText();
+        };
     });
 
     document.querySelectorAll('input[name="criteriaSystem"]').forEach(r => {
@@ -913,6 +1175,37 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         addContestantRow();
+    });
+
+    document.getElementById("btnAddJudge")?.addEventListener("click", () => {
+        const rows = Array.from(judgesBody.querySelectorAll("tr[data-judge-row]"));
+        
+        // Check completion of all existing rows
+        for (let r of rows) {
+            const nameEl = r.querySelector(".judge-name");
+            const emailEl = r.querySelector(".judge-email");
+            const pinEl = r.querySelector(".judge-pin");
+            const name = nameEl.value.trim();
+            const email = emailEl.value.trim();
+            const pin = pinEl.textContent;
+            
+            if (!name) {
+                showToast("Name is required");
+                nameEl.classList.add("is-invalid-red");
+                return;
+            }
+            if (!email) {
+                showToast("Email is required");
+                emailEl.classList.add("is-invalid-red");
+                return;
+            }
+            if (pin === "-----") {
+                showToast("PIN is required for all judges.");
+                return;
+            }
+        }
+
+        addJudgeRow();
     });
     
     // Resume Draft Check

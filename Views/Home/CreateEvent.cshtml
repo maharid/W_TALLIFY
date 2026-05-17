@@ -13,8 +13,8 @@
 <!-- Loading Overlay -->
 <div id="publishLoadingOverlay" class="loading-overlay" style="display:none;">
     <div class="loading-content">
-        <div class="loader-spinner"></div>
-        <p id="loadingMessage">Configuring your scoring environment and notifying judges...</p>
+        <img src="~/images/LOGO.png" alt="Tallify Logo" class="tallify-loader" />
+        <p id="loadingMessage" style="margin-top: 16px; font-weight: 600; color: #374151;">Saving your event...</p>
     </div>
 </div>
 
@@ -44,15 +44,12 @@
     <!-- PAGE HEADER -->
     <header class="app-page-header">
         <h1 class="app-page-title">Create Event</h1>
-        <p class="app-page-subtitle">
-            Follow the 5-step process to set up your competition. We'll help you every step of the way.
-        </p>
     </header>
 
     <!-- STEP PILL -->
     <div class="event-create-steps">
         <div class="event-step-pill is-active" id="eventStepPill">
-            <span id="eventStepPillText">Event Identity</span>
+            <span id="eventStepPillText">Event Details</span>
         </div>
     </div>
 
@@ -80,11 +77,11 @@
         }
 
         <!-- =========================================================
-             STEP 1 — EVENT IDENTITY (The Shell)
+             STEP 1 — EVENT DETAILS (The Shell)
              ========================================================= -->
         <div class="event-step is-active" data-step="1">
             <section class="event-section-card">
-                <h2 class="event-section-title">Event Identity</h2>
+                <h2 class="event-section-title">Event Details</h2>
                 <div class="event-form-grid">
                     <div class="event-field event-field-full">
                         <div class="event-field-header">
@@ -153,7 +150,7 @@
 
                 <div class="event-section-card">
                     <div class="event-section-header">
-                        <h2 class="event-section-title">Round Builder</h2>
+                        <h2 class="event-section-title">Rounds</h2>
                     </div>
                     <div id="criteriaRoundsList"></div>
                     <div class="event-section-actions event-section-actions--bottom">
@@ -184,9 +181,9 @@
                         <thead>
                             <tr>
                                 <th style="width:90px;">ID</th>
-                                <th>Name</th>
-                                <th>Organization</th>
-                                <th style="width:180px;">Photo</th>
+                                <th style="width:30%;">Name</th>
+                                <th style="width:20%;">Organization</th>
+                                <th style="width:240px;">Photo</th>
                                 <th style="width:140px;">Action</th>
                             </tr>
                         </thead>
@@ -207,9 +204,9 @@
              ========================================================= -->
         <div class="event-step" data-step="4">
             <div class="event-section-card">
-                <h2 class="event-section-title">Judge Access Code</h2>
+                <h2 class="event-section-title">Access Code</h2>
                 <div class="event-field event-field-full">
-                    <label class="event-label" for="eventAccessCode">Set a unique code (e.g., DWCC2025)</label>
+                    <label class="event-subtext" for="eventAccessCode">Set a unique code (e.g., DWCC2025)</label>
                     <input id="eventAccessCode" type="text" class="event-input" placeholder="e.g. DWCC2025" />
                 </div>
             </div>
@@ -217,7 +214,7 @@
             <div class="event-section-card">
                 <div class="event-section-header">
                     <div>
-                        <h2 class="event-section-title">Judging Panel</h2>
+                        <h2 class="event-section-title">Judges</h2>
                         <p class="event-subtext">Add judges who will receive invitation links.</p>
                     </div>
                 </div>
@@ -249,11 +246,11 @@
         </div>
 
         <!-- =========================================================
-             STEP 5 — BRANDING & REVIEW (The Polish)
+             STEP 5 — BRANDING & PREVIEW (The Polish)
              ========================================================= -->
         <div class="event-step" data-step="5">
             <section class="event-section-card">
-                <h2 class="event-section-title">Branding & Theme</h2>
+                <h2 class="event-section-title">Branding</h2>
                 <div class="event-form-grid">
                     <div class="event-field event-field-full">
                         <label class="event-label">Theme Selection</label>
@@ -268,26 +265,53 @@
 
                     <div class="event-field event-field-full">
                         <label class="event-label">Header Image</label>
-                        <div class="header-upload-group">
+                        <div class="header-upload-group" style="display:flex; align-items:center; gap:12px;">
                             <label class="header-upload-btn" id="headerImageLabel">
-                                <i class="ri-image-line"></i> Choose photo
+                                <i class="ri-image-line"></i> <span id="headerImageBtnText">Upload photo</span>
                                 <input type="file" id="eventHeaderImage" accept="image/*,.svg" hidden />
                             </label>
+                            <button type="button" id="btnRemoveHeaderImage" class="btn-outline btn-small" style="display:none; padding:4px 8px; border:none; color:#6b7280; background:transparent; font-size:16px;" title="Remove Photo">
+                                <i class="ri-close-line"></i>
+                            </button>
                             <span id="headerFileName" class="header-filename"></span>
                         </div>
                     </div>
                 </div>
-            </section>
 
+                <hr style="border:none; border-top:1px solid #e5e7eb; margin: 32px 0;" />
+
+                <div class="event-field event-field-full">
+                    <label class="event-label">Preview</label>
+                    <div id="eventPreviewCard" class="preview-card" style="margin-top:8px;">
+                        <div id="previewHeader" class="preview-header"></div>
+                        <div class="preview-body">
+                            <h3 id="previewTitle" class="preview-title">Event Name</h3>
+                            <div class="preview-tags">
+                                <span class="preview-chip type-chip">CB</span>
+                                <span class="preview-chip status-chip--open">Preparing</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- =========================================================
+             STEP 6 — REVIEW (The Final Polish)
+             ========================================================= -->
+        <div class="event-step" data-step="6">
             <section class="event-section-card">
-                <h2 class="event-section-title">Final Summary</h2>
+                <div class="event-section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                    <h2 class="event-section-title" style="margin-bottom:0;">Review</h2>
+                    <button type="button" id="btnToggleReviewAccordion" class="btn-outline btn-small" style="font-size:12px; font-weight:600; padding:6px 12px; border-radius:8px; border-color: var(--color-primary); color: var(--color-primary);">Expand All</button>
+                </div>
                 <div class="review-accordion">
                     <div class="review-item">
-                        <button type="button" class="review-toggle">Event Identity <i class="ri-arrow-down-s-line"></i></button>
+                        <button type="button" class="review-toggle">Event Details <i class="ri-arrow-down-s-line"></i></button>
                         <div class="review-content" id="reviewIdentity"></div>
                     </div>
                     <div class="review-item">
-                        <button type="button" class="review-toggle">Scoring & Rounds <i class="ri-arrow-down-s-line"></i></button>
+                        <button type="button" class="review-toggle">Scoring Logic & Rounds <i class="ri-arrow-down-s-line"></i></button>
                         <div class="review-content" id="reviewScoring"></div>
                     </div>
                     <div class="review-item">
@@ -295,22 +319,12 @@
                         <div class="review-content" id="reviewContestants"></div>
                     </div>
                     <div class="review-item">
-                        <button type="button" class="review-toggle">Judges <i class="ri-arrow-down-s-line"></i></button>
+                        <button type="button" class="review-toggle">Judges and Access Code <i class="ri-arrow-down-s-line"></i></button>
                         <div class="review-content" id="reviewJudges"></div>
                     </div>
-                </div>
-            </section>
-
-            <section class="event-section-card">
-                <h2 class="event-section-title">Live Preview</h2>
-                <div id="eventPreviewCard" class="preview-card">
-                    <div id="previewHeader" class="preview-header"></div>
-                    <div class="preview-body">
-                        <h3 id="previewTitle" class="preview-title">Event Name</h3>
-                        <div class="preview-tags">
-                            <span class="preview-chip type-chip">CB</span>
-                            <span class="preview-chip status-chip--open">Preparing</span>
-                        </div>
+                    <div class="review-item">
+                        <button type="button" class="review-toggle">Branding <i class="ri-arrow-down-s-line"></i></button>
+                        <div class="review-content" id="reviewBranding"></div>
                     </div>
                 </div>
             </section>
@@ -321,7 +335,7 @@
     <!-- GLOBAL FOOTER (step navigation) -->
     <footer class="event-step-footer">
         <div class="event-step-progress">
-            <span id="eventStepIndex">1</span> out of <span id="eventStepTotal">5</span>
+            <span id="eventStepIndex">1</span> out of <span id="eventStepTotal">6</span>
         </div>
         <div class="event-step-actions">
             <button type="button" class="btn-outline" id="btnStepBack">Cancel</button>
@@ -337,8 +351,8 @@
     /* New Styles for 5-Step Wizard */
     .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center; }
     .loading-content { text-align: center; }
-    .loader-spinner { width: 48px; height: 48px; border: 4px solid var(--color-primary-soft); border-top: 4px solid var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-    @@keyframes spin { to { transform: rotate(360deg); } }
+    .tallify-loader { height: 64px; animation: pulse 1.5s infinite ease-in-out; margin: 0 auto 16px; display: block; }
+    @@keyframes pulse { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
 
     .review-accordion { display: flex; flex-direction: column; gap: 8px; }
     .review-item { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }

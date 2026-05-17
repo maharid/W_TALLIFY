@@ -12,8 +12,8 @@
 
     // Helper for labels
     string GetTypeLabel(string val) => val switch {
-        "criteria" => "CB",
-        "orw" => "ORW",
+        "criteria" => "WA",
+        "orw" => "PB",
         _ => "All Types"
     };
 
@@ -71,9 +71,9 @@
                     <button type="button" class="filter-select-option @(currentType == "all" ? "is-selected" : "")" 
                             data-value="all">All Types</button>
                     <button type="button" class="filter-select-option @(currentType == "criteria" ? "is-selected" : "")" 
-                            data-value="criteria">CB</button>
+                            data-value="criteria">WA</button>
                     <button type="button" class="filter-select-option @(currentType == "orw" ? "is-selected" : "")" 
-                            data-value="orw">ORW</button>
+                            data-value="orw">PB</button>
                 </div>
             </div>
 
@@ -116,8 +116,8 @@
                 @if (!Model.Any())
                 {
                     string emptyMsg = "No events found.";
-                    if (currentType == "orw") { emptyMsg = "No ORW data available."; }
-                    else if (currentType == "criteria") { emptyMsg = "No CB data available."; }
+                    if (currentType == "orw") { emptyMsg = "No PB data available."; }
+                    else if (currentType == "criteria") { emptyMsg = "No WA data available."; }
                     
                     <tr class="table-empty-row">
                         <td colspan="5" style="text-align:center; padding: 32px; color: var(--color-text-faint); font-style: italic;">
@@ -127,7 +127,7 @@
                 }
                 @foreach (var ev in Model)
                 {
-                    var typeLabel = ev.EventType == "criteria" ? "CB" : "ORW";
+                    var typeLabel = ev.EventType == "criteria" ? "WA" : "PB";
                     var typeClass = ev.EventType == "criteria" ? "pill pill-type-cb" : "pill pill-type-orw";
 
                     // Derive status from ev.Status (fallback using start date if null/empty)

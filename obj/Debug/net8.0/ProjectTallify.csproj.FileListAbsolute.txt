@@ -1627,3 +1627,4 @@ C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\refint\ProjectTallify.dll
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.pdb
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.genruntimeconfig.cache
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ref\ProjectTallify.dll
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.sourcelink.json
