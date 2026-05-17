@@ -33,8 +33,6 @@ document.addEventListener("DOMContentLoaded", function () {
     root.addEventListener("input", (e) => {
         const target = e.target;
         const uppercaseSelectors = [
-            "#eventName",
-            "#eventVenue",
             "#eventAccessCode",
             ".event-round-name",
             ".criteria-name",
@@ -46,9 +44,21 @@ document.addEventListener("DOMContentLoaded", function () {
         if (uppercaseSelectors.some(selector => target.matches(selector))) {
             const start = target.selectionStart;
             const end = target.selectionEnd;
-            target.value = target.value.toUpperCase();
+            let val = target.value.toUpperCase();
+            
+            // STRIP SPACES FOR ACCESS CODE
+            if (target.id === "eventAccessCode") {
+                val = val.replace(/\s/g, "");
+            }
+            
+            target.value = val;
             target.setSelectionRange(start, end);
         }
+    });
+
+    // BLOCK SPACE KEY FOR ACCESS CODE
+    document.getElementById("eventAccessCode")?.addEventListener("keydown", (e) => {
+        if (e.key === " ") e.preventDefault();
     });
 
     /* =========================================================
@@ -204,7 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <span class="event-round-index">${roundCounter}</span>
                     <input class="event-input event-round-name" placeholder="Round Name (e.g. Elimination)" value="Round ${roundCounter}" />
                 </div>
-                <button type="button" class="btn-danger-soft btn-small event-round-remove"><i class="ri-delete-bin-line"></i></button>
+                <button type="button" class="btn-danger-soft btn-small event-round-remove" style="padding:4px 8px; border-radius:8px; font-size:16px;" title="Remove Round"><i class="ri-close-line"></i></button>
             </div>
             <div class="criteria-blocks"></div>
             
@@ -278,7 +288,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <label class="event-label" style="font-size:11px;">Weight %</label>
                     <input type="number" class="event-input criteria-weight" placeholder="0" min="1" max="100" value="${data ? data.weight : ''}" />
                 </div>
-                <button type="button" class="btn-danger-soft criteria-remove" style="height:42px; width:42px; display:flex; align-items:center; justify-content:center;"><i class="ri-delete-bin-line"></i></button>
+                <button type="button" class="btn-danger-soft criteria-remove" style="height:42px; width:42px; display:flex; align-items:center; justify-content:center;"><i class="ri-close-line"></i></button>
             </div>
             <div class="criteria-points-row" style="display:${data && data.derivedFrom ? 'none' : 'flex'}; gap:10px; margin-top:8px;">
                 <div class="event-field" style="flex:1;"><label class="event-label" style="font-size:11px;">Min Score</label><input type="number" class="event-input min-point" value="${data ? data.min : '0'}" /></div>
@@ -438,13 +448,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div style="display:flex; align-items:center; gap:12px;">
                     <div class="contestant-photo-thumb" style="width:40px; height:40px; border-radius:8px; background:#f3f4f6; background-size:cover; background-position:center; border:1px solid #e5e7eb;" data-photo-url=""></div>
                     <button type="button" class="btn-outline btn-small btn-upload-photo" style="font-size:11px; padding:4px 8px; border-radius:8px;">Upload photo</button>
-                    <button type="button" class="btn-outline btn-small btn-remove-photo" style="display:none; padding:4px 8px; border:none; color:#6b7280; background:transparent; font-size:16px;" title="Remove Photo">
+                    <button type="button" class="btn-danger-soft btn-small btn-remove-photo" style="display:none; padding:4px 8px; border-radius:8px; font-size:16px;" title="Remove Photo">
                         <i class="ri-close-line"></i>
                     </button>
                     <input type="file" accept="image/*" class="contestant-photo-input" hidden />
                 </div>
             </td>
-            <td><button type="button" class="btn-danger-soft btn-small btn-remove-contestant" style="color:#991b1b; background-color:#fee2e2; border-radius:8px; font-weight:600; padding:6px 12px; border:none;">Remove</button></td>
+            <td style="text-align:left;"><button type="button" class="btn-danger-soft btn-small btn-remove-contestant" style="padding:4px 8px; border-radius:8px; font-size:16px;" title="Remove Contestant"><i class="ri-close-line"></i></button></td>
         `;
         
         const nameInput = tr.querySelector(".contestant-name");
@@ -565,7 +575,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <td>
                 <div style="display:flex; gap:8px;">
                     <button type="button" class="btn-outline btn-small btn-gen-pin" title="Generate PIN">Generate PIN</button>
-                    <button type="button" class="btn-danger-soft btn-small btn-remove-judge"><i class="ri-delete-bin-line"></i></button>
+                    <button type="button" class="btn-danger-soft btn-small btn-remove-judge" style="padding:4px 8px; border-radius:8px; font-size:16px;" title="Remove Judge"><i class="ri-close-line"></i></button>
                 </div>
             </td>
         `;
@@ -652,9 +662,6 @@ document.addEventListener("DOMContentLoaded", function () {
     /* =========================================================
      * STEP 6 — REVIEW
      * =======================================================*/
-    /* =========================================================
-     * STEP 6 — REVIEW
-     * =======================================================*/
     function populateReview() {
         const data = getDraftData();
 
@@ -662,13 +669,24 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("reviewIdentity").innerHTML = `
             <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151;">
                 <div style="font-weight:700; color:#6b7280;">Event Name:</div>
-                <div style="font-weight:600;">${data.eventName || "—"}</div>
+                <div>
+                    <span style="font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px;">${data.eventName || "—"}</span>
+                </div>
 
                 <div style="font-weight:700; color:#6b7280;">Venue:</div>
                 <div>${data.eventVenue || "—"}</div>
 
                 <div style="font-weight:700; color:#6b7280;">Start Date:</div>
-                <div>${data.eventStartDate} at ${data.eventStartTime}</div>
+                <div>
+                    ${(() => {
+                        if (!data.eventStartDate || !data.eventStartTime) return "—";
+                        const dt = new Date(`${data.eventStartDate}T${data.eventStartTime}`);
+                        if (isNaN(dt.getTime())) return `${data.eventStartDate} at ${data.eventStartTime}`;
+                        const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                        const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                        return `${dateStr} at ${timeStr}`;
+                    })()}
+                </div>
 
                 <div style="font-weight:700; color:#6b7280;">Description:</div>
                 <div style="white-space:pre-wrap;">${data.eventDescription || "No description provided."}</div>
@@ -680,7 +698,9 @@ document.addEventListener("DOMContentLoaded", function () {
         let roundsHtml = `
             <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
                 <div style="font-weight:700; color:#6b7280;">Logic Type:</div>
-                <div>${logicName}</div>
+                <div>
+                    <span style="font-family:monospace; font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px;">${logicName}</span>
+                </div>
             </div>
         `;
 
@@ -692,10 +712,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         <table class="app-table" style="font-size:13px; table-layout: fixed; width: 100%;">
                             <thead style="background:#f9fafb;">
                                 <tr>
-                                    <th style="padding:10px; width:40%;">Criteria</th>
-                                    <th style="padding:10px; width:20%;">Weight</th>
-                                    <th style="padding:10px; width:20%;">Min</th>
-                                    <th style="padding:10px; width:20%;">Max</th>
+                                    <th style="padding:10px; width:70%;">Criteria</th>
+                                    <th style="padding:10px; width:10%;">Weight</th>
+                                    <th style="padding:10px; width:10%;">Min</th>
+                                    <th style="padding:10px; width:10%;">Max</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -722,8 +742,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <tr>
                             <th style="padding:10px; width:10%;">ID</th>
                             <th style="padding:10px; width:40%;">Name</th>
-                            <th style="padding:10px; width:30%;">Organization</th>
-                            <th style="padding:10px; width:20%;">Photo</th>
+                            <th style="padding:10px; width:35%;">Organization</th>
+                            <th style="padding:10px; width:15%;">Photo</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -748,7 +768,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
                 <div style="font-weight:700; color:#6b7280;">Event Access Code:</div>
                 <div>
-                    <span style="font-family:monospace; font-weight:700; color:var(--color-primary); background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px;">${data.accessCode}</span>
+                    <span style="font-family:monospace; font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px;">${data.accessCode}</span>
                 </div>
             </div>
             <div class="panel-table-wrapper" style="border:1px solid #e5e7eb; border-radius:8px;">
@@ -803,6 +823,7 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
         `;
     }
+
     /* =========================================================
      * DRAFTING SYSTEM
      * =======================================================*/

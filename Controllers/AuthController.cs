@@ -8,6 +8,10 @@ using System.Text;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Collections.Generic;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace ProjectTallify.Controllers
 {
@@ -42,7 +46,7 @@ namespace ProjectTallify.Controllers
                 var autoUser = await TryAutoLoginFromCookieAsync();
                 if (autoUser != null)
                 {
-                    SetLoginSession(autoUser);
+                    await SetLoginSession(autoUser);
                     return RedirectToAction("Dashboard", "Home");
                 }
             }
@@ -152,7 +156,7 @@ namespace ProjectTallify.Controllers
             }
 
             // 5) Success – set session + optionally remember-me cookie, go to Dashboard
-            SetLoginSession(user);
+            await SetLoginSession(user);
             await HandleRememberMeAsync(user, rememberMe);
 
             return RedirectToAction("Dashboard", "Home");
@@ -188,7 +192,7 @@ namespace ProjectTallify.Controllers
             await _db.SaveChangesAsync();
 
             // Log them in immediately
-            SetLoginSession(user);
+            await SetLoginSession(user);
 
             TempData["AuthSuccess"] = "Welcome back! Your account has been reactivated.";
             return RedirectToAction("Dashboard", "Home");
@@ -607,20 +611,36 @@ namespace ProjectTallify.Controllers
 
         // ============ HELPERS ============
 
-        private void SetLoginSession(User user)
+        private async Task SetLoginSession(User user)
         {
+            // 1. Session (backward compatibility)
             HttpContext.Session.SetString("UserLoggedIn", "true");
             HttpContext.Session.SetString("UserEmail", user.Email);
 
             var displayName = (user.FirstName + " " + (user.LastName ?? "")).Trim();
-            if (string.IsNullOrWhiteSpace(displayName))
-            {
-                displayName = user.Email;   // fallback to email
-            }
+            if (string.IsNullOrWhiteSpace(displayName)) displayName = user.Email;
 
             HttpContext.Session.SetString("UserName", displayName);
             HttpContext.Session.SetString("UserRole", user.Role ?? "Organizer");
             HttpContext.Session.SetInt32("UserId", user.Id);
+
+            // 2. Cookie Auth (Proper way for SignalR)
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, displayName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role ?? "Organizer")
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties
+            {
+                IsPersistent = true, // We'll handle exact duration via options if needed
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(12)
+            });
         }
 
         private async Task HandleRememberMeAsync(User user, bool rememberMe)

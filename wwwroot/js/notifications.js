@@ -101,9 +101,9 @@ document.addEventListener("DOMContentLoaded", function () {
         .withUrl("/notificationHub")
         .build();
 
-    connection.on("ReceiveNotification", function (title, message, type) {
+    connection.on("ReceiveNotification", function (title, message, type, actionUrl) {
         // 1. Show floating toast
-        showNotificationToast(title, message, type);
+        showNotificationToast(title, message, type, actionUrl);
         
         // 2. Update Badge
         updateUnreadCount();
@@ -167,6 +167,7 @@ function loadNotifications(container) {
                 html += `
                 <li class="notification-item ${n.isRead ? '' : 'notification-unread'}" 
                     data-id="${n.id}"
+                    data-url="${n.actionUrl || ''}"
                     style="${bgStyle} border-bottom:1px solid var(--color-border); padding:14px 18px; display:flex; gap:12px; align-items:start; cursor:pointer;">
                     <div style="${colorStyle}; font-size:18px; line-height:1; margin-top:2px;">
                         <i class="${iconClass}"></i>
@@ -219,6 +220,7 @@ function loadNotifications(container) {
             container.querySelectorAll('.notification-item').forEach(item => {
                 item.addEventListener('click', function() {
                     const notificationId = this.dataset.id;
+                    const url = this.dataset.url;
                     if (!notificationId) return;
 
                     // Only mark as read if it's currently unread
@@ -237,9 +239,13 @@ function loadNotifications(container) {
                             if (res.ok) {
                                 // 3. Update badge count silently
                                 updateUnreadCount(); 
+                                if (url) window.location.href = url;
                             }
                         })
                         .catch(err => console.error('Error marking notification as read:', err));
+                    } else {
+                        // Already read, just navigate if url exists
+                        if (url) window.location.href = url;
                     }
                 });
             });
@@ -251,24 +257,45 @@ function loadNotifications(container) {
 }
 
 // --- TOAST UI ---
-function showNotificationToast(title, message, type) {
+function showNotificationToast(title, message, type, actionUrl) {
+    // Ensure container exists
+    let container = document.getElementById('notifToastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notifToastContainer';
+        container.style.cssText = 'position:fixed; top:20px; right:20px; z-index:10001; display:flex; flex-direction:column; gap:10px; width:320px; pointer-events:none;';
+        document.body.appendChild(container);
+    }
+
     const toast = document.createElement('div');
-    toast.className = `notif-toast is-visible`;
+    toast.style.cssText = 'pointer-events:auto; cursor:pointer; background:#fff; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.15); border-left:5px solid #3b82f6; padding:16px; transform:translateX(120%); transition:transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);';
     
-    let bgColor = "#3b82f6"; 
-    if (type === "success") bgColor = "#10b981";
-    if (type === "warning") bgColor = "#f59e0b";
-    if (type === "error") bgColor = "#ef4444";
+    let borderColor = "#3b82f6"; 
+    if (type === "success") borderColor = "#10b981";
+    if (type === "warning") borderColor = "#f59e0b";
+    if (type === "error") borderColor = "#ef4444";
 
-    toast.style.backgroundColor = bgColor;
-    toast.innerHTML = `<strong>${title}</strong><br/><span>${message}</span>`;
+    toast.style.borderLeftColor = borderColor;
+    toast.innerHTML = `
+        <div style="font-size:14px; font-weight:700; color:#111827; margin-bottom:4px;">${title}</div>
+        <div style="font-size:12px; color:#6b7280; line-height:1.4;">${message}</div>
+    `;
 
-    document.body.appendChild(toast);
+    if (actionUrl) {
+        toast.onclick = () => window.location.href = actionUrl;
+    }
 
+    container.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+
+    // Auto-remove
     setTimeout(() => {
-        toast.classList.remove('is-visible');
+        toast.style.transform = 'translateX(120%)';
         setTimeout(() => {
             toast.remove();
+            if (container.children.length === 0) container.remove();
         }, 300); 
-    }, 4000);
+    }, 5000);
 }

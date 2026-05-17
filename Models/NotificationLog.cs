@@ -13,6 +13,7 @@ namespace ProjectTallify.Models
         public string Title { get; set; } = "";
         public string Message { get; set; } = "";
         public string Type { get; set; } = "info"; // info, success, warning, error
+        public string? ActionUrl { get; set; }
         
         public bool IsRead { get; set; } = false;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

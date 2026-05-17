@@ -38,6 +38,7 @@ namespace ProjectTallify.Controllers
                     n.Message,
                     n.Type,
                     n.IsRead,
+                    n.ActionUrl,
                     CreatedAt = n.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss") + "Z"
                 })
                 .ToListAsync();
@@ -93,20 +94,12 @@ namespace ProjectTallify.Controllers
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null) return StatusCode(401, new { success = false, message = "User not authenticated." });
+            if (userId == null) return Unauthorized();
 
-            var unreadLogs = await _db.NotificationLogs
+            await _db.NotificationLogs
                 .Where(n => n.UserId == userId && !n.IsRead)
-                .ToListAsync();
+                .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
 
-            if (unreadLogs.Any())
-            {
-                foreach (var log in unreadLogs)
-                {
-                    log.IsRead = true;
-                }
-                await _db.SaveChangesAsync();
-            }
             return Ok();
         }
         [HttpGet]

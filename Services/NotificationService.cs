@@ -9,8 +9,8 @@ namespace ProjectTallify.Services
 {
     public interface INotificationService
     {
-        Task NotifyUserAsync(int userId, string title, string message, string type = "info");
-        Task NotifyEventAsync(int eventId, string title, string message, string type = "info");
+        Task NotifyUserAsync(int userId, string title, string message, string type = "info", string? actionUrl = null);
+        Task NotifyEventAsync(int eventId, string title, string message, string type = "info", string? actionUrl = null);
     }
 
     public class NotificationService : INotificationService
@@ -24,7 +24,7 @@ namespace ProjectTallify.Services
             _db = db;
         }
 
-        public async Task NotifyUserAsync(int userId, string title, string message, string type = "info")
+        public async Task NotifyUserAsync(int userId, string title, string message, string type = "info", string? actionUrl = null)
         {
             // 1. Check Preference
             var user = await _db.Users.FindAsync(userId);
@@ -37,6 +37,7 @@ namespace ProjectTallify.Services
                 Title = title,
                 Message = message,
                 Type = type,
+                ActionUrl = actionUrl,
                 CreatedAt = DateTime.UtcNow,
                 IsRead = false
             };
@@ -45,25 +46,22 @@ namespace ProjectTallify.Services
 
             // 3. Send via SignalR
             await _hubContext.Clients.Group($"User_{userId}")
-                .SendAsync("ReceiveNotification", title, message, type);
+                .SendAsync("ReceiveNotification", title, message, type, actionUrl);
         }
 
-        public async Task NotifyEventAsync(int eventId, string title, string message, string type = "info")
+        public async Task NotifyEventAsync(int eventId, string title, string message, string type = "info", string? actionUrl = null)
         {
-            // Notify everyone listening to this event (e.g., Organizer dashboard)
-            // This is slightly different from "NotifyUser" because it targets a context (Event)
-            // Usually, the Organizer is the one watching the event.
-            // We can find the Organizer for this event and notify them.
-            
+            // 1. Notify the Organizer
             var ev = await _db.Events.Include(e => e.User).FirstOrDefaultAsync(e => e.Id == eventId);
-            if (ev != null && ev.UserId != 0) // Assuming Event has a UserId link to Organizer
+            if (ev != null && ev.UserId != 0)
             {
-                await NotifyUserAsync(ev.UserId, title, message, type);
+                await NotifyUserAsync(ev.UserId, title, message, type, actionUrl);
             }
             
-            // Additionally, if we want to broadcast to judges via SignalR group:
-            // await _hubContext.Clients.Group($"Event_{eventId}").SendAsync("ReceiveNotification", title, message, type);
-            // (Leaving this commented out unless requested for judges too, usually notification is for Organizer)
+            // 2. Broadcast to everyone currently watching this event (Judges, Scorers, etc.)
+            // These connections are added to the Event_{id} group in NotificationHub.OnConnectedAsync
+            await _hubContext.Clients.Group($"Event_{eventId}")
+                .SendAsync("ReceiveNotification", title, message, type, actionUrl);
         }
     }
 }

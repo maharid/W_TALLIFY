@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.Json;
 using ProjectTallify.Services;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace ProjectTallify.Controllers
 {
@@ -63,12 +66,27 @@ namespace ProjectTallify.Controllers
                     return Unauthorized(new { success = false, message = "This judge account is inactive." });
 
                 // Success: Judge
+                // 1. Session (backward compatibility)
                 HttpContext.Session.SetInt32("UserId", judge.Id); 
                 HttpContext.Session.SetInt32("JudgeId", judge.Id);
                 HttpContext.Session.SetInt32("EventId", ev.Id);
                 HttpContext.Session.SetString("UserName", judge.Name);
                 HttpContext.Session.SetString("JudgeName", judge.Name);
                 HttpContext.Session.SetString("Role", "judge");
+
+                // 2. Cookie Auth (Proper way for SignalR)
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, $"Judge_{judge.Id}"),
+                    new Claim(ClaimTypes.Name, judge.Name),
+                    new Claim(ClaimTypes.Role, "Judge"),
+                    new Claim("EventId", ev.Id.ToString())
+                };
+
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
                 _db.AuditLogs.Add(new AuditLog
                 {

@@ -1,33 +1,31 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using System.Linq;
 
 namespace ProjectTallify.Hubs
 {
     public class NotificationHub : Hub
     {
-        // This hub can be used for real-time communication.
-        // We can map users to connections here if needed, 
-        // or rely on Groups.
-
         public override async Task OnConnectedAsync()
         {
-            var httpContext = Context.GetHttpContext();
-            if (httpContext != null)
+            var user = Context.User;
+            if (user != null && user.Identity != null && user.Identity.IsAuthenticated)
             {
-                // If we have a logged-in user in session
-                var userId = httpContext.Session.GetInt32("UserId");
-                if (userId.HasValue)
+                // Identification via Claims (modern way)
+                var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim != null)
                 {
-                    // Add to a group named "User_{Id}"
-                    await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId.Value}");
+                    // For Organizers: "User_123"
+                    // For Judges:    "User_Judge_456"
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userIdClaim.Value}");
                 }
-                
-                // Also support "Event_{Id}" groups for judges/scorers if needed
-                var eventId = httpContext.Session.GetInt32("EventId");
-                if (eventId.HasValue)
+
+                // Event Context
+                var eventIdClaim = user.FindFirst("EventId");
+                if (eventIdClaim != null)
                 {
-                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Event_{eventId.Value}");
+                    await Groups.AddToGroupAsync(Context.ConnectionId, $"Event_{eventIdClaim.Value}");
                 }
             }
             
