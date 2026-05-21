@@ -37,7 +37,7 @@
                     <tr>
                         <td>@ev.Id</td>
                         <td><a href="/Events/Manage/@ev.Id">@ev.Name</a></td>
-                        <td>@(ev.EventType == "criteria" ? "Weighted Average" : "Point-Based")</td>
+                        <td>@(ev.ScoringLogic == "WeightedAverage" ? "Weighted Average" : "Point-Based")</td>
                         <td>@ev.CreatedAt.ToString("MMM dd, yyyy")</td> 
                         <td>
                             <button type="button" class="btn-primary-soft btn-small btn-restore-event" data-event-id="@ev.Id">Restore</button>

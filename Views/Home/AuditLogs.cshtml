@@ -75,8 +75,8 @@
                     foreach (var log in Model)
                     {
                         // Determine Name and Role
-                        string name = log.UserName ?? (log.User != null ? $"{log.User.FirstName} {log.User.LastName}" : "System");
-                        string role = log.UserRole ?? (log.User != null ? (log.User.Role ?? "Organizer") : "System");
+                        string name = log.UserName ?? (log.Organizer != null ? $"{log.Organizer.FirstName} {log.Organizer.LastName}" : "System");
+                        string role = log.UserRole ?? (log.Organizer != null ? "Organizer" : "System");
                         
                         // Determine Role Badge Color
                         string badgeStyle = "display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;";

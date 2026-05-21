@@ -570,7 +570,7 @@ namespace ProjectTallify.Services
                     {
                         ContestantId = c.Id,
                         Name = c.Name,
-                        Organization = c.Organization,
+                        Organization = c.Organization ?? "",
                         Score = os.Score,
                         Rank = os.Rank
                     };

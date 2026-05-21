@@ -46,25 +46,25 @@
                 var userId = httpContext.Session.GetInt32("UserId");
                 if (userId.HasValue)
                 {
-                    var user = _db.Users.Find(userId.Value);
-                    if (user != null)
+                    var organizer = _db.Organizers.Find(userId.Value);
+                    if (organizer != null)
                     {
-                        if (!string.IsNullOrEmpty(user.ThemeColor)) { userTheme = user.ThemeColor; }
-                        if (!string.IsNullOrEmpty(user.OrganizationName)) { ViewData["OrgName"] = user.OrganizationName; }
-                        if (!string.IsNullOrEmpty(user.OrganizationSubtitle)) { ViewData["OrgSubtitle"] = user.OrganizationSubtitle; }
-                        if (!string.IsNullOrEmpty(user.OrganizationPhotoPath)) { ViewData["OrgPhoto"] = user.OrganizationPhotoPath; }
+                        if (!string.IsNullOrEmpty(organizer.ThemeColor)) { userTheme = organizer.ThemeColor; }
+                        if (!string.IsNullOrEmpty(organizer.OrganizationName)) { ViewData["OrgName"] = organizer.OrganizationName; }
+                        if (!string.IsNullOrEmpty(organizer.OrganizationSubtitle)) { ViewData["OrgSubtitle"] = organizer.OrganizationSubtitle; }
+                        if (!string.IsNullOrEmpty(organizer.OrganizationPhotoPath)) { ViewData["OrgPhoto"] = organizer.OrganizationPhotoPath; }
 
-                        if (!string.IsNullOrEmpty(user.ProfilePhotoPath) && !user.ProfilePhotoPath.Contains("default pfp.png", StringComparison.OrdinalIgnoreCase))
+                        if (!string.IsNullOrEmpty(organizer.ProfilePhotoPath) && !organizer.ProfilePhotoPath.Contains("default pfp.png", StringComparison.OrdinalIgnoreCase))
                         {
-                            ViewBag.ProfileImg = user.ProfilePhotoPath;
+                            ViewBag.ProfileImg = organizer.ProfilePhotoPath;
                             ViewBag.DisplayInitialsInHeader = false;
                         }
                         else
                         {
                             // Calculate initials if no photo
                             var initials = "";
-                            if (!string.IsNullOrEmpty(user.FirstName)) initials += user.FirstName[0];
-                            if (!string.IsNullOrEmpty(user.LastName)) initials += user.LastName[0];
+                            if (!string.IsNullOrEmpty(organizer.FirstName)) initials += organizer.FirstName[0];
+                            if (!string.IsNullOrEmpty(organizer.LastName)) initials += organizer.LastName[0];
                             ViewBag.UserInitials = initials.ToUpper().Substring(0, Math.Min(2, initials.Length)); // Max 2 initials
                             ViewBag.DisplayInitialsInHeader = true;
                         }

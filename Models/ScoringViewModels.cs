@@ -142,7 +142,7 @@ namespace ProjectTallify.Models
         public decimal Rank { get; set; }
         public string ContestantName { get; set; } = "";
         public string Organization { get; set; } = ""; // Added
-        public string? PhotoUrl { get; set; } // Added for Grand Reveal
+        public string? PhotoPath { get; set; } // Added for Grand Reveal
         public decimal AverageScore { get; set; }
         public decimal TotalScore { get; set; } // Weighted/Accumulated
         public Dictionary<int, decimal> CriteriaScores { get; set; } = new(); // CriteriaId -> Weighted Score

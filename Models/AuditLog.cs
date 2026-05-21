@@ -9,8 +9,8 @@ namespace ProjectTallify.Models
         public int? EventId { get; set; }
         public Event? Event { get; set; }
 
-        public int? UserId { get; set; }
-        public User? User { get; set; }
+        public int? OrganizerId { get; set; }
+        public Organizer? Organizer { get; set; }
 
         // Snapshot of who performed the action (e.g. "John Doe", "Judge #1")
         public string? UserName { get; set; }

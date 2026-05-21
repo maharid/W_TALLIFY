@@ -1,0 +1,28 @@
+# .NET / Visual Studio
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment files
+.env
+appsettings.Development.json
+
+# User Uploads (The most important for this project)
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+
+# IDEs
+.vs/
+.vscode/
+*.swp
+*.DS_Store
+
+# Automation
+TALLIFY/.gradle/
+TALLIFY/build/
+TALLIFY/bin/
+TALLIFY/Reports/

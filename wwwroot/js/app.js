@@ -1,7 +1,7 @@
 // wwwroot/js/app.js
 
 // GLOBAL wizard state – these are used in Create Event wizard + Manage
-let wizardContestants = [];   // [{ id, name, organization, photoUrl }]
+let wizardContestants = [];   // [{ id, name, organization, photoPath }]
 let wizardAccessUsers = [];   // [{ id, name, assigned, pin }]
 let wizardCriteria    = {};   // criteria-based events config
 let wizardRounds      = [];   // list of rounds
@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (existingHeaderImageEl)      window.existingHeaderImage      = existingHeaderImageEl.value;
   
   // Existing specific event properties
-  if (document.getElementById("existingEventType")) window.existingEventType = document.getElementById("existingEventType").value;
+  if (document.getElementById("existingScoringLogic")) window.existingScoringLogic = document.getElementById("existingScoringLogic").value;
   if (document.getElementById("existingAccessCode")) window.existingAccessCode = document.getElementById("existingAccessCode").value;
 
 
@@ -231,9 +231,9 @@ document.addEventListener("DOMContentLoaded", function () {
       eventStartTime:   startTime?.value || "",
       eventEndDate:     endDate?.value || "",
       eventEndTime:     endTime?.value || "",
-      eventType:        typeof getSelectedEventType === "function"
-                          ? getSelectedEventType()
-                          : "criteria",
+      scoringLogic:     typeof getSelectedEventType === "function"
+                          ? (getSelectedEventType() === "averaging" ? "WeightedAverage" : "PointBased")
+                          : "WeightedAverage",
       accessCode:       codeInput?.value.trim() || "",
 
       // JSON blobs from wizard state

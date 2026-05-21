@@ -26,13 +26,13 @@
     }
 
     // Access users (Judges / Scorers)
-    var accessUsers = new List<SimpleAccessUser>();
+    var accessUsers = new List<SimpleAccessAccount>();
     if (!string.IsNullOrWhiteSpace(Model.AccessJson))
     {
         try
         {
-            accessUsers = JsonSerializer.Deserialize<List<SimpleAccessUser>>(Model.AccessJson, jsonOptions)
-                          ?? new List<SimpleAccessUser>();
+            accessUsers = JsonSerializer.Deserialize<List<SimpleAccessAccount>>(Model.AccessJson, jsonOptions)
+                          ?? new List<SimpleAccessAccount>();
         }
         catch (Exception ex)
         {
@@ -56,7 +56,7 @@
     }
 
     var statusText = string.IsNullOrWhiteSpace(Model.Status) ? "Preparing" : Model.Status;
-    var isCriteria = Model.EventType == "criteria";
+    var isCriteria = Model.ScoringLogic == "WeightedAverage";
     var isEnded = statusText.ToLower() == "closed";
 }
 
@@ -75,9 +75,7 @@
     <!-- EVENT HEADER CARD -->
     <section class="manage-event-card">
         <div class="manage-header-image-wrapper @(string.IsNullOrWhiteSpace(Model.HeaderImage) ? "no-image" : "")"
-             @if (string.IsNullOrWhiteSpace(Model.HeaderImage) && !string.IsNullOrWhiteSpace(Model.ThemeColor)) {
-                 @: style="background-color: @Model.ThemeColor;"
-             }>
+             style="background-color: @(string.IsNullOrWhiteSpace(Model.ThemeColor) ? "var(--color-bg)" : Model.ThemeColor);">
             @if (!string.IsNullOrWhiteSpace(Model.HeaderImage))
             {
                 var headerUrl = Model.HeaderImage;
@@ -248,20 +246,21 @@
                                     <td>@c.Name</td>
                                     <td>@c.Organization</td>
                                     <td class="contestant-photo-cell">
-                                        @if (!string.IsNullOrWhiteSpace(c.PhotoUrl))
+                                        @if (!string.IsNullOrWhiteSpace(c.PhotoPath))
                                         {
-                                            var photoUrl = c.PhotoUrl;
-                                            if (!photoUrl.StartsWith("/") && !photoUrl.StartsWith("http"))
+                                            var photoPath = c.PhotoPath;
+                                            if (!photoPath.StartsWith("/") && !photoPath.StartsWith("http"))
                                             {
-                                                photoUrl = "/uploads/" + photoUrl;
+                                                photoPath = "/uploads/" + photoPath;
                                             }
                                             <div class="contestant-photo-wrapper">
-                                                <div class="contestant-photo-thumb has-photo"
-                                                    data-full-src="@photoUrl"
-                                                    style="background-image: url('@photoUrl');">
+                                                <div class="contestant-photo-thumb has-photo" 
+                                                     data-full-src="@photoPath"
+                                                     style="background-image: url('@photoPath');">
                                                 </div>
                                             </div>
                                         }
+
                                         else
                                         {
                                             <span class="text-muted">No photo</span>
@@ -1093,8 +1092,8 @@
 
                     contestants.forEach(c => {
                         const rankDisplay = (c.rank && c.rank > 0 && canUseRank) ? `#${c.rank}` : '-';
-                        const photoHtml = c.photoUrl
-                            ? `<div class="contestant-photo-wrapper"><div class="contestant-photo-thumb has-photo" style="background-image: url('${c.photoUrl}');"></div></div>`
+                        const photoHtml = c.photoPath
+                            ? `<div class="contestant-photo-wrapper"><div class="contestant-photo-thumb has-photo" style="background-image: url('${c.photoPath}');"></div></div>`
                             : `<span class="text-muted">No photo</span>`;
                         
                         const row = document.createElement('tr');
@@ -1822,7 +1821,7 @@
                     div.innerHTML = `
                         <div class="card-running-light"></div>
                         <div class="card-inner-content">
-                            <div class="winner-photo" style="background-image: url('${w.PhotoUrl || '/images/default pfp.png'}');"></div>
+                            <div class="winner-photo" style="background-image: url('${w.photoPath || '/images/default pfp.png'}');"></div>
                             <div class="winner-info">
                                 <div class="winner-title">${title}</div>
                                 <div class="winner-name">${w.Name}</div>

@@ -39,6 +39,30 @@
   </div>
 </div>
 
+<!-- Upload Error Modal -->
+<div class="modal fade" id="uploadErrorModal" tabindex="-1" aria-hidden="true" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+      <div class="modal-header" style="border-bottom: 1px solid #f3f4f6; padding: 20px 24px;">
+        <h5 class="modal-title" style="font-weight: 700; color: #ef4444;">Upload Failed</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="padding: 24px; text-align: center;">
+        <div style="background: #fef2f2; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="ri-error-warning-fill" style="font-size: 32px; color: #ef4444;"></i>
+        </div>
+        <p id="uploadErrorMessage" style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 8px;">File too large</p>
+        <p style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
+            The maximum file size allowed is 5MB. Please compress your image or choose a smaller file.
+        </p>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid #f3f4f6; padding: 16px 24px; background-color: #f9fafb; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="font-weight: 600; width: 100%;">Understood</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app-page app-page--create-event is-active">
 
     <!-- PAGE HEADER -->
@@ -59,12 +83,12 @@
              HIDDEN FIELDS (for EDIT mode)
              ========================================================= -->
         <input type="hidden" id="existingEventId"      value="@(isEdit ? Model!.Id : 0)" />
-        <input type="hidden" id="existingEventType"   value="@(isEdit ? Model!.EventType : "criteria")" />
         <input type="hidden" id="existingAccessCode"  value="@(isEdit ? Model!.AccessCode : "")" />
         <input type="hidden" id="existingContestants" value='@(isEdit ? Model!.ContestantsJson : "[]")' />
-        <input type="hidden" id="existingAccessUsers" value='@(isEdit ? Model!.AccessJson : "[]")' />
-        <input type="hidden" id="existingCriteria"    value='@(isEdit ? Model!.AveragingJson : "{}")' />
+        <input type="hidden" id="existingScoringLogic"   value="@(isEdit ? Model!.ScoringLogic : "WA")" />
+        <input type="hidden" id="existingAccessUsers"  value='@(isEdit ? Model!.AccessJson : "[]")' />
         <input type="hidden" id="existingRounds"      value='@(isEdit ? Model!.RoundsJson : "[]")' />
+
         @if (isEdit)
         {
             <input type="hidden" id="existingEventName"        value="@Model!.Name" />

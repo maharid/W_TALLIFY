@@ -91,7 +91,7 @@ namespace ProjectTallify.Controllers
                 _db.AuditLogs.Add(new AuditLog
                 {
                     EventId = ev.Id,
-                    UserId = null,
+                    OrganizerId = null,
                     UserName = judge.Name,
                     UserRole = "Judge",
                     Action = "Judge Logged In",
@@ -136,7 +136,7 @@ namespace ProjectTallify.Controllers
                 .Include(e => e.Contestants)
                 .Include(e => e.Rounds)
                 .ThenInclude(r => r.Criterias)
-                .Include(e => e.User) 
+                .Include(e => e.Organizer) 
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(code))
@@ -150,9 +150,9 @@ namespace ProjectTallify.Controllers
 
             if (ev == null) return NotFound("Event not found.");
 
-            ViewBag.OrganizationName = ev.User.OrganizationName ?? "The Organization";
-            ViewBag.OrganizationSubtitle = ev.User.OrganizationSubtitle ?? "Subtitle";
-            ViewBag.OrganizationPhotoPath = ev.User.OrganizationPhotoPath;
+            ViewBag.OrganizationName = ev.Organizer.OrganizationName ?? "The Organization";
+            ViewBag.OrganizationSubtitle = ev.Organizer.OrganizationSubtitle ?? "Subtitle";
+            ViewBag.OrganizationPhotoPath = ev.Organizer.OrganizationPhotoPath;
 
             if (sessionEventId.HasValue && sessionEventId.Value == ev.Id)
             {
@@ -186,7 +186,6 @@ namespace ProjectTallify.Controllers
                 if (activeRound == null)
                 {
                     activeRound = allRounds
-                        .Where(r => r.RoundType == "criteria")
                         .FirstOrDefault();
                 }
             }
@@ -211,7 +210,7 @@ namespace ProjectTallify.Controllers
             var selectedId = contestantVms.FirstOrDefault()?.ContestantId;
 
             var criteriaRounds = new List<Round>();
-            if (activeRound != null && activeRound.RoundType == "criteria")
+            if (activeRound != null)
             {
                 criteriaRounds.Add(activeRound);
             }
@@ -257,9 +256,9 @@ namespace ProjectTallify.Controllers
                 ThemeColor          = ev.ThemeColor,
                 HeaderImage         = ev.HeaderImage,
                 JudgeName           = HttpContext.Session.GetString("JudgeName") ?? "Judge",
-                OrganizationName    = ev.User.OrganizationName ?? "Organization", 
-                OrganizationSubtitle = ev.User.OrganizationSubtitle ?? "Subtitle",
-                OrganizationPhotoPath = ev.User.OrganizationPhotoPath,
+                OrganizationName    = ev.Organizer.OrganizationName ?? "Organization", 
+                OrganizationSubtitle = ev.Organizer.OrganizationSubtitle ?? "Subtitle",
+                OrganizationPhotoPath = ev.Organizer.OrganizationPhotoPath,
                 Contestants         = contestantVms,
                 Groups              = groups
             };
@@ -316,7 +315,7 @@ namespace ProjectTallify.Controllers
                 _db.AuditLogs.Add(new AuditLog
                 {
                     EventId = ev.Id,
-                    UserId = null, 
+                    OrganizerId = null, 
                     UserName = judgeName,
                     UserRole = "Judge",
                     Action = "Round Scores Submitted",

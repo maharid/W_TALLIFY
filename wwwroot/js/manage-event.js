@@ -161,8 +161,8 @@ function initManageEvent(eventId, serverAccessCode, eventStatus) {
 
             contestants.forEach(c => {
                 const rankDisplay = (c.rank && c.rank > 0 && canUseRank) ? `#${c.rank} (${c.score})` : '-';
-                const photoHtml = c.photoUrl
-                    ? `<div class="contestant-photo-wrapper"><div class="contestant-photo-thumb has-photo" style="background-image: url('${c.photoUrl}');"></div></div>`
+                const photoHtml = c.photoPath
+                    ? `<div class="contestant-photo-wrapper"><div class="contestant-photo-thumb has-photo" style="background-image: url('${c.photoPath}');"></div></div>`
                     : `<span class="text-muted">No photo</span>`;
                 
                 const row = document.createElement('tr');

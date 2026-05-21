@@ -12,8 +12,8 @@
 
     // Helper for labels
     string GetTypeLabel(string val) => val switch {
-        "criteria" => "WA",
-        "orw" => "PB",
+        "WeightedAverage" => "WA",
+        "PointBased" => "PB",
         _ => "All Types"
     };
 
@@ -70,10 +70,10 @@
                 <div class="filter-select-menu">
                     <button type="button" class="filter-select-option @(currentType == "all" ? "is-selected" : "")" 
                             data-value="all">All Types</button>
-                    <button type="button" class="filter-select-option @(currentType == "criteria" ? "is-selected" : "")" 
-                            data-value="criteria">WA</button>
-                    <button type="button" class="filter-select-option @(currentType == "orw" ? "is-selected" : "")" 
-                            data-value="orw">PB</button>
+                    <button type="button" class="filter-select-option @(currentType == "WeightedAverage" ? "is-selected" : "")" 
+                            data-value="WeightedAverage">WA</button>
+                    <button type="button" class="filter-select-option @(currentType == "PointBased" ? "is-selected" : "")" 
+                            data-value="PointBased">PB</button>
                 </div>
             </div>
 
@@ -116,8 +116,8 @@
                 @if (!Model.Any())
                 {
                     string emptyMsg = "No events found.";
-                    if (currentType == "orw") { emptyMsg = "No PB data available."; }
-                    else if (currentType == "criteria") { emptyMsg = "No WA data available."; }
+                    if (currentType == "PointBased") { emptyMsg = "No Point-Based events found."; }
+                    else if (currentType == "WeightedAverage") { emptyMsg = "No Weighted Average events found."; }
                     
                     <tr class="table-empty-row">
                         <td colspan="5" style="text-align:center; padding: 32px; color: var(--color-text-faint); font-style: italic;">
@@ -127,8 +127,8 @@
                 }
                 @foreach (var ev in Model)
                 {
-                    var typeLabel = ev.EventType == "criteria" ? "WA" : "PB";
-                    var typeClass = ev.EventType == "criteria" ? "pill pill-type-cb" : "pill pill-type-orw";
+                    var typeLabel = ev.ScoringLogic == "WeightedAverage" ? "WA" : "PB";
+                    var typeClass = ev.ScoringLogic == "WeightedAverage" ? "pill pill-type-cb" : "pill pill-type-orw";
 
                     // Derive status from ev.Status (fallback using start date if null/empty)
                     string statusText;
@@ -160,7 +160,7 @@
                         <td class="events-cell-event" style="font-weight:600;">@ev.Name</td>
 
                         <td>
-                            <span class="@typeClass" style="@(ev.EventType == "criteria" ? "background:#fee2f3; color:#fb0a74;" : "background:#e5ecff; color:#4f46e5;")">@typeLabel</span>
+                            <span class="@typeClass" style="@(ev.ScoringLogic == "WeightedAverage" ? "background:#fee2f3; color:#fb0a74;" : "background:#e5ecff; color:#4f46e5;")">@typeLabel</span>
                         </td>
 
                         <td>@ev.StartDateTime.ToString("MMM dd, yyyy h:mm tt")</td>

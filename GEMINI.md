@@ -1,65 +1,83 @@
-# Project Tallify
+# ProjectTallify
 
-Project Tallify is a real-time event scoring and tallying system designed for competitions such as beauty pageants and talent shows. It automates the judging process, provides live tally updates via SignalR, and generates high-quality PDF reports for final results.
+ProjectTallify is a comprehensive event management and scoring system designed for organized competitions, such as pageants or talent shows. It facilitates event coordination, judge participation, real-time scoring, and automated reporting.
 
-## Project Overview
-
-- **Purpose**: Automate judging, scoring, and real-time result aggregation for multi-round competitions.
-- **Main Technologies**:
-  - **Framework**: .NET 8.0 (ASP.NET Core MVC)
-  - **Database**: MySQL 8.0 (via Pomelo.EntityFrameworkCore.MySql)
-  - **Real-time**: ASP.NET Core SignalR
-  - **Reporting**: QuestPDF (for PDF generation)
-  - **Authentication**: Cookie-based authentication with BCrypt hashing.
-  - **Frontend**: Razor Views, Vanilla CSS, jQuery for AJAX interactions.
-  - **Testing**: Katalon Studio project located in the `TALLIFY/` directory.
-
-## Architecture
-
-The project follows a standard ASP.NET Core MVC architecture with a dedicated service layer:
-
-- **Controllers**: Located in `/Controllers`. Key controllers include `AuthController`, `EventsController`, `JudgeController`, and `NotificationsController`.
-- **Models**: Located in `/Models`. The database context is `TallifyDbContext` in `/Models/Data/`.
-- **Services**: Business logic is encapsulated in `/Services`:
-  - `ScoringService`: Core logic for score calculations, rankings, and tallying.
-  - `ReportService`: Generates PDF summaries using QuestPDF.
-  - `NotificationService`: Manages real-time alerts and state changes via SignalR.
-  - `SmtpEmailSender`: Handles email communications.
-- **Hubs**: `/Hubs/NotificationHub.cs` facilitates real-time communication between the management dashboard and judges.
-- **Migrations**: Database schema evolution is tracked in `/Migrations`.
-
-## Building and Running
+## 🚀 Quick Start
 
 ### Prerequisites
-- .NET 8 SDK
-- MySQL Server 8.0
+- .NET 8.0 SDK
+- MySQL Server (or Docker)
+- SMTP Server (for email features, e.g., Gmail)
 
-### Local Setup
-1.  **Configuration**: Update the `TallifyDb` connection string in `appsettings.json` or `appsettings.Development.json`.
-2.  **Database Migration**:
-    ```bash
-    dotnet ef database update
-    ```
-3.  **Run Application**:
+### Building and Running
+1.  **Database Setup:**
+    - Ensure a MySQL instance is running.
+    - Update the connection string in `appsettings.json` or via environment variables.
+    - Apply migrations:
+      ```bash
+      dotnet ef database update
+      ```
+2.  **Run the Application:**
     ```bash
     dotnet run
     ```
-    The application typically starts at the Login screen (`/Auth/Login`).
+    The application will be available at `http://localhost:5022` (or the port configured in `Properties/launchSettings.json`).
 
-### Docker Setup
-The project includes a `docker-compose.yml` for easy environment setup:
-```bash
-docker-compose up --build
-```
+3.  **Docker (Optional):**
+    ```bash
+    docker-compose up --build
+    ```
+
+### Configuration
+Environment variables can be managed via `appsettings.json`, `.env.example` (if using a loader), or system environment variables. Key sections include:
+- `ConnectionStrings:TallifyDb`: MySQL connection string.
+- `EmailSettings`: SMTP configuration for system emails.
+
+## 🏗️ Architecture & Technology Stack
+
+-   **Backend:** ASP.NET Core 8.0 MVC
+-   **Database:** MySQL with Entity Framework Core (Pomelo provider)
+-   **Real-time:** SignalR for live notifications and scoring updates
+-   **Reporting:** QuestPDF for generating PDF result summaries
+-   **Authentication:** Cookie-based authentication for Organizers; PIN-based access for Judges
+-   **Security:** SHA256 hashing for passwords/tokens (using `BCrypt.Net-Next` as per project file, though `AuthController` uses a custom SHA256 helper)
+-   **Frontend:** Razor Views, Vanilla JavaScript, CSS, Bootstrap, and jQuery
+
+## 📂 Project Structure
+
+-   `Controllers/`: Handles incoming requests (Auth, Events, Judge, etc.)
+-   `Models/`: Contains data entities (`Event.cs`, `Contestant.cs`, `Judge.cs`, `Score.cs`) and DTOs
+-   `Services/`: Business logic implementations:
+    -   `ScoringService.cs`: Logic for tallying and ranking
+    -   `ReportService.cs`: PDF generation logic
+    -   `NotificationService.cs`: SignalR wrapper for notifications
+-   `Views/`: Razor templates for the UI
+-   `wwwroot/`: Static assets (CSS, JS, images, uploads)
+-   `TALLIFY/`: Automation testing project (Katalon Studio/Gradle)
+-   `Hubs/`: SignalR Hub definitions (`NotificationHub.cs`)
+-   `Migrations/`: EF Core database migration history
+
+## 🛠️ Development Conventions
+
+### Coding Style
+-   Follow standard C# and .NET naming conventions (PascalCase for classes/methods).
+-   Use Dependency Injection (DI) for services in controllers.
+-   Asynchronous programming (`async`/`await`) is preferred for I/O operations (database, email).
+
+### Database Management
+-   All schema changes must be done via EF Core Migrations.
+-   Avoid raw SQL queries unless absolutely necessary for performance.
 
 ### Testing
-Automated functional tests are located in the `TALLIFY/` folder. This is a Katalon Studio project.
+-   **Manual Testing:** Most features involve complex multi-user flows (Organizer vs. Judge).
+-   **Automation:** The `TALLIFY` directory contains Gradle-based automation tests using the Katalon plugin.
 
-## Development Conventions
+## 📝 Key Commands
+-   **Add Migration:** `dotnet ef migrations add <MigrationName>`
+-   **Update Database:** `dotnet ef database update`
+-   **Build:** `dotnet build`
+-   **Clean:** `dotnet clean`
 
-- **Dependency Injection**: Use the built-in DI container. Register services in `Program.cs` (typically as `Transient` or `Scoped`).
-- **Real-time Updates**: Use the `NotificationHub` and `INotificationService` to push state changes (e.g., score submissions) to connected clients.
-- **Controller Logic**: Keep controllers thin. Move complex business logic, calculations, and data transformations to the appropriate `Service` classes.
-- **Data Transfer**: Use DTOs (found in `Models/EventDtos.cs`, `Models/ManageDtos.cs`, etc.) for passing data between the client and server.
-- **Styling**: Maintain UI consistency using the Vanilla CSS files in `wwwroot/css/`.
-- **AJAX**: Most interactive elements in the Judge and Manage views are powered by jQuery AJAX calls to controller actions.
+## 💡 Important Notes
+-   **Email:** Password resets and signup verifications require a valid SMTP configuration in `appsettings.json`.
+-   **Environment:** Ensure `ASPNETCORE_ENVIRONMENT` is set to `Development` during local work to see detailed error pages.

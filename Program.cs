@@ -3,48 +3,24 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using ProjectTallify.Models; // <-- your DbContext + Models namespace
-using Microsoft.AspNetCore.Authentication.Cookies;
+using ProjectTallify.Hubs;   // <-- where your NotificationHub is
 using ProjectTallify.Services;
-using ProjectTallify.Hubs;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ======================================================
-// DATABASE (MySQL via Pomelo)
-// ======================================================
-var connectionString = builder.Configuration.GetConnectionString("TallifyDb");
+// ==================================================
+// 1. SERVICES
+// ==================================================
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
 
+// DB: MySQL (Pomelo)
+var connectionString = builder.Configuration.GetConnectionString("TallifyDb");
 builder.Services.AddDbContext<TallifyDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-
-// ======================================================
-// MVC + Controllers + Views
-// ======================================================
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllersWithViews();
-builder.Services.AddSignalR(); // Add SignalR
-
-
-// ======================================================
-// (OPTIONAL) SIMPLE COOKIE AUTH
-// If you want login sessions; you can remove if not needed
-// ======================================================
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/Auth/Login";       // where to redirect if not logged in
-        options.AccessDeniedPath = "/Auth/Denied";
-    });
-
-
-// ======================================================
-// SESSION (for temporary storage)
-// IMPORTANT: Session must be enabled BEFORE UseRouting()
-// ======================================================
+// Add Session
 builder.Services.AddDistributedMemoryCache();
-
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(12);
@@ -52,49 +28,44 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Email
-builder.Services.Configure<EmailSettings>(
-    builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+// Authentication (Cookie-based for SignalR support)
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+    });
 
-// Scoring Service
-builder.Services.AddTransient<IScoringService, ScoringService>();
+// Real-time: SignalR
+builder.Services.AddSignalR();
+
+// Business Services
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddTransient<IReportService, ReportService>();
+builder.Services.AddScoped<IScoringService, ScoringService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
-
-// ======================================================
-// BUILD APP
-// ======================================================
 var app = builder.Build();
 
-
-// ======================================================
-// ERROR HANDLING + SECURITY
-// ======================================================
+// ==================================================
+// 2. MIDDLEWARE
+// ==================================================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-    app.UseHttpsRedirection();
 }
 app.UseStaticFiles();
-
-
-// ======================================================
-// ROUTING + AUTH + SESSION
-// ======================================================
 app.UseRouting();
 
-app.UseSession();            // MUST BE BEFORE Authorization
-app.UseAuthentication();      // if using cookie login
+app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
 
-
-// ======================================================
-// DEFAULT ROUTE
-// Your app starts at the Login screen
-// ======================================================
+// ==================================================
+// 3. ROUTES
+// ==================================================
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}");

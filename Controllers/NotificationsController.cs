@@ -22,7 +22,7 @@ namespace ProjectTallify.Controllers
             if (userId == null) return Unauthorized();
 
             var query = _db.NotificationLogs
-                .Where(n => n.UserId == userId)
+                .Where(n => n.OrganizerId == userId)
                 .OrderByDescending(n => n.CreatedAt)
                 .AsQueryable();
 
@@ -63,7 +63,7 @@ namespace ProjectTallify.Controllers
                 Console.WriteLine($"[MarkAsRead] Attempting to find notification with ID: {id} for user: {userId}");
                 var log = await _db.NotificationLogs.FindAsync(id);
                 
-                if (log != null && log.UserId == userId)
+                if (log != null && log.OrganizerId == userId)
                 {
                     Console.WriteLine($"[MarkAsRead] Found notification {id}. Marking as read.");
                     log.IsRead = true;
@@ -78,7 +78,7 @@ namespace ProjectTallify.Controllers
                 }
                 else // log.UserId != userId
                 {
-                    Console.WriteLine($"[MarkAsRead] Unauthorized attempt to mark notification {id} by user {userId}. Owner: {log.UserId}");
+                    Console.WriteLine($"[MarkAsRead] Unauthorized attempt to mark notification {id} by user {userId}. Owner: {log.OrganizerId}");
                     return StatusCode(403, new { success = false, message = "You are not authorized to mark this notification as read." });
                 }
                 return Ok(new { success = true }); // Return a success response
@@ -97,7 +97,7 @@ namespace ProjectTallify.Controllers
             if (userId == null) return Unauthorized();
 
             await _db.NotificationLogs
-                .Where(n => n.UserId == userId && !n.IsRead)
+                .Where(n => n.OrganizerId == userId && !n.IsRead)
                 .ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true));
 
             return Ok();
@@ -109,7 +109,7 @@ namespace ProjectTallify.Controllers
             if (userId == null) return Ok(0);
 
             var count = await _db.NotificationLogs
-                .Where(n => n.UserId == userId && !n.IsRead)
+                .Where(n => n.OrganizerId == userId && !n.IsRead)
                 .CountAsync();
 
             return Ok(count);

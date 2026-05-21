@@ -306,26 +306,19 @@ namespace ProjectTallify.Services
                     continue;
                 }
 
-                if (ev.EventType == "criteria") // Weighted Average System
+                if (ev.ScoringLogic == "WeightedAverage") // Weighted Average System
                 {
                     foreach (var criteria in currentRound.Criterias.OrderBy(c => c.DisplayOrder))
                     {
                         decimal weightedScore = 0;
 
                         // --- STEP B: DERIVED CRITERION ---
-                        // Check if this criteria is derived from a previous round
-                        // Prioritize explicit IsDerived flag, fallback to MinPoints == -1 convention
                         if (criteria.IsDerived || criteria.MinPoints == -1 || criteria.Name.IndexOf("DERIVED FROM", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             Round? sourceRound = null;
-
-                            // Strategy 0: Explicit DB Link (Best)
                             if (criteria.DerivedFromRoundId.HasValue)
-                            {
                                 sourceRound = ev.Rounds.FirstOrDefault(r => r.Id == criteria.DerivedFromRoundId.Value);
-                            }
 
-                            // Strategy 1: Look for round name match in the string (Legacy/Fallback)
                             if (sourceRound == null)
                             {
                                 sourceRound = ev.Rounds
@@ -334,7 +327,6 @@ namespace ProjectTallify.Services
                                     .FirstOrDefault();
                             }
 
-                            // Strategy 2 (Fallback): If MinPoints == -1 but no name match, assume immediate previous round
                             if (sourceRound == null && (criteria.MinPoints == -1 || criteria.IsDerived))
                             {
                                 sourceRound = ev.Rounds
@@ -345,21 +337,16 @@ namespace ProjectTallify.Services
 
                             if (sourceRound != null)
                             {
-                                // Fetch the total score of that round for this contestant
                                 var prevRoundScore = allPriorComputedScores
                                     .FirstOrDefault(crs => crs.RoundId == sourceRound.Id && crs.ContestantId == contestant.Id);
 
                                 if (prevRoundScore != null)
-                                {
-                                    // Formula: Previous Round Total * Weight
                                     weightedScore = prevRoundScore.Score * (criteria.WeightPercent / 100M);
-                                }
                             }
                         }
                         // --- STEP A: STANDARD CRITERION ---
                         else
                         {
-                            // Fetch judge scores for this criteria
                             var criteriaRawValues = contestantRawScores
                                 .Where(s => s.CriteriaId == criteria.Id)
                                 .Select(s => s.Value)
@@ -367,21 +354,19 @@ namespace ProjectTallify.Services
 
                             if (criteriaRawValues.Any())
                             {
-                                // Formula: (Sum of Scores / Count of Judges) * Weight
                                 decimal averageScore = criteriaRawValues.Average();
                                 weightedScore = averageScore * (criteria.WeightPercent / 100M);
                             }
                         }
 
                         currentContestantCriteriaScores.Add(criteria.Id, weightedScore);
-                        
-                        // --- STEP C: ROUND TOTAL ---
                         roundTotalScore += weightedScore;
                     }
                 }
-                else if (ev.EventType == "orw") // Pointing System (Objective Right/Wrong)
+                else if (ev.ScoringLogic == "PointBased") // Point-Based (Judge Rank Aggregation)
                 {
-                    // Sum all raw points directly. Weight is ignored or implicitly 100% of the raw value.
+                    // For PB, we store the SUM of raw points as the contestant's score for this round initially,
+                    // but the RANKING logic below will override the final placement.
                     roundTotalScore = contestantRawScores.Sum(s => s.Value);
                 }
 
@@ -389,37 +374,83 @@ namespace ProjectTallify.Services
             }
 
             // 5. Save Computed Results & Calculate Ranks
-            var scoresForRanking = contestantScores.Select(cs => cs.TotalScore).ToList();
-            
-            foreach (var cs in contestantScores)
+            if (ev.ScoringLogic == "PointBased")
             {
-                var rank = CalculateRankAvg(scoresForRanking, cs.TotalScore);
+                // SPECIAL LOGIC: Point-Based Rank Aggregation
+                // 1. Calculate ranks per judge
+                var judges = ev.Scores.Where(s => s.RoundId == roundId).Select(s => s.JudgeId).Distinct().ToList();
+                var contestantRankSums = new Dictionary<int, decimal>(); // ContestantId -> Sum of Ranks
 
-                // A. Save Round Total
-                _db.ComputedRoundScores.Add(new ComputedRoundScore
+                foreach (var judgeId in judges)
                 {
-                    EventId = eventId,
-                    RoundId = roundId,
-                    ContestantId = cs.Contestant.Id,
-                    Score = cs.TotalScore,
-                    Rank = rank,
-                    ComputedAt = DateTime.UtcNow,
-                    CriteriaId = null // Indicates Round Total
-                });
+                    var judgeScores = ev.Scores
+                        .Where(s => s.RoundId == roundId && s.JudgeId == judgeId)
+                        .GroupBy(s => s.ContestantId)
+                        .Select(g => new { ContestantId = g.Key, TotalPoints = g.Sum(s => s.Value) })
+                        .ToList();
 
-                // B. Save Criteria Breakdown (Optional but good for reports)
-                foreach (var kvp in cs.CriteriaScores)
+                    var pointsList = judgeScores.Select(js => js.TotalPoints).ToList();
+                    foreach (var js in judgeScores)
+                    {
+                        var rank = CalculateRankAvg(pointsList, js.TotalPoints);
+                        if (!contestantRankSums.ContainsKey(js.ContestantId)) contestantRankSums[js.ContestantId] = 0;
+                        contestantRankSums[js.ContestantId] += rank;
+                    }
+                }
+
+                // 2. Final ranking is based on LOWEST rank sum
+                var rankSumsList = contestantRankSums.Values.ToList();
+                foreach (var cs in contestantScores)
                 {
+                    decimal rankSum = contestantRankSums.ContainsKey(cs.Contestant.Id) ? contestantRankSums[cs.Contestant.Id] : 9999;
+                    // Lower rank sum is better, so we pass inverse to CalculateRankAvg or custom logic
+                    // CalculateRankAvg normally treats higher as better. For Rank Sum, lower is better.
+                    var finalRank = CalculateRankLowIsBetter(rankSumsList, rankSum);
+
                     _db.ComputedRoundScores.Add(new ComputedRoundScore
                     {
                         EventId = eventId,
                         RoundId = roundId,
                         ContestantId = cs.Contestant.Id,
-                        Score = kvp.Value,
-                        Rank = 0, // No specific rank for criteria breakdown usually
+                        Score = rankSum, // Store the Rank Sum as the "Score" for PB
+                        Rank = finalRank,
                         ComputedAt = DateTime.UtcNow,
-                        CriteriaId = kvp.Key
+                        CriteriaId = null
                     });
+                }
+            }
+            else
+            {
+                // STANDARD LOGIC: Weighted Average
+                var scoresForRanking = contestantScores.Select(cs => cs.TotalScore).ToList();
+                foreach (var cs in contestantScores)
+                {
+                    var rank = CalculateRankAvg(scoresForRanking, cs.TotalScore);
+
+                    _db.ComputedRoundScores.Add(new ComputedRoundScore
+                    {
+                        EventId = eventId,
+                        RoundId = roundId,
+                        ContestantId = cs.Contestant.Id,
+                        Score = cs.TotalScore,
+                        Rank = rank,
+                        ComputedAt = DateTime.UtcNow,
+                        CriteriaId = null
+                    });
+
+                    foreach (var kvp in cs.CriteriaScores)
+                    {
+                        _db.ComputedRoundScores.Add(new ComputedRoundScore
+                        {
+                            EventId = eventId,
+                            RoundId = roundId,
+                            ContestantId = cs.Contestant.Id,
+                            Score = kvp.Value,
+                            Rank = 0,
+                            ComputedAt = DateTime.UtcNow,
+                            CriteriaId = kvp.Key
+                        });
+                    }
                 }
             }
             
@@ -485,7 +516,30 @@ namespace ProjectTallify.Services
             {
                 return (decimal)firstPosition; // No ties, rank is simply its position
             }
-        }        
+        }
+
+        private decimal CalculateRankLowIsBetter(List<decimal> scores, decimal currentScore)
+        {
+            if (scores == null || !scores.Any()) return 0;
+
+            // Sort scores in ASCENDING order (lower rank sum is better)
+            var sortedScores = scores.OrderBy(s => s).ToList();
+
+            int firstPosition = -1;
+            int lastPosition = -1;
+
+            for (int i = 0; i < sortedScores.Count; i++)
+            {
+                if (sortedScores[i] == currentScore)
+                {
+                    if (firstPosition == -1) firstPosition = i + 1;
+                    lastPosition = i + 1;
+                }
+            }
+
+            if (firstPosition == -1) return 0;
+            return (firstPosition != lastPosition) ? (decimal)(firstPosition + lastPosition) / 2 : (decimal)firstPosition;
+        }
     }
     
     // --- DTOs for score input ---

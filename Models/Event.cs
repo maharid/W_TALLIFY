@@ -11,8 +11,7 @@ namespace ProjectTallify.Models
         public string Venue { get; set; } = null!;
         public string? Description { get; set; }
 
-        // "criteria" or "orw"
-        public string EventType { get; set; } = "criteria";
+        public string ScoringLogic { get; set; } = "WA";
 
         public DateTime StartDateTime { get; set; }
 
@@ -23,12 +22,11 @@ namespace ProjectTallify.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public int UserId { get; set; }
-        public User User { get; set; } = null!;
+        public int OrganizerId { get; set; }
+        public Organizer Organizer { get; set; } = null!;
 
         public string? ContestantsJson { get; set; }
         public string? AccessJson { get; set; }
-        public string? AveragingJson { get; set; }
         public string? RoundsJson { get; set; }
 
         // Branding / Appearance

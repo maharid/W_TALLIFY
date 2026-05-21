@@ -26,6 +26,9 @@ namespace ProjectTallify.Controllers
         private readonly IScoringService _scoringService;
         private readonly IReportService _reportService;
 
+        // 5MB Limit
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024;
+
         public EventsController(TallifyDbContext db, IEmailSender emailSender, IWebHostEnvironment webHostEnvironment, INotificationService notificationService, IScoringService scoringService, IReportService reportService)
         {
             _db = db;
@@ -56,7 +59,7 @@ namespace ProjectTallify.Controllers
             var query = _db.Events.AsQueryable();
             
             // Filter by User ID
-            query = query.Where(e => e.UserId == userId.Value);
+            query = query.Where(e => e.OrganizerId == userId.Value);
 
             // Filter out archived events by default
             query = query.Where(e => !e.IsArchived);
@@ -68,10 +71,10 @@ namespace ProjectTallify.Controllers
                 query = query.Where(e => e.Name.Contains(s));
             }
 
-            // Filter by type (criteria / orw)
+            // Filter by logic (WeightedAverage / PointBased)
             if (!string.IsNullOrEmpty(type) && type != "all")
             {
-                query = query.Where(e => e.EventType == type);
+                query = query.Where(e => e.ScoringLogic == type);
             }
 
             // Filter by status – "all" means no filter
@@ -142,7 +145,7 @@ namespace ProjectTallify.Controllers
 
             var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();
-            if (ev.UserId != userId.Value) return Unauthorized(); // Check ownership
+            if (ev.OrganizerId != userId.Value) return Unauthorized(); // Check ownership
 
             // Populate ContestantsJson from actual Contestants table
             var contestants = await _db.Contestants
@@ -152,18 +155,18 @@ namespace ProjectTallify.Controllers
                     Id = c.Code,
                     Name = c.Name,
                     Organization = c.Organization,
-                    PhotoUrl = c.PhotoPath
+                    PhotoPath = c.PhotoPath
                 })
                 .ToListAsync();
             ev.ContestantsJson = JsonSerializer.Serialize(contestants);
 
             // Populate AccessJson from actual Judges table
-            List<SimpleAccessUser> accessUsers = new List<SimpleAccessUser>();
-            if (ev.EventType == "criteria")
+            List<SimpleAccessAccount> accessAccounts = new List<SimpleAccessAccount>();
+            if (ev.ScoringLogic == "WeightedAverage" || ev.ScoringLogic == "PointBased")
             {
                 var judges = await _db.Judges
                     .Where(j => j.EventId == ev.Id)
-                    .Select(j => new SimpleAccessUser
+                    .Select(j => new SimpleAccessAccount
                     {
                         Id = j.Id.ToString(),
                         Name = j.Name,
@@ -171,9 +174,9 @@ namespace ProjectTallify.Controllers
                         Pin = j.Pin
                     })
                     .ToListAsync();
-                accessUsers.AddRange(judges);
+                accessAccounts.AddRange(judges);
             }
-            ev.AccessJson = JsonSerializer.Serialize(accessUsers);
+            ev.AccessJson = JsonSerializer.Serialize(accessAccounts);
 
             // Populate RoundsJson (and implicitly criteria)
             var rounds = await _db.Rounds
@@ -208,7 +211,7 @@ namespace ProjectTallify.Controllers
             var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             ev.RoundsJson = JsonSerializer.Serialize(simpleRoundsWithCriteria, jsonOptions);
             ev.ContestantsJson = JsonSerializer.Serialize(contestants, jsonOptions);
-            ev.AccessJson = JsonSerializer.Serialize(accessUsers, jsonOptions);
+            ev.AccessJson = JsonSerializer.Serialize(accessAccounts, jsonOptions);
             
             // Pass the Event model to the same CreateEvent view
             return View("~/Views/Home/CreateEvent.cshtml", ev);
@@ -254,23 +257,16 @@ namespace ProjectTallify.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 return Unauthorized(new { success = false, message = "You must be logged in." });
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-                return Unauthorized(new { success = false, message = "User account not found." });
+            var organizer = await _db.Organizers.FirstOrDefaultAsync(u => u.Email == email);
+            if (organizer == null)
+                return Unauthorized(new { success = false, message = "Organizer account not found." });
 
             // Save Logic
-            var result = await SaveEventCoreAsync(request, user.Id);
+            var result = await SaveEventCoreAsync(request, organizer.Id);
 
             if (!result.Success)
             {
                 return BadRequest(new { success = false, message = result.Message });
-            }
-
-            // Send Invites if requested (Post-Save)
-            // CHANGED: Always send Verification Email on Publish (CreateFromWizard), do NOT send Access Code yet.
-            if (result.Event!.EventType == "criteria")
-            {
-                await SendJudgeVerificationsInternal(result.Event);
             }
 
             return Ok(new
@@ -331,11 +327,11 @@ namespace ProjectTallify.Controllers
             var email = HttpContext.Session.GetString("UserEmail");
             if (string.IsNullOrWhiteSpace(email)) return Unauthorized(new { success = false, message = "Unauthorized" });
             
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return Unauthorized(new { success = false, message = "User not found" });
+            var organizer = await _db.Organizers.FirstOrDefaultAsync(u => u.Email == email);
+            if (organizer == null) return Unauthorized(new { success = false, message = "Organizer not found" });
 
             // 1. Save Event first (Draft/Update) to ensure judges exist in DB
-            var saveResult = await SaveEventCoreAsync(request, user.Id);
+            var saveResult = await SaveEventCoreAsync(request, organizer.Id);
             if (!saveResult.Success) return BadRequest(new { success = false, message = saveResult.Message });
 
             var ev = saveResult.Event!;
@@ -432,7 +428,7 @@ namespace ProjectTallify.Controllers
                 {
                     ev = new Event
                     {
-                        UserId = userId,
+                        OrganizerId = userId,
                         Status = "preparing",
                         CreatedAt = DateTime.UtcNow
                     };
@@ -444,24 +440,28 @@ namespace ProjectTallify.Controllers
                 ev.Venue = request.EventVenue!.Trim();
                 ev.Description = request.EventDescription?.Trim();
                 ev.StartDateTime = start;
-                ev.EventType = string.IsNullOrWhiteSpace(request.EventType) ? "criteria" : request.EventType;
+                ev.ScoringLogic = string.IsNullOrWhiteSpace(request.ScoringLogic) ? "WeightedAverage" : request.ScoringLogic;
                 ev.AccessCode = trimmedCode;
 
                 ev.ContestantsJson = JsonSerializer.Serialize(request.Contestants ?? new List<SimpleContestant>());
-                ev.AccessJson = JsonSerializer.Serialize(request.AccessUsers ?? new List<SimpleAccessUser>());
+                ev.AccessJson = JsonSerializer.Serialize(request.AccessUsers ?? new List<SimpleAccessAccount>());
                 
-                ev.AveragingJson = !string.IsNullOrEmpty(request.RoundsJson) ? request.RoundsJson : request.CriteriaJson;
-
-                ev.RoundsJson = request.RoundsJson;
-                ev.ThemeColor = request.ThemeColor;
-                ev.HeaderImage = request.HeaderImage;
-
+                if (ev.HeaderImage != request.HeaderImage)
+                {
+                    // Cleanup old header image if it existed
+                    if (!string.IsNullOrEmpty(ev.HeaderImage))
+                    {
+                        DeleteLocalFile(ev.HeaderImage);
+                    }
+                    ev.HeaderImage = request.HeaderImage;
+                }
+                
                 await _db.SaveChangesAsync(); // Get ID
 
                 // Sync sub-tables
                 await SyncContestantsInternal(ev, request.Contestants);
                 await SyncAccessUsersInternal(ev, request.AccessUsers);
-                await SyncRoundsAndCriteriaInternal(ev, request.RoundsJson, request.CriteriaType ?? "averaging");
+                await SyncRoundsAndCriteriaInternal(ev, request.RoundsJson, request.CriteriaType ?? "WeightedAverage");
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -484,6 +484,21 @@ namespace ProjectTallify.Controllers
         {
             // Remove existing
             var existing = await _db.Contestants.Where(c => c.EventId == ev.Id).ToListAsync();
+            
+            // Cleanup orphaned photos (Safety: 30 days)
+            var incomingPhotos = (contestants ?? new List<SimpleContestant>())
+                .Select(c => c.PhotoPath)
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList();
+
+            foreach (var oldC in existing)
+            {
+                if (!string.IsNullOrEmpty(oldC.PhotoPath) && !incomingPhotos.Contains(oldC.PhotoPath))
+                {
+                    DeleteLocalFile(oldC.PhotoPath);
+                }
+            }
+
             _db.Contestants.RemoveRange(existing);
 
             if (contestants == null || !contestants.Any()) return;
@@ -498,19 +513,19 @@ namespace ProjectTallify.Controllers
                     Code = string.IsNullOrWhiteSpace(c.Id) ? $"C-{Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper()}" : c.Id,
                     Name = c.Name,
                     Organization = c.Organization,
-                    PhotoPath = c.PhotoUrl
+                    PhotoPath = c.PhotoPath
                 });
             }
         }
 
-        private async Task SyncAccessUsersInternal(Event ev, List<SimpleAccessUser>? users)
+        private async Task SyncAccessUsersInternal(Event ev, List<SimpleAccessAccount>? users)
         {
-            if (ev.EventType == "criteria")
+            if (ev.ScoringLogic == "WeightedAverage" || ev.ScoringLogic == "PointBased")
             {
                 // Sync Judges
                 var existingJudges = await _db.Judges.Where(j => j.EventId == ev.Id).ToListAsync();
                 
-                var incoming = users ?? new List<SimpleAccessUser>();
+                var incoming = users ?? new List<SimpleAccessAccount>();
                 var keptIds = new List<int>();
 
                 foreach (var u in incoming)
@@ -586,7 +601,6 @@ namespace ProjectTallify.Controllers
                             EventId = ev.Id,
                             Name = rDto.RoundName,
                             Order = roundOrder++,
-                            RoundType = "criteria", // Both systems use criteria-based rounds structure
                             IsActive = false
                         };
                         _db.Rounds.Add(round);
@@ -638,7 +652,7 @@ namespace ProjectTallify.Controllers
                                     WeightPercent = weight,
                                     MaxPoints = maxPoints,
                                     MinPoints = minPoints,
-                                    IsDerived = (cDto.IsDerived || cDto.MinPoints == -1), 
+                                    IsDerived = (cDto.IsDerived || cDto.DerivedFromRoundIndex.HasValue || cDto.MinPoints == -1), 
                                     DerivedFromRoundId = derivedRoundId, // Store the Mapped ID
                                     DisplayOrder = critOrder++
                                 };
@@ -697,7 +711,7 @@ namespace ProjectTallify.Controllers
                 _db.AuditLogs.Add(new AuditLog
                 {
                     EventId = judge.EventId,
-                    UserId = null,
+                    OrganizerId = null,
                     UserName = judge.Name,
                     UserRole = "Judge",
                     Action = "Judge Verified",
@@ -736,7 +750,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = judge.EventId,
-                UserId = null,
+                OrganizerId = null,
                 UserName = judge.Name,
                 UserRole = "Judge",
                 Action = "Judge Accessed Event",
@@ -764,7 +778,7 @@ namespace ProjectTallify.Controllers
 
             var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();
-            if (ev.UserId != userId.Value) return Unauthorized();
+            if (ev.OrganizerId != userId.Value) return Unauthorized();
 
             // Populate ContestantsJson
             var contestants = await _db.Contestants
@@ -774,18 +788,18 @@ namespace ProjectTallify.Controllers
                     Id = c.Code,
                     Name = c.Name,
                     Organization = c.Organization,
-                    PhotoUrl = c.PhotoPath
+                    PhotoPath = c.PhotoPath
                 })
                 .ToListAsync();
             ev.ContestantsJson = JsonSerializer.Serialize(contestants);
 
             // Populate AccessJson
-            List<SimpleAccessUser> accessUsers = new List<SimpleAccessUser>();
-            if (ev.EventType == "criteria")
+            List<SimpleAccessAccount> accessAccounts = new List<SimpleAccessAccount>();
+            if (ev.ScoringLogic == "WeightedAverage" || ev.ScoringLogic == "PointBased")
             {
                 var judges = await _db.Judges
                     .Where(j => j.EventId == ev.Id)
-                    .Select(j => new SimpleAccessUser
+                    .Select(j => new SimpleAccessAccount
                     {
                         Id = j.Id.ToString(),
                         Name = j.Name,
@@ -794,9 +808,9 @@ namespace ProjectTallify.Controllers
                         IsVerified = j.IsEmailVerified
                     })
                     .ToListAsync();
-                accessUsers.AddRange(judges);
+                accessAccounts.AddRange(judges);
             }
-            ev.AccessJson = JsonSerializer.Serialize(accessUsers);
+            ev.AccessJson = JsonSerializer.Serialize(accessAccounts);
 
             // Populate RoundsJson
             var rounds = await _db.Rounds
@@ -868,7 +882,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
                 UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
                 Action = "Opened event",
@@ -902,7 +916,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
                 UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
                 Action = "Closed event",
@@ -931,7 +945,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
                 UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
                 Action = "Archived event",
@@ -988,7 +1002,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
                 UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
                 Action = "Started round",
@@ -1027,7 +1041,7 @@ namespace ProjectTallify.Controllers
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = round.EventId,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
                 UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
                 Action = "Ended round",
@@ -1285,7 +1299,7 @@ namespace ProjectTallify.Controllers
                             {
                                 ContestantName = c.Name,
                                 Organization = c.Organization ?? "",
-                                PhotoUrl = c.PhotoPath, 
+                                PhotoPath = c.PhotoPath, 
                                 TotalScore = compTotal.Score,
                                 AverageScore = simpleAvg, 
                                 Rank = compTotal.Rank,
@@ -1304,7 +1318,7 @@ namespace ProjectTallify.Controllers
                     roundVm.SummaryRows = roundVm.SummaryRows.OrderBy(x => x.Rank).ToList();
 
                     // 4b. Detailed Breakdown Tables (Per Criteria)
-                    if (ev.EventType == "criteria") 
+                    if (ev.ScoringLogic == "WA" || ev.ScoringLogic == "PB") 
                     {
                         foreach (var criteria in r.Criterias.OrderBy(c => c.DisplayOrder))
                         {
@@ -1413,6 +1427,19 @@ namespace ProjectTallify.Controllers
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { success = false, message = "No file uploaded." });
+
+            // 1. Validate Size (5MB)
+            if (file.Length > MaxFileSizeBytes)
+            {
+                return BadRequest(new { success = false, message = "File is too large. Maximum size allowed is 5MB." });
+            }
+
+            // 2. Validate file type
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif")
+            {
+                return BadRequest(new { success = false, message = "Invalid file type. Only images are allowed." });
+            }
 
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder))
@@ -1579,7 +1606,7 @@ namespace ProjectTallify.Controllers
                     id = c.Code, 
                     name = c.Name,
                     organization = c.Organization,
-                    photoUrl = c.PhotoPath
+                    photoPath = c.PhotoPath
                 })
                 .ToListAsync();
 
@@ -1609,12 +1636,48 @@ namespace ProjectTallify.Controllers
                 c.id,
                 c.name,
                 c.organization,
-                c.photoUrl,
+                c.photoPath,
                 rank = relevantScores.FirstOrDefault(s => s.ContestantId == c.internalId)?.Rank ?? 0, 
                 score = relevantScores.FirstOrDefault(s => s.ContestantId == c.internalId)?.Score ?? 0
             }).ToList();
 
             return Json(result);
+        }
+
+        /// <summary>
+        /// Deletes a file from the local wwwroot folder.
+        /// SAFETY: Includes a check to ensure we don't delete files uploaded within the last 30 days.
+        /// </summary>
+        private void DeleteLocalFile(string relativePath)
+        {
+            try
+            {
+                // 1. Clean path (remove leading slash if any)
+                var path = relativePath.StartsWith("/") ? relativePath.Substring(1) : relativePath;
+                
+                // 2. Map to physical path
+                var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, path);
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    // SAFETY: Only delete if the file is older than 30 days
+                    var creationTime = System.IO.File.GetCreationTimeUtc(fullPath);
+                    if (creationTime < DateTime.UtcNow.AddDays(-30))
+                    {
+                        System.IO.File.Delete(fullPath);
+                        Console.WriteLine($"Cleanup: Deleted orphaned file {fullPath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Cleanup Skip: File {fullPath} is recent ({creationTime}). Retained.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't crash (cleanup is secondary)
+                Console.WriteLine($"Cleanup Error: Failed to delete {relativePath}. {ex.Message}");
+            }
         }
     }
 }

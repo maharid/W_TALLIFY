@@ -1481,7 +1481,6 @@ C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\ProjectTallify.genr
 C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\ref\ProjectTallify.dll
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\appsettings.Development.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\appsettings.json
-C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\TALLIFY\Reports\Self-healing\broken-test-objects-v2.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.staticwebassets.endpoints.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-Black.ttf
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-BlackItalic.ttf

@@ -34,7 +34,7 @@ namespace ProjectTallify.Controllers
 
             // Only OPEN events, not archived, and belonging to the user
             var activeEvents = await _db.Events
-                .Where(e => e.UserId == userId.Value && e.Status == "open" && !e.IsArchived)
+                .Where(e => e.OrganizerId == userId.Value && e.Status == "open" && !e.IsArchived)
                 .OrderBy(e => e.StartDateTime)
                 .ToListAsync();
 
@@ -67,11 +67,11 @@ namespace ProjectTallify.Controllers
             if (!userId.HasValue) return RedirectToAction("Login", "Auth");
 
             var query = _db.AuditLogs
-                .Include(a => a.User)
+                .Include(a => a.Organizer)
                 .Include(a => a.Event)
                 .Where(a => 
-                    (a.UserId == userId.Value) || // User's own account actions
-                    (a.Event != null && a.Event.UserId == userId.Value) // Actions on user's events
+                    (a.OrganizerId == userId.Value) || // User's own account actions
+                    (a.Event != null && a.Event.OrganizerId == userId.Value) // Actions on user's events
                 )
                 .AsQueryable();
 

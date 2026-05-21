@@ -5,10 +5,10 @@ namespace ProjectTallify.Models
         public string? Id { get; set; }
         public string? Name { get; set; }
         public string? Organization { get; set; }
-        public string? PhotoUrl { get; set; }
+        public string? PhotoPath { get; set; }
     }
 
-    public class SimpleAccessUser
+    public class SimpleAccessAccount
     {
         public string? Id { get; set; }
         public string? Name { get; set; }
@@ -47,17 +47,16 @@ namespace ProjectTallify.Models
         public string? EventStartDate   { get; set; }
         public string? EventStartTime   { get; set; }
         
-        public string? EventType        { get; set; } 
+        public string? ScoringLogic     { get; set; } 
         public string? AccessCode       { get; set; }
 
         // Structured Lists for Atomic Save (Prompt Requirement)
         public List<SimpleContestant>? Contestants { get; set; } = new();
-        public List<SimpleAccessUser>? AccessUsers { get; set; } = new();
+        public List<SimpleAccessAccount>? AccessUsers { get; set; } = new();
 
         // Complex nested configs still as JSON for now (or can be structured)
-        public string? CriteriaJson       { get; set; }
         public string? RoundsJson         { get; set; }
-        public string? CriteriaType       { get; set; } // "averaging" or "pointing"
+        public string? CriteriaType       { get; set; } // "WeightedAverage" or "PointBased"
 
         public string? ThemeColor  { get; set; }
         public string? HeaderImage { get; set; }

@@ -7,6 +7,7 @@ using System.Linq;
 using System;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using System.Collections.Generic;
 
 namespace ProjectTallify.Controllers
 {
@@ -14,6 +15,9 @@ namespace ProjectTallify.Controllers
     {
         private readonly TallifyDbContext _db;
         private readonly IWebHostEnvironment _webHostEnvironment;
+
+        // 5MB Limit
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
         public SettingsController(TallifyDbContext db, IWebHostEnvironment webHostEnvironment)
         {
@@ -26,7 +30,7 @@ namespace ProjectTallify.Controllers
             ViewBag.ActiveNav = "Settings";
             ViewBag.HideOrgCard = true; // <- this hides the org card in _Layout
 
-            // Get logged-in user's ID
+            // Get logged-in organizer's ID
             var userId = HttpContext.Session.GetInt32("UserId");
             if (!userId.HasValue)
             {
@@ -34,18 +38,18 @@ namespace ProjectTallify.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            // Fetch user data
-            var user = await _db.Users
+            // Fetch organizer data
+            var organizer = await _db.Organizers
                 .Where(u => u.Id == userId.Value)
                 .FirstOrDefaultAsync();
 
-            if (user == null)
+            if (organizer == null)
             {
-                // User not found, perhaps session is stale
+                // Organizer not found, perhaps session is stale
                 return RedirectToAction("Login", "Auth");
             }
 
-            return View(user);
+            return View(organizer);
         }
 
         [HttpPost]
@@ -53,31 +57,37 @@ namespace ProjectTallify.Controllers
         {
             if (file == null || file.Length == 0) return BadRequest("No file selected.");
 
-            // 1. Validate file type (optional but recommended)
+            // 1. Validate Size (Efficiency: Prevent huge files from bloating local storage)
+            if (file.Length > MaxFileSizeBytes)
+            {
+                return BadRequest("File is too large. Maximum size allowed is 5MB.");
+            }
+
+            // 2. Validate file type (Security)
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif")
             {
                 return BadRequest("Invalid file type. Only images are allowed.");
             }
 
-            // 2. Create Uploads Folder if not exists
+            // 3. Create Uploads Folder if not exists
             var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-            // 3. Generate Unique Filename
+            // 4. Generate Unique Filename
             var fileName = $"{Guid.NewGuid()}{ext}";
             var filePath = Path.Combine(uploadsFolder, fileName);
 
-            // 4. Save File
+            // 5. Save File
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
 
-            // 5. Return Relative URL
+            // 6. Return Relative URL
             var fileUrl = $"/uploads/{fileName}";
             return Ok(new { filePath = fileUrl });
         }
@@ -88,61 +98,67 @@ namespace ProjectTallify.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (!userId.HasValue) return Unauthorized();
 
-            var user = await _db.Users.FindAsync(userId.Value);
-            if (user == null) return NotFound();
+            var organizer = await _db.Organizers.FindAsync(userId.Value);
+            if (organizer == null) return NotFound();
 
             bool changed = false;
 
             if (!string.IsNullOrWhiteSpace(request.ThemeColor))
             {
-                user.ThemeColor = request.ThemeColor;
+                organizer.ThemeColor = request.ThemeColor;
                 changed = true;
             }
 
             if (!string.IsNullOrWhiteSpace(request.OrganizationName))
             {
-                user.OrganizationName = request.OrganizationName;
+                organizer.OrganizationName = request.OrganizationName;
                 changed = true;
             }
 
             if (!string.IsNullOrWhiteSpace(request.OrganizationSubtitle))
             {
-                user.OrganizationSubtitle = request.OrganizationSubtitle;
+                organizer.OrganizationSubtitle = request.OrganizationSubtitle;
                 changed = true;
             }
 
-            if (!string.IsNullOrWhiteSpace(request.OrganizationPhotoPath)) // Check for photo path update
+            if (!string.IsNullOrWhiteSpace(request.OrganizationPhotoPath)) 
             {
-                user.OrganizationPhotoPath = request.OrganizationPhotoPath;
-                changed = true;
-            }
-            else // If path is empty/null, and it was previously set, assume removal or reset
-            {
-                if (request.OrganizationPhotoPath != null && !string.IsNullOrEmpty(user.OrganizationPhotoPath)) // Only clear if explicitly sent as empty string/null but present in request logic (requires care, simpler: if not null)
+                // DELETE OLD FILE (Cleanup logic)
+                if (!string.IsNullOrEmpty(organizer.OrganizationPhotoPath))
                 {
-                   // Actually, for simplicity, we assume frontend sends the new path or we skip.
-                   // To support clearing, we might need a flag or empty string.
-                   // Current logic for org photo was:
+                    DeleteLocalFile(organizer.OrganizationPhotoPath);
                 }
+
+                organizer.OrganizationPhotoPath = request.OrganizationPhotoPath;
+                changed = true;
             }
 
-            if (request.ProfilePhotoPath != null) // Check if the property was sent in the request
+            if (request.ProfilePhotoPath != null) 
             {
                 // If it's an empty string, it means removal
                 if (string.IsNullOrEmpty(request.ProfilePhotoPath))
                 {
-                    user.ProfilePhotoPath = null; // Set to null in DB
+                    if (!string.IsNullOrEmpty(organizer.ProfilePhotoPath))
+                    {
+                        DeleteLocalFile(organizer.ProfilePhotoPath);
+                    }
+                    organizer.ProfilePhotoPath = null; 
                 }
-                else // Otherwise, it's a new path
+                else 
                 {
-                    user.ProfilePhotoPath = request.ProfilePhotoPath;
+                    // New path provided, delete the old one first
+                    if (!string.IsNullOrEmpty(organizer.ProfilePhotoPath))
+                    {
+                        DeleteLocalFile(organizer.ProfilePhotoPath);
+                    }
+                    organizer.ProfilePhotoPath = request.ProfilePhotoPath;
                 }
                 changed = true;
             }
 
-            if (request.EnableNotifications.HasValue && request.EnableNotifications.Value != user.EnableNotifications)
+            if (request.EnableNotifications.HasValue && request.EnableNotifications.Value != organizer.EnableNotifications)
             {
-                user.EnableNotifications = request.EnableNotifications.Value;
+                organizer.EnableNotifications = request.EnableNotifications.Value;
                 changed = true;
             }
 
@@ -155,6 +171,42 @@ namespace ProjectTallify.Controllers
             return Ok(new { success = true, message = "No changes" });
         }
 
+        /// <summary>
+        /// Deletes a file from the local wwwroot folder.
+        /// SAFETY: Includes a check to ensure we don't delete files uploaded within the last 30 days.
+        /// </summary>
+        private void DeleteLocalFile(string relativePath)
+        {
+            try
+            {
+                // 1. Clean path (remove leading slash if any)
+                var path = relativePath.StartsWith("/") ? relativePath.Substring(1) : relativePath;
+                
+                // 2. Map to physical path
+                var fullPath = Path.Combine(_webHostEnvironment.WebRootPath, path);
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    // SAFETY: Only delete if the file is older than 30 days
+                    var creationTime = System.IO.File.GetCreationTimeUtc(fullPath);
+                    if (creationTime < DateTime.UtcNow.AddDays(-30))
+                    {
+                        System.IO.File.Delete(fullPath);
+                        Console.WriteLine($"Cleanup: Deleted orphaned file {fullPath}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Cleanup Skip: File {fullPath} is recent ({creationTime}). Retained.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't crash (cleanup is secondary)
+                Console.WriteLine($"Cleanup Error: Failed to delete {relativePath}. {ex.Message}");
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeactivateAccount([FromForm] string password)
@@ -165,29 +217,29 @@ namespace ProjectTallify.Controllers
                 return Json(new { success = false, message = "User not logged in." });
             }
 
-            var user = await _db.Users.FindAsync(userId.Value);
-            if (user == null)
+            var organizer = await _db.Organizers.FindAsync(userId.Value);
+            if (organizer == null)
             {
-                return Json(new { success = false, message = "User not found." });
+                return Json(new { success = false, message = "Organizer not found." });
             }
 
             // Verify Password
-            if (string.IsNullOrWhiteSpace(password) || !VerifyPassword(password, user.HashedPassword))
+            if (string.IsNullOrWhiteSpace(password) || !VerifyPassword(password, organizer.HashedPassword))
             {
                 return Json(new { success = false, reason = "password", message = "Incorrect password." });
             }
 
-            user.IsActive = false; // Deactivate the account
+            organizer.IsActive = false; // Deactivate the account
 
             // Audit Log
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = null,
-                UserId = user.Id,
-                UserName = user.Email,
-                UserRole = user.Role,
+                OrganizerId = organizer.Id,
+                UserName = organizer.Email,
+                UserRole = "Organizer",
                 Action = "Account Deactivated",
-                Details = $"User '{user.Email}' has deactivated their account.",
+                Details = $"Organizer '{organizer.Email}' has deactivated their account.",
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -197,11 +249,11 @@ namespace ProjectTallify.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deactivating account for user {user.Id} ({user.Email}): {ex}");
+                Console.WriteLine($"Error deactivating account for organizer {organizer.Id} ({organizer.Email}): {ex}");
                 return Json(new { success = false, message = "An error occurred while deactivating your account." });
             }
 
-            // Log out the user after deactivation
+            // Log out the organizer after deactivation
             HttpContext.Session.Clear();
             return Json(new { success = true });
         }
@@ -231,7 +283,7 @@ namespace ProjectTallify.Controllers
             }
 
             var archivedEvents = await _db.Events
-                .Where(e => e.UserId == userId.Value && e.IsArchived == true)
+                .Where(e => e.OrganizerId == userId.Value && e.IsArchived == true)
                 .OrderByDescending(e => e.StartDateTime)
                 .ToListAsync();
 
@@ -249,16 +301,16 @@ namespace ProjectTallify.Controllers
             {
                 return Unauthorized(new { success = false, message = "User not authenticated." });
             }
-            if (ev.UserId != userId.Value) return Unauthorized(new { success = false, message = "Unauthorized." });
+            if (ev.OrganizerId != userId.Value) return Unauthorized(new { success = false, message = "Unauthorized." });
 
             ev.IsArchived = false;
 
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
-                UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
+                UserRole = "Organizer",
                 Action = "Restored event",
                 Details = $"Event '{ev.Name}' was restored from archive.",
                 CreatedAt = DateTime.UtcNow
@@ -271,7 +323,10 @@ namespace ProjectTallify.Controllers
         [HttpPost]
         public async Task<IActionResult> PermanentlyDeleteEvent(int id)
         {
-            var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
+            var ev = await _db.Events
+                .Include(e => e.Contestants)
+                .FirstOrDefaultAsync(e => e.Id == id);
+                
             if (ev == null) return NotFound(new { success = false, message = "Event not found." });
 
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -279,23 +334,97 @@ namespace ProjectTallify.Controllers
             {
                 return Unauthorized(new { success = false, message = "User not authenticated." });
             }
-            if (ev.UserId != userId.Value) return Unauthorized(new { success = false, message = "Unauthorized." });
+            if (ev.OrganizerId != userId.Value) return Unauthorized(new { success = false, message = "Unauthorized." });
 
-            // Audit log BEFORE deletion, as ev will be gone
+            // 1. Cleanup Header Image
+            if (!string.IsNullOrEmpty(ev.HeaderImage))
+            {
+                DeleteLocalFile(ev.HeaderImage);
+            }
+
+            // 2. Cleanup Contestant Photos
+            foreach (var c in ev.Contestants)
+            {
+                if (!string.IsNullOrEmpty(c.PhotoPath))
+                {
+                    DeleteLocalFile(c.PhotoPath);
+                }
+            }
+
+            // Audit log BEFORE deletion
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = ev.Id,
-                UserId = HttpContext.Session.GetInt32("UserId"),
+                OrganizerId = HttpContext.Session.GetInt32("UserId"),
                 UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
-                UserRole = HttpContext.Session.GetString("UserRole") ?? "Organizer",
+                UserRole = "Organizer",
                 Action = "Permanently deleted event",
-                Details = $"Event '{ev.Name}' was permanently deleted from archive.",
+                Details = $"Event '{ev.Name}' and its associated files were permanently deleted.",
                 CreatedAt = DateTime.UtcNow
             });
 
             _db.Events.Remove(ev);
             await _db.SaveChangesAsync();
-            return Ok(new { success = true, message = "Event permanently deleted." });
+            return Ok(new { success = true, message = "Event and associated files permanently deleted." });
+        }
+
+        /// <summary>
+        /// SYSTEM UTILITY: Scans the uploads folder and deletes any file not referenced in the DB.
+        /// SAFETY: Only deletes files older than 30 days.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> RunDeepCleanup()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (!userId.HasValue) return Unauthorized();
+
+            // 1. Get all file paths from DB
+            var organizerPhotos = await _db.Organizers.Select(u => u.ProfilePhotoPath).Where(p => p != null).ToListAsync();
+            var orgLogos = await _db.Organizers.Select(u => u.OrganizationPhotoPath).Where(p => p != null).ToListAsync();
+            var eventHeaders = await _db.Events.Select(e => e.HeaderImage).Where(p => p != null).ToListAsync();
+            var contestantPhotos = await _db.Contestants.Select(c => c.PhotoPath).Where(p => p != null).ToListAsync();
+
+            var allDbPaths = organizerPhotos
+                .Concat(orgLogos)
+                .Concat(eventHeaders)
+                .Concat(contestantPhotos)
+                .Select(p => p!.TrimStart('/').Replace("/", "\\")) // Normalize for Windows
+                .ToHashSet();
+
+            // 2. Scan physical folder
+            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+            if (!Directory.Exists(uploadsFolder)) return Ok(new { message = "Uploads folder not found." });
+
+            var filesOnDisk = Directory.GetFiles(uploadsFolder);
+            int deletedCount = 0;
+            int skippedCount = 0;
+
+            foreach (var filePath in filesOnDisk)
+            {
+                var fileName = Path.GetFileName(filePath);
+                var relativePath = Path.Combine("uploads", fileName);
+
+                if (!allDbPaths.Contains(relativePath))
+                {
+                    // Found an orphan! Check age.
+                    var creationTime = System.IO.File.GetCreationTimeUtc(filePath);
+                    if (creationTime < DateTime.UtcNow.AddDays(-30))
+                    {
+                        System.IO.File.Delete(filePath);
+                        deletedCount++;
+                    }
+                    else
+                    {
+                        skippedCount++;
+                    }
+                }
+            }
+
+            return Ok(new { 
+                success = true, 
+                message = $"Deep cleanup complete. Deleted {deletedCount} orphans. Skipped {skippedCount} recent files.",
+                totalScanned = filesOnDisk.Length
+            });
         }
     }
 

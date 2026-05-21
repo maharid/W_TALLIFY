@@ -8,7 +8,7 @@ namespace ProjectTallify.Models
             : base(options)
         { }
 
-        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Organizer> Organizers { get; set; } = null!;
         public DbSet<Event> Events { get; set; } = null!;
 
         // 👉 NEW ONES:

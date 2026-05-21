@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const typeChip = document.querySelector("#eventPreviewCard .type-chip");
         if (typeChip) {
-            typeChip.textContent = data.eventType === "pointing" ? "PB" : "WA";
+            typeChip.textContent = data.scoringLogic === "PointBased" ? "PB" : "WA";
         }
         
         const previewHeader = document.getElementById("previewHeader");
@@ -434,6 +434,17 @@ document.addEventListener("DOMContentLoaded", function () {
         return valid;
     }
 
+    function showUploadError(msg) {
+        const modalEl = document.getElementById('uploadErrorModal');
+        if (!modalEl) {
+            showToast(msg);
+            return;
+        }
+        document.getElementById('uploadErrorMessage').textContent = msg;
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
     /* =========================================================
      * STEP 3 — CONTESTANTS
      * =======================================================*/
@@ -473,7 +484,11 @@ document.addEventListener("DOMContentLoaded", function () {
         photoInput.addEventListener("change", async () => {
             const file = photoInput.files[0];
             if (!file) return;
-            if (file.size > 5 * 1024 * 1024) { showToast("Photo exceeds 5MB limit."); return; }
+            if (file.size > 5 * 1024 * 1024) { 
+                showUploadError("File too large");
+                photoInput.value = ""; // Clear input
+                return; 
+            }
 
             photoBtn.textContent = "...";
             const formData = new FormData();
@@ -484,7 +499,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.success) {
                     const path = "/uploads/" + data.fileName;
                     thumb.style.backgroundImage = `url('${path}')`;
-                    thumb.dataset.photoUrl = path;
+                    thumb.dataset.photoPath = path;
                     photoBtn.textContent = "Replace photo";
                     removePhotoBtn.style.display = "inline-flex";
                     saveDraft();
@@ -500,7 +515,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         removePhotoBtn.addEventListener("click", () => {
             thumb.style.backgroundImage = "none";
-            thumb.dataset.photoUrl = "";
+            thumb.dataset.photoPath = "";
             photoBtn.textContent = "Upload photo";
             removePhotoBtn.style.display = "none";
             photoInput.value = "";
@@ -694,12 +709,12 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
 
         // 2. Scoring Logic & Rounds
-        const logicName = data.eventType === "averaging" ? "Weighted Average" : "Point-Based";
+        const logicName = data.scoringLogic === "WeightedAverage" ? "Weighted Average" : "Point-Based";
         let roundsHtml = `
             <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
                 <div style="font-weight:700; color:#6b7280;">Logic Type:</div>
                 <div>
-                    <span style="font-family:monospace; font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px;">${logicName}</span>
+                    <span style="font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px;">${logicName}</span>
                 </div>
             </div>
         `;
@@ -725,8 +740,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     <tr>
                         <td style="padding:10px; font-weight:500;">${c.name}</td>
                         <td style="padding:10px;">${c.weight + "%"}</td>
-                        <td style="padding:10px;">${c.derivedFrom ? "—" : (c.min !== undefined ? c.min : "—")}</td>
-                        <td style="padding:10px;">${c.derivedFrom ? "—" : (c.max !== undefined ? c.max : "—")}</td>
+                        <td style="padding:10px;">${c.isDerived ? "—" : (c.minPoints !== undefined ? c.minPoints : "—")}</td>
+                        <td style="padding:10px;">${c.isDerived ? "—" : (c.maxPoints !== undefined ? c.maxPoints : "—")}</td>
                     </tr>
                 `;
             });
@@ -803,7 +818,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <div style="display:grid; grid-template-columns: 140px 1fr; gap:12px; font-size:14px; color:#374151; margin-bottom:16px;">
                 <div style="font-weight:700; color:#6b7280;">Theme Color:</div>
                 <div>
-                    <span style="font-family:monospace; font-weight:700; color:#000; background-color:${data.themeColor}; padding:4px 10px; border-radius:6px; letter-spacing:1px;">${upperThemeColor}</span>
+                    <span style="font-weight:700; color:#000; background-color:${data.themeColor}; padding:4px 10px; border-radius:6px;">${upperThemeColor}</span>
                 </div>
 
                 <div style="font-weight:700; color:#6b7280;">Header Image:</div>
@@ -815,7 +830,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div class="preview-body">
                         <h3 class="preview-title">${data.eventName || "Your Competition Title"}</h3>
                         <div class="preview-tags">
-                            <span class="preview-chip type-chip">${data.eventType === "pointing" ? "PB" : "WA"}</span>
+                            <span class="preview-chip type-chip">${data.scoringLogic === "PointBased" ? "PB" : "WA"}</span>
                             <span class="preview-chip status-chip--open">Preparing</span>
                         </div>
                     </div>
@@ -828,13 +843,14 @@ document.addEventListener("DOMContentLoaded", function () {
      * DRAFTING SYSTEM
      * =======================================================*/
     function getDraftData() {
+        const isPointing = document.getElementById("criteriaSystemPointing")?.checked;
         return {
             eventName: document.getElementById("eventName").value.trim(),
             eventVenue: document.getElementById("eventVenue").value.trim(),
             eventDescription: document.getElementById("eventDescription").value.trim(),
             eventStartDate: document.getElementById("eventStartDate").value,
             eventStartTime: document.getElementById("eventStartTime").value,
-            eventType: document.querySelector('input[name="criteriaSystem"]:checked')?.value || "averaging",
+            scoringLogic: isPointing ? "PointBased" : "WeightedAverage",
             accessCode: document.getElementById("eventAccessCode").value.trim(),
             themeColor: eventThemeColor,
             headerImage: window.selectedHeaderImageFileName,
@@ -843,15 +859,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 criteria: Array.from(r.querySelectorAll(".criteria-block")).map(b => ({
                     name: b.querySelector(".criteria-name").value.trim(),
                     weight: parseFloat(b.querySelector(".criteria-weight").value) || 0,
-                    min: parseFloat(b.querySelector(".min-point").value) || 0,
-                    max: parseFloat(b.querySelector(".max-point").value) || 100,
-                    derivedFrom: b.querySelector(".criteria-derived-from")?.value || ""
+                    minPoints: parseFloat(b.querySelector(".min-point").value) || 0,
+                    maxPoints: parseFloat(b.querySelector(".max-point").value) || 100,
+                    isDerived: !!b.querySelector(".criteria-derived-from")?.value,
+                    derivedFromRoundIndex: b.querySelector(".criteria-derived-from")?.value ? parseInt(b.querySelector(".criteria-derived-from").value) : null
                 }))
             })),
             contestants: Array.from(contestantsBody.querySelectorAll("tr[data-contestant-row]")).map(tr => ({
                 name: tr.querySelector(".contestant-name").value.trim(),
                 org: tr.querySelector(".contestant-org").value.trim(),
-                photo: tr.querySelector(".contestant-photo-thumb").dataset.photoUrl
+                photo: tr.querySelector(".contestant-photo-thumb").dataset.photoPath
             })),
             judges: Array.from(judgesBody.querySelectorAll("tr[data-judge-row]")).map(tr => ({
                 name: tr.querySelector(".judge-name").value.trim(),
@@ -870,6 +887,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function loadDraft() {
+        // SAFETY: If we are in "Edit" mode (editing an existing event), 
+        // we MUST NOT load a local draft from localStorage. 
+        // The data from the database is the single source of truth.
+        if (window.currentEventId && window.currentEventId > 0) return;
+
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (!raw) return;
         
@@ -889,7 +911,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("eventStartDate").value = data.eventStartDate || "";
                 document.getElementById("eventStartTime").value = data.eventStartTime || "";
 
-                if (data.eventType === "pointing") document.getElementById("criteriaSystemPointing").checked = true;
+                if (data.scoringLogic === "PointBased") document.getElementById("criteriaSystemPointing").checked = true;
                 else document.getElementById("criteriaSystemAveraging").checked = true;
                 updateCriteriaVisibility();
 
@@ -903,7 +925,13 @@ document.addEventListener("DOMContentLoaded", function () {
                         const container = card.querySelector(".criteria-blocks");
                         container.innerHTML = "";
                         r.criteria.forEach(c => {
-                            addCriteriaBlock(container, c);
+                            addCriteriaBlock(container, {
+                                name: c.name,
+                                weight: c.weight,
+                                min: c.minPoints,
+                                max: c.maxPoints,
+                                derivedFrom: c.derivedFromRoundIndex
+                            });
                         });
                         updateWeightTracker(card);
                     });
@@ -915,13 +943,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         addContestantRow();
                         const tr = contestantsBody.lastElementChild;
                         tr.querySelector(".contestant-name").value = c.name;
-                        tr.querySelector(".contestant-org").value = c.org;
+                        tr.querySelector(".contestant-org").value = c.org || c.organization || "";
                         const thumb = tr.querySelector(".contestant-photo-thumb");
                         const photoBtn = tr.querySelector(".btn-upload-photo");
                         const removePhotoBtn = tr.querySelector(".btn-remove-photo");
-                        thumb.dataset.photoUrl = c.photo || "";
-                        if (c.photo) {
-                            thumb.style.backgroundImage = `url('${c.photo}')`;
+                        const path = c.photo || c.photoPath || "";
+                        thumb.dataset.photoPath = path;
+                        if (path) {
+                            thumb.style.backgroundImage = `url('${path.startsWith("/") ? path : "/uploads/" + path}')`;
                             photoBtn.textContent = "Replace photo";
                             removePhotoBtn.style.display = "inline-flex";
                         }
@@ -935,7 +964,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         addJudgeRow();
                         const tr = judgesBody.lastElementChild;
                         tr.querySelector(".judge-name").value = j.name;
-                        tr.querySelector(".judge-email").value = j.email;
+                        tr.querySelector(".judge-email").value = j.email || j.assigned || "";
                         tr.querySelector(".judge-pin").textContent = j.pin;
                     });
                 }
@@ -966,7 +995,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 modal.hide();
                 showToast("Your progress has been restored.", "success");
-            } catch (e) { showToast("Error restoring draft."); modal.hide(); }
+            } catch (e) { console.error(e); showToast("Error restoring draft."); modal.hide(); }
         };
 
         document.getElementById("btnDraftFresh").onclick = () => {
@@ -1001,6 +1030,11 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("eventHeaderImage")?.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { 
+            showUploadError("File too large");
+            e.target.value = ""; // Clear input
+            return; 
+        }
         const formData = new FormData();
         formData.append("file", file);
         try {
@@ -1057,12 +1091,20 @@ document.addEventListener("DOMContentLoaded", function () {
         publishLoadingOverlay.style.display = "flex";
         const data = getDraftData();
         const payload = {
-            eventName: data.eventName, eventVenue: data.eventVenue, eventDescription: data.eventDescription,
-            eventStartDate: data.eventStartDate, eventStartTime: data.eventStartTime, eventType: data.eventType,
-            accessCode: data.accessCode, themeColor: data.themeColor, headerImage: data.headerImage,
+            eventId: (window.currentEventId || 0),
+            eventName: data.eventName, 
+            eventVenue: data.eventVenue, 
+            eventDescription: data.eventDescription,
+            eventStartDate: data.eventStartDate, 
+            eventStartTime: data.eventStartTime, 
+            scoringLogic: data.scoringLogic,
+            accessCode: data.accessCode, 
+            themeColor: data.themeColor, 
+            headerImage: data.headerImage,
             contestants: data.contestants.map(c => ({ name: c.name, organization: c.org, photoPath: c.photo })),
-            accessUsers: data.judges.map(j => ({ name: j.name, email: j.email, pin: j.pin })),
-            roundsJson: JSON.stringify(data.rounds)
+            accessUsers: data.judges.map(j => ({ name: j.name, assigned: j.email, pin: j.pin })),
+            roundsJson: JSON.stringify(data.rounds),
+            criteriaType: data.scoringLogic // Include criteriaType for backend compatibility
         };
 
         fetch("/Events/CreateFromWizard", {
@@ -1229,7 +1271,115 @@ document.addEventListener("DOMContentLoaded", function () {
         addJudgeRow();
     });
     
+    function initExistingData() {
+        if (!window.currentEventId || window.currentEventId <= 0) return;
+
+        console.log("Initializing existing event data for ID:", window.currentEventId);
+
+        // 1. Basic Details
+        if (window.existingEventName)        document.getElementById("eventName").value = window.existingEventName;
+        if (window.existingEventVenue)       document.getElementById("eventVenue").value = window.existingEventVenue;
+        if (window.existingEventDescription) document.getElementById("eventDescription").value = window.existingEventDescription;
+        if (window.existingEventStartDate)   document.getElementById("eventStartDate").value = window.existingEventStartDate;
+        if (window.existingEventStartTime)   document.getElementById("eventStartTime").value = window.existingEventStartTime;
+        if (window.existingAccessCode)      document.getElementById("eventAccessCode").value = window.existingAccessCode;
+
+        // 2. Scoring Logic
+        if (window.existingScoringLogic === "PointBased") {
+            document.getElementById("criteriaSystemPointing").checked = true;
+        } else {
+            document.getElementById("criteriaSystemAveraging").checked = true;
+        }
+        updateCriteriaVisibility();
+
+        // 3. Rounds & Criteria
+        if (window.wizardRounds && window.wizardRounds.length > 0) {
+            criteriaRoundsList.innerHTML = "";
+            roundCounter = 0;
+            window.wizardRounds.forEach(r => {
+                createCriteriaRound();
+                const card = criteriaRoundsList.lastElementChild;
+                card.querySelector(".event-round-name").value = r.roundName;
+                const container = card.querySelector(".criteria-blocks");
+                container.innerHTML = "";
+                r.criteria.forEach(c => {
+                    addCriteriaBlock(container, {
+                        name: c.name,
+                        weight: c.weight,
+                        min: c.minPoints,
+                        max: c.maxPoints,
+                        derivedFrom: c.derivedFromRoundIndex
+                    });
+                });
+                updateWeightTracker(card);
+            });
+        }
+
+        // 4. Contestants
+        if (window.wizardContestants && window.wizardContestants.length > 0) {
+            contestantsBody.innerHTML = "";
+            window.wizardContestants.forEach(c => {
+                addContestantRow();
+                const tr = contestantsBody.lastElementChild;
+                tr.querySelector(".contestant-name").value = c.name;
+                tr.querySelector(".contestant-org").value = c.organization || c.org || "";
+                const thumb = tr.querySelector(".contestant-photo-thumb");
+                const photoBtn = tr.querySelector(".btn-upload-photo");
+                const removePhotoBtn = tr.querySelector(".btn-remove-photo");
+                const path = c.photoPath || c.photo || "";
+                thumb.dataset.photoPath = path;
+                if (path) {
+                    thumb.style.backgroundImage = `url('${path.startsWith("/") ? path : "/uploads/" + path}')`;
+                    photoBtn.textContent = "Replace photo";
+                    removePhotoBtn.style.display = "inline-flex";
+                }
+            });
+        }
+
+        // 5. Judges
+        if (window.wizardAccessUsers && window.wizardAccessUsers.length > 0) {
+            judgesBody.innerHTML = "";
+            window.wizardAccessUsers.forEach(j => {
+                addJudgeRow();
+                const tr = judgesBody.lastElementChild;
+                tr.querySelector(".judge-name").value = j.name;
+                tr.querySelector(".judge-email").value = j.email || j.assigned || "";
+                tr.querySelector(".judge-pin").textContent = j.pin;
+            });
+        }
+
+        // 6. Branding
+        if (window.existingThemeColor) {
+            eventThemeColor = window.existingThemeColor;
+            document.querySelectorAll(".theme-preset-option").forEach(o => o.classList.remove("is-selected"));
+            const presetOpt = document.querySelector(`.theme-preset-option[data-color="${eventThemeColor}"]`);
+            if (presetOpt) {
+                presetOpt.classList.add("is-selected");
+            } else {
+                const customOpt = document.querySelector('.theme-preset-option[data-color="custom"]');
+                if (customOpt) customOpt.classList.add("is-selected");
+                const customInput = document.getElementById("eventThemeCustom");
+                if (customInput) customInput.value = eventThemeColor;
+            }
+        }
+
+        if (window.existingHeaderImage) {
+            window.selectedHeaderImageFileName = window.existingHeaderImage;
+            document.getElementById("headerFileName").textContent = window.existingHeaderImage;
+            const btnText = document.getElementById("headerImageBtnText");
+            if (btnText) btnText.textContent = "Replace photo";
+            const rmBtn = document.getElementById("btnRemoveHeaderImage");
+            if (rmBtn) rmBtn.style.display = "inline-flex";
+        }
+
+        updateLivePreview();
+    }
+
     // Resume Draft Check
-    loadDraft();
+    if (window.currentEventId && window.currentEventId > 0) {
+        initExistingData();
+    } else {
+        loadDraft();
+    }
     setInterval(saveDraft, 10000);
 });

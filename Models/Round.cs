@@ -13,8 +13,6 @@ namespace ProjectTallify.Models
         public string Name { get; set; } = null!;
         public int Order { get; set; }
 
-        // "criteria" or "orw" or other types in the future
-        public string RoundType { get; set; } = null!;
         public bool IsActive { get; set; } = false;
         public string Status { get; set; } = "pending"; // pending, ongoing, finished
 

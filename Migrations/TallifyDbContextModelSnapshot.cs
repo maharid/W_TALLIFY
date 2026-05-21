@@ -38,7 +38,7 @@ namespace ProjectTallify.Migrations
                     b.Property<int?>("EventId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int?>("OrganizerId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserName")
@@ -51,7 +51,7 @@ namespace ProjectTallify.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("OrganizerId");
 
                     b.ToTable("AuditLogs");
                 });
@@ -187,9 +187,6 @@ namespace ProjectTallify.Migrations
                     b.Property<string>("AccessJson")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("AveragingJson")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("ContestantsJson")
                         .HasColumnType("longtext");
 
@@ -197,10 +194,6 @@ namespace ProjectTallify.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("HeaderImage")
@@ -213,7 +206,14 @@ namespace ProjectTallify.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int>("OrganizerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("RoundsJson")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ScoringLogic")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("StartDateTime")
@@ -226,16 +226,13 @@ namespace ProjectTallify.Migrations
                     b.Property<string>("ThemeColor")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Venue")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("OrganizerId");
 
                     b.ToTable("Events");
                 });
@@ -291,6 +288,9 @@ namespace ProjectTallify.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    b.Property<string>("ActionUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -301,6 +301,9 @@ namespace ProjectTallify.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("OrganizerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -309,123 +312,14 @@ namespace ProjectTallify.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("OrganizerId");
 
                     b.ToTable("NotificationLogs");
                 });
 
-            modelBuilder.Entity("ProjectTallify.Models.OverallScore", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ComputedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ContestantId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Rank")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<decimal>("Score")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContestantId");
-
-                    b.HasIndex("EventId");
-
-                    b.ToTable("OverallScores");
-                });
-
-            modelBuilder.Entity("ProjectTallify.Models.Round", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("int");
-
-                    b.Property<string>("RoundType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId");
-
-                    b.ToTable("Rounds");
-                });
-
-            modelBuilder.Entity("ProjectTallify.Models.Score", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int>("ContestantId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("CriteriaId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("JudgeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoundId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContestantId");
-
-                    b.HasIndex("CriteriaId");
-
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("JudgeId");
-
-                    b.HasIndex("RoundId");
-
-                    b.ToTable("Scores");
-                });
-
-            modelBuilder.Entity("ProjectTallify.Models.User", b =>
+            modelBuilder.Entity("ProjectTallify.Models.Organizer", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -487,17 +381,115 @@ namespace ProjectTallify.Migrations
                     b.Property<DateTime?>("RememberMeTokenExpiresAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<string>("ThemeColor")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Organizers");
+                });
+
+            modelBuilder.Entity("ProjectTallify.Models.OverallScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ComputedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ContestantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Rank")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("Score")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContestantId");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("OverallScores");
+                });
+
+            modelBuilder.Entity("ProjectTallify.Models.Round", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("Rounds");
+                });
+
+            modelBuilder.Entity("ProjectTallify.Models.Score", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("ContestantId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("CriteriaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("JudgeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoundId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContestantId");
+
+                    b.HasIndex("CriteriaId");
+
+                    b.HasIndex("EventId");
+
+                    b.HasIndex("JudgeId");
+
+                    b.HasIndex("RoundId");
+
+                    b.ToTable("Scores");
                 });
 
             modelBuilder.Entity("ProjectTallify.Models.AuditLog", b =>
@@ -506,13 +498,13 @@ namespace ProjectTallify.Migrations
                         .WithMany()
                         .HasForeignKey("EventId");
 
-                    b.HasOne("ProjectTallify.Models.User", "User")
+                    b.HasOne("ProjectTallify.Models.Organizer", "Organizer")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("OrganizerId");
 
                     b.Navigation("Event");
 
-                    b.Navigation("User");
+                    b.Navigation("Organizer");
                 });
 
             modelBuilder.Entity("ProjectTallify.Models.ComputedRoundScore", b =>
@@ -585,13 +577,13 @@ namespace ProjectTallify.Migrations
 
             modelBuilder.Entity("ProjectTallify.Models.Event", b =>
                 {
-                    b.HasOne("ProjectTallify.Models.User", "User")
+                    b.HasOne("ProjectTallify.Models.Organizer", "Organizer")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("OrganizerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Organizer");
                 });
 
             modelBuilder.Entity("ProjectTallify.Models.Judge", b =>
@@ -607,11 +599,11 @@ namespace ProjectTallify.Migrations
 
             modelBuilder.Entity("ProjectTallify.Models.NotificationLog", b =>
                 {
-                    b.HasOne("ProjectTallify.Models.User", "User")
+                    b.HasOne("ProjectTallify.Models.Organizer", "Organizer")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("OrganizerId");
 
-                    b.Navigation("User");
+                    b.Navigation("Organizer");
                 });
 
             modelBuilder.Entity("ProjectTallify.Models.OverallScore", b =>

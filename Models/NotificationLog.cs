@@ -6,9 +6,9 @@ namespace ProjectTallify.Models
     {
         public int Id { get; set; }
 
-        // Link to the recipient user
-        public int? UserId { get; set; }
-        public User? User { get; set; }
+        // Link to the recipient organizer
+        public int? OrganizerId { get; set; }
+        public Organizer? Organizer { get; set; }
 
         public string Title { get; set; } = "";
         public string Message { get; set; } = "";

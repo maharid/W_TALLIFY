@@ -3,6 +3,7 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using ProjectTallify.Models;
+using System;
 
 namespace ProjectTallify.Services
 {
@@ -15,7 +16,7 @@ namespace ProjectTallify.Services
             _settings = settings.Value;
         }
 
-        public async Task SendEmailConfirmationAsync(User user, string confirmationLink)
+        public async Task SendEmailConfirmationAsync(Organizer organizer, string confirmationLink)
         {
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {
@@ -30,11 +31,11 @@ namespace ProjectTallify.Services
                 IsBodyHtml = true
             };
 
-            message.To.Add(user.Email);
+            message.To.Add(organizer.Email);
 
-            var displayName = string.IsNullOrWhiteSpace(user.FirstName)
+            var displayName = string.IsNullOrWhiteSpace(organizer.FirstName)
                 ? "Organizer"
-                : (user.FirstName + " " + (user.LastName ?? "")).Trim();
+                : (organizer.FirstName + " " + (organizer.LastName ?? "")).Trim();
 
             message.Body = $@"
             <!DOCTYPE html>
@@ -80,7 +81,7 @@ namespace ProjectTallify.Services
             await client.SendMailAsync(message);
         }
 
-        public async Task SendPasswordResetAsync(User user, string resetLink)
+        public async Task SendPasswordResetAsync(Organizer organizer, string resetLink)
         {
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {
@@ -95,22 +96,22 @@ namespace ProjectTallify.Services
                 IsBodyHtml = true
             };
 
-            message.To.Add(user.Email);
+            message.To.Add(organizer.Email);
 
-            var displayName = string.IsNullOrWhiteSpace(user.FirstName)
-        ? "Organizer"
-        : (user.FirstName + " " + (user.LastName ?? "")).Trim();
+            var displayName = string.IsNullOrWhiteSpace(organizer.FirstName)
+                ? "Organizer"
+                : (organizer.FirstName + " " + (organizer.LastName ?? "")).Trim();
 
-        message.Body = $@"
-    <h2>Password Reset</h2>
-    <p>Hello {displayName},</p>
-    <p>Someone (hopefully you) requested a password reset for your Tallify account.</p>
-    <p>Click the link below to set a new password:</p>
-    <p><a href=""{resetLink}"">Reset my password</a></p>
-    <p>If you did not request this, you can ignore this email.</p>
-    <p>If the button doesn’t work, use this URL:</p>
-    <p>{resetLink}</p>
-    ";
+            message.Body = $@"
+            <h2>Password Reset</h2>
+            <p>Hello {displayName},</p>
+            <p>Someone (hopefully you) requested a password reset for your Tallify account.</p>
+            <p>Click the link below to set a new password:</p>
+            <p><a href=""{resetLink}"">Reset my password</a></p>
+            <p>If you did not request this, you can ignore this email.</p>
+            <p>If the button doesn’t work, use this URL:</p>
+            <p>{resetLink}</p>
+            ";
             await client.SendMailAsync(message);
         }
 

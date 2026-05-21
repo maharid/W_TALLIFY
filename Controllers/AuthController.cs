@@ -81,12 +81,12 @@ namespace ProjectTallify.Controllers
 
             email = email.Trim();
 
-            // Look up user by email (regardless of active status initially)
-            var user = await _db.Users
+            // Look up organizer by email (regardless of active status initially)
+            var organizer = await _db.Organizers
                 .FirstOrDefaultAsync(u => u.Email == email);
 
             // 1) Email not found at all
-            if (user == null)
+            if (organizer == null)
             {
                 TempData["AuthError"] = "No account found for this email. Please sign up first.";
                 TempData["AuthMode"] = "login";
@@ -97,23 +97,23 @@ namespace ProjectTallify.Controllers
             // We want to verify password first so we don't leak account status or allow reactivation without proof of ownership.
 
             // 3) Email exists but not verified yet
-            if (!user.EmailConfirmed)
+            if (!organizer.EmailConfirmed)
             {
                 // ... (existing email confirmation logic) ...
-                if (user.EmailVerificationTokenExpiresAt.HasValue &&
-                    user.EmailVerificationTokenExpiresAt.Value < DateTime.UtcNow)
+                if (organizer.EmailVerificationTokenExpiresAt.HasValue &&
+                    organizer.EmailVerificationTokenExpiresAt.Value < DateTime.UtcNow)
                 {
-                    user.EmailVerificationToken = GenerateEmailToken();
-                    user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+                    organizer.EmailVerificationToken = GenerateEmailToken();
+                    organizer.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
                     await _db.SaveChangesAsync();
 
                     var confirmationLink = Url.Action(
                         "ConfirmEmail",
                         "Auth",
-                        new { userId = user.Id, token = user.EmailVerificationToken },
+                        new { userId = organizer.Id, token = organizer.EmailVerificationToken },
                         protocol: Request.Scheme);
 
-                    await _emailSender.SendEmailConfirmationAsync(user, confirmationLink!);
+                    await _emailSender.SendEmailConfirmationAsync(organizer, confirmationLink!);
 
                     TempData["AuthError"] =
                         "The previous verification link expired. " +
@@ -131,7 +131,7 @@ namespace ProjectTallify.Controllers
             }
 
             // 4) Password wrong (generic message)
-            if (!VerifyPassword(password, user.HashedPassword))
+            if (!VerifyPassword(password, organizer.HashedPassword))
             {
                 TempData["AuthError"] = "Incorrect email or password.";
                 TempData["AuthMode"] = "login";
@@ -139,12 +139,12 @@ namespace ProjectTallify.Controllers
             }
             
             // NOW check Deactivation status
-            if (!user.IsActive)
+            if (!organizer.IsActive)
             {
                 // Password is correct, but account is inactive.
                 // Prompt for reactivation.
                 ViewBag.ShowReactivationModal = true;
-                ViewBag.ReactivationUserId = user.Id;
+                ViewBag.ReactivationUserId = organizer.Id;
                 ViewBag.AuthMode = "login"; // Ensure we stay on login tab
                 
                 // We need to return View directly to pass ViewBag (Redirect kills it)
@@ -156,8 +156,8 @@ namespace ProjectTallify.Controllers
             }
 
             // 5) Success – set session + optionally remember-me cookie, go to Dashboard
-            await SetLoginSession(user);
-            await HandleRememberMeAsync(user, rememberMe);
+            await SetLoginSession(organizer);
+            await HandleRememberMeAsync(organizer, rememberMe);
 
             return RedirectToAction("Dashboard", "Home");
         }
@@ -167,32 +167,32 @@ namespace ProjectTallify.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReactivateAccount(int userId)
         {
-            var user = await _db.Users.FindAsync(userId);
-            if (user == null)
+            var organizer = await _db.Organizers.FindAsync(userId);
+            if (organizer == null)
             {
-                TempData["AuthError"] = "User not found.";
+                TempData["AuthError"] = "Organizer not found.";
                 return RedirectToAction("Login");
             }
 
             // Reactivate
-            user.IsActive = true;
+            organizer.IsActive = true;
             
             // Audit Log
             _db.AuditLogs.Add(new AuditLog
             {
                 EventId = null,
-                UserId = user.Id,
-                UserName = user.Email,
-                UserRole = user.Role,
+                OrganizerId = organizer.Id,
+                UserName = organizer.Email,
+                UserRole = "Organizer",
                 Action = "Account Reactivated",
-                Details = $"User '{user.Email}' reactivated their account.",
+                Details = $"Organizer '{organizer.Email}' reactivated their account.",
                 CreatedAt = DateTime.UtcNow
             });
 
             await _db.SaveChangesAsync();
 
             // Log them in immediately
-            await SetLoginSession(user);
+            await SetLoginSession(organizer);
 
             TempData["AuthSuccess"] = "Welcome back! Your account has been reactivated.";
             return RedirectToAction("Dashboard", "Home");
@@ -229,7 +229,7 @@ namespace ProjectTallify.Controllers
             email = email.Trim();
 
             // Email uniqueness
-            var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+            var existing = await _db.Organizers.FirstOrDefaultAsync(u => u.Email == email);
 
             if (existing != null)
             {
@@ -248,7 +248,7 @@ namespace ProjectTallify.Controllers
                 return RedirectToAction("Login");
             }
 
-            var user = new User
+            var organizer = new Organizer
             {
                 FirstName = firstName,
                 LastName = lastName,
@@ -256,21 +256,20 @@ namespace ProjectTallify.Controllers
                 HashedPassword = HashPassword(password),
                 EmailConfirmed = false,
                 IsActive = true,
-                Role = "Organizer",
                 EmailVerificationToken = GenerateEmailToken(),
                 EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddMinutes(15)
             };
 
-            _db.Users.Add(user);
+            _db.Organizers.Add(organizer);
             await _db.SaveChangesAsync();
 
             var confirmationLink = Url.Action(
                 "ConfirmEmail",
                 "Auth",
-                new { userId = user.Id, token = user.EmailVerificationToken },
+                new { userId = organizer.Id, token = organizer.EmailVerificationToken },
                 protocol: Request.Scheme);
 
-            await _emailSender.SendEmailConfirmationAsync(user, confirmationLink!);
+            await _emailSender.SendEmailConfirmationAsync(organizer, confirmationLink!);
 
             TempData["AuthSuccess"] =
                 "We sent a verification link to your email. " +
@@ -283,11 +282,11 @@ namespace ProjectTallify.Controllers
         [HttpGet]
         public async Task<IActionResult> ConfirmEmail(int userId, string token)
         {
-            var user = await _db.Users.FindAsync(userId);
+            var organizer = await _db.Organizers.FindAsync(userId);
 
-            if (user == null ||
-                string.IsNullOrWhiteSpace(user.EmailVerificationToken) ||
-                !string.Equals(user.EmailVerificationToken, token, StringComparison.Ordinal))
+            if (organizer == null ||
+                string.IsNullOrWhiteSpace(organizer.EmailVerificationToken) ||
+                !string.Equals(organizer.EmailVerificationToken, token, StringComparison.Ordinal))
             {
                 TempData["AuthError"] = "Invalid verification link.";
                 TempData["AuthMode"] = "login";
@@ -295,20 +294,20 @@ namespace ProjectTallify.Controllers
             }
 
             // Expired → automatically send a new one
-            if (user.EmailVerificationTokenExpiresAt.HasValue &&
-                user.EmailVerificationTokenExpiresAt.Value < DateTime.UtcNow)
+            if (organizer.EmailVerificationTokenExpiresAt.HasValue &&
+                organizer.EmailVerificationTokenExpiresAt.Value < DateTime.UtcNow)
             {
-                user.EmailVerificationToken = GenerateEmailToken();
-                user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+                organizer.EmailVerificationToken = GenerateEmailToken();
+                organizer.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
                 await _db.SaveChangesAsync();
 
                 var newLink = Url.Action(
                     "ConfirmEmail",
                     "Auth",
-                    new { userId = user.Id, token = user.EmailVerificationToken },
+                    new { userId = organizer.Id, token = organizer.EmailVerificationToken },
                     protocol: Request.Scheme);
 
-                await _emailSender.SendEmailConfirmationAsync(user, newLink!);
+                await _emailSender.SendEmailConfirmationAsync(organizer, newLink!);
 
                 TempData["AuthError"] =
                     "This verification link has expired. A new verification email has been sent. " +
@@ -317,9 +316,9 @@ namespace ProjectTallify.Controllers
                 return RedirectToAction("Login");
             }
 
-            user.EmailConfirmed = true;
-            user.EmailVerificationToken = null;
-            user.EmailVerificationTokenExpiresAt = null;
+            organizer.EmailConfirmed = true;
+            organizer.EmailVerificationToken = null;
+            organizer.EmailVerificationTokenExpiresAt = null;
             await _db.SaveChangesAsync();
 
             TempData["AuthSuccess"] = "Your email has been verified. You can now log in.";
@@ -350,23 +349,23 @@ namespace ProjectTallify.Controllers
 
             email = email.Trim();
 
-            // Look for active, confirmed user with this email
-            var user = await _db.Users
+            // Look for active, confirmed organizer with this email
+            var organizer = await _db.Organizers
                 .FirstOrDefaultAsync(u => u.IsActive && u.Email == email && u.EmailConfirmed);
 
-            if (user != null)
+            if (organizer != null)
             {
-                user.PasswordResetToken = GenerateRandomToken();
-                user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+                organizer.PasswordResetToken = GenerateRandomToken();
+                organizer.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
                 await _db.SaveChangesAsync();
 
                 var resetLink = Url.Action(
                     "ResetPassword",
                     "Auth",
-                    new { userId = user.Id, token = user.PasswordResetToken },
+                    new { userId = organizer.Id, token = organizer.PasswordResetToken },
                     protocol: Request.Scheme);
 
-                await _emailSender.SendPasswordResetAsync(user, resetLink!);
+                await _emailSender.SendPasswordResetAsync(organizer, resetLink!);
             }
 
             // Always show generic response
@@ -380,13 +379,13 @@ namespace ProjectTallify.Controllers
         [HttpGet]
         public async Task<IActionResult> ResetPassword(int userId, string token)
         {
-            var user = await _db.Users.FindAsync(userId);
+            var organizer = await _db.Organizers.FindAsync(userId);
 
-            if (user == null ||
-                string.IsNullOrWhiteSpace(user.PasswordResetToken) ||
-                !string.Equals(user.PasswordResetToken, token, StringComparison.Ordinal) ||
-                !user.PasswordResetTokenExpiresAt.HasValue ||
-                user.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
+            if (organizer == null ||
+                string.IsNullOrWhiteSpace(organizer.PasswordResetToken) ||
+                !string.Equals(organizer.PasswordResetToken, token, StringComparison.Ordinal) ||
+                !organizer.PasswordResetTokenExpiresAt.HasValue ||
+                organizer.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
             {
                 ViewBag.Error = "This password reset link is invalid or has expired. Please request a new one.";
                 return View(model: null);
@@ -403,14 +402,14 @@ namespace ProjectTallify.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(int userId, string token, string password, string confirmPassword)
         {
-            var user = await _db.Users.FindAsync(userId);
+            var organizer = await _db.Organizers.FindAsync(userId);
 
             // 1. Validate that the link is still valid
-            if (user == null ||
-                string.IsNullOrWhiteSpace(user.PasswordResetToken) ||
-                !string.Equals(user.PasswordResetToken, token, StringComparison.Ordinal) ||
-                !user.PasswordResetTokenExpiresAt.HasValue ||
-                user.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
+            if (organizer == null ||
+                string.IsNullOrWhiteSpace(organizer.PasswordResetToken) ||
+                !string.Equals(organizer.PasswordResetToken, token, StringComparison.Ordinal) ||
+                !organizer.PasswordResetTokenExpiresAt.HasValue ||
+                organizer.PasswordResetTokenExpiresAt.Value < DateTime.UtcNow)
             {
                 ViewBag.Error = "This password reset link is invalid or has expired. Please request a new one.";
                 return View(model: null);
@@ -445,11 +444,11 @@ namespace ProjectTallify.Controllers
             }
 
             // 5. Success – update password and clear tokens
-            user.HashedPassword = HashPassword(password);
-            user.PasswordResetToken = null;
-            user.PasswordResetTokenExpiresAt = null;
-            user.RememberMeToken = null;
-            user.RememberMeTokenExpiresAt = null;
+            organizer.HashedPassword = HashPassword(password);
+            organizer.PasswordResetToken = null;
+            organizer.PasswordResetTokenExpiresAt = null;
+            organizer.RememberMeToken = null;
+            organizer.RememberMeTokenExpiresAt = null;
 
             await _db.SaveChangesAsync();
 
@@ -497,10 +496,8 @@ namespace ProjectTallify.Controllers
                 return RedirectToAction("Login");
             }
 
-            // 3) Route depending on EventType (events.EventType in your DB)
-            //    "criteria"  -> Judges table
-            //    "orw"       -> Scorers table
-            if (ev.EventType == "criteria")
+            // 3) Route depending on ScoringLogic (WeightedAverage or PointBased)
+            if (ev.ScoringLogic == "WeightedAverage" || ev.ScoringLogic == "PointBased")
             {
                 var judge = await _db.Judges
                     .FirstOrDefaultAsync(j => j.EventId == ev.Id && j.Pin == pin);
@@ -522,7 +519,7 @@ namespace ProjectTallify.Controllers
                 _db.AuditLogs.Add(new AuditLog
                 {
                     EventId = ev.Id,
-                    UserId = null, // not an Organizer account
+                    OrganizerId = null, // not an Organizer account
                     UserName = judge.Name,
                     UserRole = "Judge",
                     Action = "Judge Joined",
@@ -591,7 +588,7 @@ namespace ProjectTallify.Controllers
                 _db.AuditLogs.Add(new AuditLog
                 {
                     EventId   = eventId.Value,
-                    UserId    = null,
+                    OrganizerId    = null,
                     UserName  = name,
                     UserRole  = role, // e.g. "judge"
                     Action    = "Logged Out",
@@ -611,26 +608,26 @@ namespace ProjectTallify.Controllers
 
         // ============ HELPERS ============
 
-        private async Task SetLoginSession(User user)
+        private async Task SetLoginSession(Organizer organizer)
         {
             // 1. Session (backward compatibility)
             HttpContext.Session.SetString("UserLoggedIn", "true");
-            HttpContext.Session.SetString("UserEmail", user.Email);
+            HttpContext.Session.SetString("UserEmail", organizer.Email);
 
-            var displayName = (user.FirstName + " " + (user.LastName ?? "")).Trim();
-            if (string.IsNullOrWhiteSpace(displayName)) displayName = user.Email;
+            var displayName = (organizer.FirstName + " " + (organizer.LastName ?? "")).Trim();
+            if (string.IsNullOrWhiteSpace(displayName)) displayName = organizer.Email;
 
             HttpContext.Session.SetString("UserName", displayName);
-            HttpContext.Session.SetString("UserRole", user.Role ?? "Organizer");
-            HttpContext.Session.SetInt32("UserId", user.Id);
+            HttpContext.Session.SetString("UserRole", "Organizer");
+            HttpContext.Session.SetInt32("UserId", organizer.Id);
 
             // 2. Cookie Auth (Proper way for SignalR)
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, organizer.Id.ToString()),
                 new Claim(ClaimTypes.Name, displayName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role ?? "Organizer")
+                new Claim(ClaimTypes.Email, organizer.Email),
+                new Claim(ClaimTypes.Role, "Organizer")
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -643,7 +640,7 @@ namespace ProjectTallify.Controllers
             });
         }
 
-        private async Task HandleRememberMeAsync(User user, bool rememberMe)
+        private async Task HandleRememberMeAsync(Organizer organizer, bool rememberMe)
         {
             if (!rememberMe)
             {
@@ -653,12 +650,12 @@ namespace ProjectTallify.Controllers
 
             var rawToken = GenerateRandomToken();
             var hashed = HashToken(rawToken);
-            user.RememberMeToken = hashed;
-            user.RememberMeTokenExpiresAt = DateTime.UtcNow.AddDays(30);
+            organizer.RememberMeToken = hashed;
+            organizer.RememberMeTokenExpiresAt = DateTime.UtcNow.AddDays(30);
 
             await _db.SaveChangesAsync();
 
-            var cookieValue = $"{user.Id}|{rawToken}";
+            var cookieValue = $"{organizer.Id}|{rawToken}";
             var options = new CookieOptions
             {
                 HttpOnly = true,
@@ -680,17 +677,17 @@ namespace ProjectTallify.Controllers
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId.HasValue)
             {
-                var user = await _db.Users.FindAsync(userId.Value);
-                if (user != null)
+                var organizer = await _db.Organizers.FindAsync(userId.Value);
+                if (organizer != null)
                 {
-                    user.RememberMeToken = null;
-                    user.RememberMeTokenExpiresAt = null;
+                    organizer.RememberMeToken = null;
+                    organizer.RememberMeTokenExpiresAt = null;
                     await _db.SaveChangesAsync();
                 }
             }
         }
 
-        private async Task<User?> TryAutoLoginFromCookieAsync()
+        private async Task<Organizer?> TryAutoLoginFromCookieAsync()
         {
             if (!Request.Cookies.TryGetValue(RememberMeCookieName, out var cookieValue) ||
                 string.IsNullOrWhiteSpace(cookieValue))
@@ -704,25 +701,25 @@ namespace ProjectTallify.Controllers
             if (!int.TryParse(parts[0], out var userId)) return null;
             var rawToken = parts[1];
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
-            if (user == null ||
-                string.IsNullOrWhiteSpace(user.RememberMeToken) ||
-                !user.RememberMeTokenExpiresAt.HasValue ||
-                user.RememberMeTokenExpiresAt.Value < DateTime.UtcNow)
+            var organizer = await _db.Organizers.FirstOrDefaultAsync(u => u.Id == userId && u.IsActive);
+            if (organizer == null ||
+                string.IsNullOrWhiteSpace(organizer.RememberMeToken) ||
+                !organizer.RememberMeTokenExpiresAt.HasValue ||
+                organizer.RememberMeTokenExpiresAt.Value < DateTime.UtcNow)
             {
                 await ClearRememberMeAsync();
                 return null;
             }
 
             var hashed = HashToken(rawToken);
-            if (!string.Equals(hashed, user.RememberMeToken, StringComparison.Ordinal))
+            if (!string.Equals(hashed, organizer.RememberMeToken, StringComparison.Ordinal))
             {
                 await ClearRememberMeAsync();
                 return null;
             }
 
             // Optionally rotate token each time – for now we just reuse it.
-            return user;
+            return organizer;
         }
 
         private static string HashPassword(string password)
