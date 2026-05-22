@@ -27,6 +27,7 @@
             asp-controller="Auth"
             asp-action="Login">
           @Html.AntiForgeryToken()
+          <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
 
           <div class="auth-floating-group">
               <input

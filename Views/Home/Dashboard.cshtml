@@ -78,7 +78,18 @@
                         <h3 class="event-card-title">@ev.Name</h3>
                         <div class="event-card-tags">
                             <span class="pill @typeClass">@typeLabel</span>
-                            <span class="pill" style="background:#dcfce7; color:#166534;">@statusText.ToUpper()</span>
+                            @if (statusText == "Open")
+                            {
+                                <span class="pill pill-status-open" style="background:#dcfce7; color:#16a34a;">OPEN</span>
+                            }
+                            else if (statusText == "Preparing")
+                            {
+                                <span class="pill pill-status-preparing" style="background:#fef3c7; color:#d97706;">PREPARING</span>
+                            }
+                            else
+                            {
+                                <span class="pill pill-status-closed" style="background:#f3f4f6; color:#374151;">CLOSED</span>
+                            }
                         </div>
                     </div>
 
@@ -191,10 +202,10 @@
                 });
             }
 
-            var btnProceed = document.getElementById('btnProceedToCreate');
+            const btnProceed = document.getElementById('btnProceedToCreate');
             if(btnProceed) {
                 btnProceed.addEventListener('click', function() {
-                    window.location.href = '/Home/CreateEvent';
+                    window.location.href = '/Home/CreateEvent?returnUrl=' + encodeURIComponent(window.location.pathname);
                 });
             }
         });

@@ -30,7 +30,7 @@ namespace ProjectTallify.Controllers
             ViewBag.ActiveNav = "Dashboard";
 
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             // Only OPEN events, not archived, and belonging to the user
             var activeEvents = await _db.Events
@@ -44,9 +44,9 @@ namespace ProjectTallify.Controllers
 
         // GET: /Home/CreateEvent
         // Just redirect to the real Create Event wizard in EventsController
-        public IActionResult CreateEvent()
+        public IActionResult CreateEvent(string? returnUrl = null)
         {
-            return RedirectToAction("Create", "Events");
+            return RedirectToAction("Create", "Events", new { returnUrl });
         }
 
         // GET: /Home/Events  (for your header nav)
@@ -64,7 +64,7 @@ namespace ProjectTallify.Controllers
             ViewBag.CurrentSort = sort;
 
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             var query = _db.AuditLogs
                 .Include(a => a.Organizer)

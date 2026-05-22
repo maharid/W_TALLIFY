@@ -100,7 +100,15 @@
 
                 
 
-                                <span class="pill pill-status pill-status-@statusText.ToLower()">
+                                @{
+                                    var sClass = statusText.ToLower() == "open" ? "pill-status-open" :
+                                                 statusText.ToLower() == "preparing" ? "pill-status-preparing" : "pill-status-closed";
+                                    var sStyle = statusText.ToLower() == "open" ? "background:#dcfce7; color:#16a34a;" :
+                                                 statusText.ToLower() == "preparing" ? "background:#fef3c7; color:#d97706;" :
+                                                 "background:#f3f4f6; color:#374151;";
+                                }
+
+                                <span class="pill pill-status @sClass" style="@sStyle">
 
                                     @statusText
 
@@ -119,6 +127,7 @@
                     <a asp-controller="Events"
                        asp-action="Edit"
                        asp-route-id="@Model.Id"
+                       asp-route-returnUrl="@Context.Request.Path"
                        class="btn-secondary">
                         Edit event
                     </a>
@@ -194,22 +203,30 @@
                 <div class="card overview-item">
                     <p class="card-label">Access Code</p>
                     <div class="access-code-row">
-                        <span id="accessCodeValue">
+                        <span id="accessCodeValue" class="code-font">
                             @(string.IsNullOrWhiteSpace(Model.AccessCode) ? "â€”" : Model.AccessCode)
                         </span>
                         @if (!string.IsNullOrWhiteSpace(Model.AccessCode))
                         {
                             <button type="button"
-                                    class="btn-secondary btn-copy-access"
+                                    class="btn-info-access"
+                                    data-tooltip="The Access Code is used in the following:
+> Key for judge login
+> Start event
+> Start and end rounds">
+                                <i class="ri-information-line"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="btn-copy-access"
                                     data-copy-target="accessCodeValue"
+                                    data-tooltip="Copy Access Code"
+                                    data-tooltip-copied="Copied!"
                                     disabled="@isEnded">
-                                Copy
+                                <i class="ri-file-copy-line"></i>
                             </button>
                         }
                     </div>
-                    <p class="card-hint">
-                        Share this code with scorers/judges so they can join the event.
-                    </p>
                 </div>
             </div>
         </section>
@@ -242,7 +259,7 @@
                             @foreach (var c in contestants)
                             {
                                 <tr>
-                                    <td>@c.Id</td>
+                                    <td><span class="code-font">@c.Id</span></td>
                                     <td>@c.Name</td>
                                     <td>@c.Organization</td>
                                     <td class="contestant-photo-cell">
@@ -315,14 +332,16 @@
                         }
                         else
                         {
+                            int judgeIdx = 1;
                             @foreach (var u in accessUsers)
                             {
+                                var judgeCode = "J" + judgeIdx.ToString("D3");
                                 <tr>
-                                    <td>@u.Id</td>
+                                    <td><span class="code-font">@judgeCode</span></td>
                                     <td>@u.Name</td>
                                     <td>@u.Assigned</td> @* criteria: email; orw: assigned contestants *@
                                     <td>
-                                        @u.Pin
+                                        <span class="code-font">@u.Pin</span>
                                         @if (isCriteria)
                                         {
                                             if (u.IsVerified)
@@ -359,6 +378,7 @@
                                         }
                                     </td>
                                 </tr>
+                                judgeIdx++;
                             }
                         }
                     </tbody>
@@ -1455,10 +1475,23 @@
                         const textToCopy = targetEl.textContent.trim();
                         if (textToCopy && textToCopy !== '—') {
                             navigator.clipboard.writeText(textToCopy).then(() => {
-                                const originalText = this.textContent;
-                                this.textContent = 'Copied!';
+                                const icon = this.querySelector('i');
+                                const originalIconClass = icon.className;
+                                const originalTooltip = this.getAttribute('data-tooltip');
+                                const copiedTooltip = this.getAttribute('data-tooltip-copied');
+
+                                // Change Icon to checkmark
+                                icon.className = 'ri-check-line';
+                                icon.style.color = '#16a34a'; // Success green
+
+                                // Change Tooltip Text to "Copied!"
+                                this.setAttribute('data-tooltip', copiedTooltip);
+
                                 setTimeout(() => {
-                                    this.textContent = originalText;
+                                    // Revert back
+                                    icon.className = originalIconClass;
+                                    icon.style.color = '';
+                                    this.setAttribute('data-tooltip', originalTooltip);
                                 }, 2000);
                             }).catch(err => {
                                 console.error('Failed to copy: ', err);

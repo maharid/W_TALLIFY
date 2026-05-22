@@ -1197,6 +1197,184 @@
 }
 
 /****************************************************
+ * TOOLTIP & ACTION BUTTON COMPONENTS (Shared)
+ ****************************************************/
+
+.btn-copy-access,
+.btn-info-access,
+.btn-info-logic {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-text-soft);
+    transition: all 0.2s;
+    cursor: pointer !important;
+    padding: 0;
+    flex-shrink: 0;
+    z-index: 10;
+    pointer-events: auto !important;
+}
+
+.btn-copy-access,
+.btn-info-access,
+.btn-info-logic {
+    width: 32px;
+    height: 32px;
+}
+
+.btn-info-logic {
+    font-size: 14px;
+    margin-left: 6px;
+}
+
+.btn-copy-access:hover,
+.btn-info-access:hover,
+.btn-info-logic:hover {
+    background: var(--color-bg) !important;
+    color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+}
+
+/* Tooltip container styling */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    z-index: 10000;
+}
+
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    background: #24292f;
+    color: #fff;
+    font-size: 11px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    width: max-content;
+    max-width: 320px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    bottom: 150%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+}
+
+[data-tooltip]::after {
+    content: '';
+    border-width: 6px;
+    border-style: solid;
+    border-color: #24292f transparent transparent transparent;
+    bottom: calc(150% - 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* Specific Alignment - Info Access in Manage (Strict Left Alignment) */
+.btn-info-access[data-tooltip]::before {
+    left: 0;
+    transform: translateY(10px);
+}
+.btn-info-access[data-tooltip]::after {
+    left: 16px;
+    transform: translateX(-50%) translateY(10px);
+}
+
+/* Hover Triggers */
+[data-tooltip]:hover::before, [data-tooltip]:hover::after {
+    visibility: visible;
+    opacity: 1;
+}
+
+[data-tooltip]:hover::before {
+    transform: translateX(-50%) translateY(0);
+}
+.btn-info-access[data-tooltip]:hover::before {
+    transform: translateY(0);
+}
+[data-tooltip]:hover::after {
+    transform: translateX(-50%) translateY(0);
+}
+
+/****************************************************
+ * HIGH-FIDELITY GUIDANCE MODALS (Scoring Logic)
+ ****************************************************/
+
+.logic-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    padding: 20px;
+}
+
+.logic-modal-overlay.is-open {
+    display: flex;
+}
+
+.logic-modal-content {
+    background: #fff;
+    width: 100%;
+    max-width: 580px;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    position: relative;
+    animation: modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalScaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.logic-modal-header { margin-bottom: 24px; }
+.logic-modal-title { font-size: 22px; font-weight: 700; color: #1e293b; margin: 0 0 8px 0; }
+.logic-modal-desc { font-size: 14px; color: #64748b; line-height: 1.6; }
+
+.logic-example-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 20px 0;
+}
+
+.logic-example-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+}
+
+.logic-table { width: 100%; border-collapse: collapse; }
+.logic-table th { text-align: left; font-size: 11px; text-transform: uppercase; color: #94a3b8; padding: 8px 12px; border-bottom: 2px solid #f1f5f9; }
+.logic-table td { padding: 12px; font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9; }
+.logic-table tr:last-child td { border-bottom: none; font-weight: 700; color: #1e293b; background: #f1f5f9; }
+
+.logic-modal-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+.btn-close-logic { padding: 10px 24px; border-radius: 10px; background: #1e293b; color: #fff; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+.btn-close-logic:hover { background: #0f172a; transform: translateY(-1px); }
+
+/****************************************************
  * CONTESTANTS TABLE
  ****************************************************/
 

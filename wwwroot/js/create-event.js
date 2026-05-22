@@ -866,11 +866,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 }))
             })),
             contestants: Array.from(contestantsBody.querySelectorAll("tr[data-contestant-row]")).map(tr => ({
+                id: tr.querySelector(".col-id").textContent,
                 name: tr.querySelector(".contestant-name").value.trim(),
                 org: tr.querySelector(".contestant-org").value.trim(),
                 photo: tr.querySelector(".contestant-photo-thumb").dataset.photoPath
             })),
             judges: Array.from(judgesBody.querySelectorAll("tr[data-judge-row]")).map(tr => ({
+                id: tr.querySelector(".col-id").textContent,
                 name: tr.querySelector(".judge-name").value.trim(),
                 email: tr.querySelector(".judge-email").value.trim(),
                 pin: tr.querySelector(".judge-pin").textContent
@@ -1081,7 +1083,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     btnBack.addEventListener("click", () => {
         if (currentStep === 1) {
-            window.location.href = "/";
+            const returnUrl = document.getElementById("returnUrl")?.value;
+            if (returnUrl && returnUrl !== "") {
+                window.location.href = returnUrl;
+            } else {
+                window.location.href = "/";
+            }
         } else if (currentStep > 1) {
             showStep(currentStep - 1);
         }
@@ -1374,6 +1381,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
         updateLivePreview();
     }
+
+    // Scoring Logic Modals
+    const btnInfoWeighted = document.getElementById('btnInfoWeighted');
+    const btnInfoPointBased = document.getElementById('btnInfoPointBased');
+    const modalWeighted = document.getElementById('modalWeighted');
+    const modalPointBased = document.getElementById('modalPointBased');
+
+    if (btnInfoWeighted) {
+        btnInfoWeighted.addEventListener('click', (e) => {
+            e.preventDefault();
+            modalWeighted.classList.add('is-open');
+            document.body.classList.add('has-modal-open');
+        });
+    }
+
+    if (btnInfoPointBased) {
+        btnInfoPointBased.addEventListener('click', (e) => {
+            e.preventDefault();
+            modalPointBased.classList.add('is-open');
+            document.body.classList.add('has-modal-open');
+        });
+    }
+
+    // Close logic for logic modals
+    document.querySelectorAll('.logic-modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this || e.target.classList.contains('btn-close-logic')) {
+                this.classList.remove('is-open');
+                document.body.classList.remove('has-modal-open');
+            }
+        });
+    });
 
     // Resume Draft Check
     if (window.currentEventId && window.currentEventId > 0) {

@@ -33,7 +33,7 @@
                 View, manage, and track all events in your organization.
             </p>
         </div>
-        <a href="/Events/Create" style="text-decoration:none;">
+        <a href="/Events/Create?returnUrl=@Context.Request.Path" style="text-decoration:none;">
             <button type="button" class="dashboard-create-event-btn" style="width: max-content; margin-bottom: 0;">
                 Create Event
             </button>
@@ -98,8 +98,8 @@
         </div>
     </form>
 
-    <!-- RECENT ACTIVITIES -->
-    <h3 class="recent-header" style="margin-top:28px; font-size:18px; font-weight:600; margin-bottom:16px;">Recent Activities</h3>
+    <!-- RECENT EVENTS -->
+    <h3 class="recent-header" style="margin-top:28px; font-size:18px; font-weight:600; margin-bottom:16px;">Recent Events</h3>
 
     <div class="panel-table-wrapper">
         <table class="app-table">

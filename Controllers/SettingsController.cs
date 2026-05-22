@@ -35,7 +35,7 @@ namespace ProjectTallify.Controllers
             if (!userId.HasValue)
             {
                 // Redirect to login if not logged in (should be handled by auth middleware too)
-                return RedirectToAction("Login", "Auth");
+                return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
             }
 
             // Fetch organizer data
@@ -46,7 +46,7 @@ namespace ProjectTallify.Controllers
             if (organizer == null)
             {
                 // Organizer not found, perhaps session is stale
-                return RedirectToAction("Login", "Auth");
+                return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
             }
 
             return View(organizer);

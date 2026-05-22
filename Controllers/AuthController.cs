@@ -32,13 +32,16 @@ namespace ProjectTallify.Controllers
 
         // ============ LOGIN (GET) ============
         [HttpGet]
-        public async Task<IActionResult> Login(string? mode, string? code, string? pin)
+        public async Task<IActionResult> Login(string? mode, string? code, string? pin, string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
+            
             // If user already logged in in this session AND not in join-mode, send to dashboard
             if (!string.Equals(mode, "join", StringComparison.OrdinalIgnoreCase))
             {
                 if (HttpContext.Session.GetString("UserLoggedIn") == "true")
                 {
+                    if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
                     return RedirectToAction("Dashboard", "Home");
                 }
 
@@ -47,6 +50,7 @@ namespace ProjectTallify.Controllers
                 if (autoUser != null)
                 {
                     await SetLoginSession(autoUser);
+                    if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
                     return RedirectToAction("Dashboard", "Home");
                 }
             }
@@ -70,13 +74,13 @@ namespace ProjectTallify.Controllers
         // ============ LOGIN (POST) ============
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password, bool rememberMe)
+        public async Task<IActionResult> Login(string email, string password, bool rememberMe, string? returnUrl = null)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 TempData["AuthError"] = "Please enter both email and password.";
                 TempData["AuthMode"] = "login";
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", new { returnUrl });
             }
 
             email = email.Trim();
@@ -90,7 +94,7 @@ namespace ProjectTallify.Controllers
             {
                 TempData["AuthError"] = "No account found for this email. Please sign up first.";
                 TempData["AuthMode"] = "login";
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", new { returnUrl });
             }
 
             // 2) Check if account is deactivated - MOVED AFTER PASSWORD CHECK
@@ -127,7 +131,7 @@ namespace ProjectTallify.Controllers
                 }
 
                 TempData["AuthMode"] = "login";
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", new { returnUrl });
             }
 
             // 4) Password wrong (generic message)
@@ -135,7 +139,7 @@ namespace ProjectTallify.Controllers
             {
                 TempData["AuthError"] = "Incorrect email or password.";
                 TempData["AuthMode"] = "login";
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", new { returnUrl });
             }
             
             // NOW check Deactivation status
@@ -146,6 +150,7 @@ namespace ProjectTallify.Controllers
                 ViewBag.ShowReactivationModal = true;
                 ViewBag.ReactivationUserId = organizer.Id;
                 ViewBag.AuthMode = "login"; // Ensure we stay on login tab
+                ViewBag.ReturnUrl = returnUrl;
                 
                 // We need to return View directly to pass ViewBag (Redirect kills it)
                 // Re-populate standard view bags
@@ -159,6 +164,7 @@ namespace ProjectTallify.Controllers
             await SetLoginSession(organizer);
             await HandleRememberMeAsync(organizer, rememberMe);
 
+            if (!string.IsNullOrEmpty(returnUrl)) return LocalRedirect(returnUrl);
             return RedirectToAction("Dashboard", "Home");
         }
 

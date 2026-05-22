@@ -54,7 +54,7 @@ namespace ProjectTallify.Controllers
             ViewBag.ActiveNav = "Events";
 
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             var query = _db.Events.AsQueryable();
             
@@ -114,15 +114,16 @@ namespace ProjectTallify.Controllers
         /// Renders the Create Event wizard page.
         /// </summary>
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string? returnUrl = null)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             ViewData["Title"]   = "Create Event";
             ViewBag.ActiveNav   = "Events";
             ViewBag.HideMainNav = true;
             ViewBag.HideOrgCard = true;
+            ViewBag.ReturnUrl   = returnUrl;
 
             // No model when creating new event
             return View("~/Views/Home/CreateEvent.cshtml", model: null);
@@ -133,15 +134,16 @@ namespace ProjectTallify.Controllers
         /// Ensures the user owns the event before access.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Edit(int id)
+        public async Task<IActionResult> Edit(int id, string? returnUrl = null)
         {
             ViewData["Title"]   = "Edit Event";
             ViewBag.ActiveNav   = "Events";
             ViewBag.HideMainNav = true;
             ViewBag.HideOrgCard = true;
+            ViewBag.ReturnUrl   = returnUrl;
 
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();
@@ -503,18 +505,23 @@ namespace ProjectTallify.Controllers
 
             if (contestants == null || !contestants.Any()) return;
 
+            int cIndex = 1;
             foreach (var c in contestants)
             {
                 if (string.IsNullOrWhiteSpace(c.Name)) continue;
 
+                // Use a sequential code: C001, C002, etc.
+                string sequentialCode = "C" + cIndex.ToString("D3");
+
                 _db.Contestants.Add(new Contestant
                 {
                     EventId = ev.Id,
-                    Code = string.IsNullOrWhiteSpace(c.Id) ? $"C-{Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper()}" : c.Id,
+                    Code = sequentialCode,
                     Name = c.Name,
                     Organization = c.Organization,
                     PhotoPath = c.PhotoPath
                 });
+                cIndex++;
             }
         }
 
@@ -774,7 +781,7 @@ namespace ProjectTallify.Controllers
         public async Task<IActionResult> Manage(int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
-            if (!userId.HasValue) return RedirectToAction("Login", "Auth");
+            if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();

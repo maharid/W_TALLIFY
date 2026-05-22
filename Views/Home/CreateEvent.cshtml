@@ -8,7 +8,11 @@
     ViewBag.HideOrgCard = true;
 
     var isEdit = (Model?.Id ?? 0) > 0;
+    var returnUrl = ViewBag.ReturnUrl as string;
 }
+
+<!-- Return URL for JS -->
+<input type="hidden" id="returnUrl" value="@returnUrl" />
 
 <!-- Loading Overlay -->
 <div id="publishLoadingOverlay" class="loading-overlay" style="display:none;">
@@ -158,18 +162,78 @@
                 <div class="event-section-card" id="criteriaSystemCard">
                     <h2 class="event-section-title">Scoring Logic</h2>
                     <div class="event-type-toggle">
-                        <label class="chip-toggle" for="criteriaSystemAveraging">
-                            <input type="radio" name="criteriaSystem" value="averaging" id="criteriaSystemAveraging" checked>
-                            <span class="chip-toggle-inner">Weighted Average</span>
-                        </label>
-                        <label class="chip-toggle" for="criteriaSystemPointing">
-                            <input type="radio" name="criteriaSystem" value="pointing" id="criteriaSystemPointing">
-                            <span class="chip-toggle-inner">Point-Based</span>
-                        </label>
+                        <div class="logic-group" style="display: flex; align-items: center; gap: 8px;">
+                            <label class="chip-toggle" for="criteriaSystemAveraging">
+                                <input type="radio" name="criteriaSystem" value="averaging" id="criteriaSystemAveraging" checked>
+                                <span class="chip-toggle-inner">Weighted Average</span>
+                            </label>
+                            <button type="button" class="btn-info-logic" id="btnInfoWeighted">
+                                <i class="ri-information-line"></i>
+                            </button>
+                        </div>
+
+                        <div class="logic-group" style="display: flex; align-items: center; gap: 8px;">
+                            <label class="chip-toggle" for="criteriaSystemPointing">
+                                <input type="radio" name="criteriaSystem" value="pointing" id="criteriaSystemPointing">
+                                <span class="chip-toggle-inner">Point-Based</span>
+                            </label>
+                            <button type="button" class="btn-info-logic" id="btnInfoPointBased">
+                                <i class="ri-information-line"></i>
+                            </button>
+                        </div>
                     </div>
-                    <p class="event-subtext" id="criteriaSystemDescription">
-                        Weighted Average: Scoring is based on percentage weights per criteria.
-                    </p>
+                </div>
+
+                <!-- MODALS FOR SCORING LOGIC -->
+                <div class="logic-modal-overlay" id="modalWeighted">
+                    <div class="logic-modal-content">
+                        <div class="logic-modal-header">
+                            <h3 class="logic-modal-title">Weighted Average Scoring</h3>
+                            <p class="logic-modal-desc">Judges give scores for each criterion. Each criterion has a percentage weight that determines its contribution to the final score.</p>
+                        </div>
+                        <div class="logic-example-card">
+                            <div class="logic-example-title">Calculation Example</div>
+                            <table class="logic-table">
+                                <thead>
+                                    <tr><th>Criterion</th><th>Weight</th><th>Score</th><th>Final</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Evening Gown</td><td>20%</td><td>90.0</td><td>18.0</td></tr>
+                                    <tr><td>Poise & Grace</td><td>80%</td><td>85.0</td><td>68.0</td></tr>
+                                    <tr><td>Total Score</td><td>100%</td><td>-</td><td>86.0</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="logic-modal-footer">
+                            <button type="button" class="btn-close-logic">Close</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="logic-modal-overlay" id="modalPointBased">
+                    <div class="logic-modal-content">
+                        <div class="logic-modal-header">
+                            <h3 class="logic-modal-title">Point-Based Scoring</h3>
+                            <p class="logic-modal-desc">Judges give direct points for each criterion. All points are simply added together to calculate the final score.</p>
+                        </div>
+                        <div class="logic-example-card">
+                            <div class="logic-example-title">Calculation Example</div>
+                            <table class="logic-table">
+                                <thead>
+                                    <tr><th>Criterion</th><th>Max Pts</th><th>Judge</th><th>Points</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>Creative Concept</td><td>10</td><td>8</td><td>8</td></tr>
+                                    <tr><td>Stage Props</td><td>5</td><td>4</td><td>4</td></tr>
+                                    <tr><td>Total Score</td><td>15</td><td>-</td><td>12</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="logic-modal-footer">
+                            <button type="button" class="btn-close-logic">Close</button>
+                        </div>
+                    </div>
+                </div>
                 </div>
 
                 <div class="event-section-card">

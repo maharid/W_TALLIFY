@@ -49,13 +49,12 @@
 else
 {
     var activeRoundId = 0;
-    // Default active: The last ongoing round, or the last round in the list if none ongoing
-    var ongoing = Model.LastOrDefault(r => r.Status == "ongoing");
-    if (ongoing != null) {
-        activeRoundId = ongoing.RoundId;
-    } else {
-        activeRoundId = Model.Last().RoundId;
-    }
+    // Default active: The first ongoing round, or the first pending, or just the first overall
+    var current = Model.FirstOrDefault(r => r.Status == "ongoing") 
+               ?? Model.FirstOrDefault(r => string.IsNullOrEmpty(r.Status) || r.Status == "pending") 
+               ?? Model.First();
+    
+    activeRoundId = current.RoundId;
 
     <!-- 1. Tabs Navigation -->
     <div class="tally-tabs-nav" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--color-border); padding-bottom: 0px; overflow-x: auto;">
