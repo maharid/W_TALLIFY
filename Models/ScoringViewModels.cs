@@ -45,7 +45,7 @@ namespace ProjectTallify.Models
         
         // Added for Event Standby State
         public string EventStatus { get; set; } = "preparing";
-        public DateTime EventStartDate { get; set; }
+        public DateTime Schedule { get; set; }
 
         public string? SelectedContestantId { get; set; }
 

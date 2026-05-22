@@ -43,13 +43,12 @@ namespace ProjectTallify.Models
         public int?   EventId           { get; set; } 
 
         public string? EventName        { get; set; }
-        public string? EventVenue       { get; set; }
-        public string? EventDescription { get; set; }
-
-        public string? EventStartDate   { get; set; }
-        public string? EventStartTime   { get; set; }
-        
-        public string? ScoringLogic     { get; set; } 
+        public string? EventVenue        { get; set; }
+        public string? EventDescription  { get; set; }
+        public string? ScheduleDate   { get; set; }
+        public string? ScheduleTime   { get; set; }
+        public string? ScoringLogic      { get; set; }
+ 
         public string? AccessCode       { get; set; }
 
         // Structured Lists for Atomic Save (Prompt Requirement)

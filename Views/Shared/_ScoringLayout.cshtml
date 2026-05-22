@@ -58,12 +58,10 @@
     </div>
 
     <div class="scoring-header-right">
-        <span class="header-status">Mabuhay! You are signed in as <strong>@ViewBag.JudgeName</strong>!</span>
-
         <div class="header-actions">
             <span class="header-role">@role</span>
             <button type="button" class="btn-logout" id="btnLogout">
-                Logout
+                Exit Room
             </button>
         </div>
     </div>
@@ -82,7 +80,7 @@
         <div class="summary-modal screen-modal">
 
             <div class="summary-modal-header">
-                <h3 class="screen-title">Log Out</h3>
+                <h3 class="screen-title">Exit Judging Room</h3>
 
                 <button type="button" id="btn-close-logout" class="screen-close-btn" aria-label="Close">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -94,7 +92,7 @@
             </div>
 
             <div class="summary-modal-body screen-body">
-                Are you sure you want to log out?
+                Are you sure you want to exit the judging room?
             </div>
 
             <div class="screen-actions">
@@ -103,7 +101,7 @@
                 <form asp-controller="Auth" asp-action="Logout" method="post" class="logout-form">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn-screen-confirm">
-                        Yes, Log Out
+                        Yes, Exit Room
                     </button>
                 </form>
             </div>

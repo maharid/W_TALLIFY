@@ -4,26 +4,99 @@
     ViewBag.JudgeName = Model.JudgeName;
 }
 
+<style>
+    .standby-pulse {
+        animation: standby-pulse 2s infinite ease-in-out;
+    }
+    @@keyframes standby-pulse {
+        0% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 0.5; }
+    }
+
+    /* Premium Header Styling */
+    .judge-header-premium {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: var(--content-max-width);
+        padding: 1.5rem 0;
+        margin: 0 auto 2rem auto;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .event-branding {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .event-title-premium {
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        background: linear-gradient(135deg, var(--color-text) 0%, #64748b 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        line-height: 1.1;
+    }
+
+    .status-badge-premium {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .badge-active {
+        background: var(--color-primary-soft-bg);
+        color: var(--color-primary);
+        border: 1px solid var(--color-primary-soft);
+    }
+
+    .badge-standby {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+    }
+
+    .badge-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: currentColor;
+    }
+</style>
+
 <main class="judge-main">
     
-    <!-- Top Row: Event Title & Info Pills - ALWAYS VISIBLE -->
-    <div class="card-top-row">
-        <div class="event-title-group">
-            <h1 class="event-title">@Model.EventTitle</h1>
-            <span class="event-meta">
-                @{
-                                var metaParts = new List<string>();
-                                // Removed Model.OrganizationSubtitle from event meta per user request
-                                if (!string.IsNullOrEmpty(Model.Venue))
-                                {
-                                    metaParts.Add(Model.Venue);
-                                }
-                                metaParts.Add(Model.EventStartDate.ToString("MMM dd, yyyy")); // Date is always present
-                            }
-                            @Html.Raw(string.Join(" &nbsp;&bull;&nbsp; ", metaParts))
-                        </span>
-                    </div>        <div class="event-pills">
-            <span class="info-pill">@Model.RoundName</span>
+    <!-- Top Row: Premium Event Header -->
+    <div class="judge-header-premium">
+        <div class="event-branding">
+            <h1 class="event-title-premium">@Model.EventTitle</h1>
+        </div>
+        <div class="status-panel">
+            @if (Model.IsRoundActive)
+            {
+                <div class="status-badge-premium badge-active">
+                    <span class="badge-dot standby-pulse"></span>
+                    @Model.RoundName
+                </div>
+            }
+            else
+            {
+                <div class="status-badge-premium badge-standby">
+                    Waiting for Round
+                </div>
+            }
         </div>
     </div>
 
@@ -31,36 +104,48 @@
     {
         <!-- EVENT NOT STARTED STANDBY -->
         <div class="standby-container text-center standby-floating-card">
-            <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
+            <div class="standby-icon standby-pulse" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
                 📅
             </div>
             <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
                 Event Not Started
             </h2>
             <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-                This event is currently in preparation. It will start on <strong>@Model.EventStartDate.ToString("MMM dd, yyyy h:mm tt")</strong>.
+                This event is currently in preparation. It is scheduled for <strong>@Model.Schedule.ToString("MMM dd, yyyy h:mm tt")</strong>.
             </p>
             <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
                 Refresh Status
             </button>
         </div>
     }
-    @if (Model.EventStatus == "open")
+    else if (Model.EventStatus == "open")
     {
         @if (Model.IsRoundActive)
         {
             <!-- 3. The Scoring Card (Wizard Style) -->
             <div class="scoring-card">
-                
+
+                <!-- Progress Bar -->
+                <div class="scoring-progress-container" style="padding: 1rem 2rem 0; display: flex; align-items: center; gap: 15px;">
+                    <div class="scoring-progress-track" style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; flex: 1;">
+                        <div id="wizardProgressBar" style="height: 100%; width: 0%; background: var(--color-primary); transition: width 0.3s ease;"></div>
+                    </div>
+                    <div id="syncIndicator" style="font-size: 11px; font-weight: 700; color: #10b981; opacity: 0; transition: opacity 0.3s; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+                        <span class="badge-dot standby-pulse" style="width: 6px; height: 6px;"></span>
+                        DRAFT SAVED
+                    </div>
+                </div>
+
                 <!-- Wizard Container -->
                 @{
                     var allCriteria = Model.Groups.SelectMany(g => g.Criteria).ToList();
                     var totalSteps = allCriteria.Count;
                 }
-
-                                <form id="scoring-form" class="wizard-container">
-                                    @Html.AntiForgeryToken()
-                                    @for (int i = 0; i < totalSteps; i++)                        {
+                
+                <form id="scoring-form" class="wizard-container">
+                    @Html.AntiForgeryToken()
+                    @for (int i = 0; i < totalSteps; i++)
+                    {
                         var criteria = allCriteria[i];
                         var stepIndex = i;
                         var isActive = i == 0 ? "active" : "";
@@ -108,7 +193,7 @@
 
                                                 <!-- ID Badge -->
                                                 <div class="c-id-wrapper">
-                                                    <span class="id-badge" style="font-size: 12px;">@contestant.ContestantId</span>
+                                                    <span class="id-badge" style="font-size: 16px; font-weight: 800; min-width: 50px;">@contestant.ContestantId</span>
                                                 </div>
 
                                                 <!-- Name Text -->
@@ -139,7 +224,6 @@
                                     }
                                 </div>
                             </div>
-
                         </div>
                     }
                 </form>
@@ -161,33 +245,24 @@
                     </button>
                 </div>
             </div>
-            @* <div class="standby-container text-center" style="margin-top: 1rem; padding: 1rem; background: transparent;">
-                <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 0;">
-                    ✅ Your scores for <strong>@Model.RoundName</strong> have been successfully recorded.
-                </p>
-            </div> *@
-            @* Removed by Gemini: Replaced with success modal and waiting screen logic *@
-            @* Removed the if (Model.IsSubmitted) block *@
-
         }
         else
         {
             <!-- ROUND NOT STARTED STANDBY (Inside Layout) -->
-            <div class="scoring-card">
-                <div class="standby-container text-center standby-floating-card">
-                    <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
-                        ⏳
-                    </div>
-                    <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
-                        Please Standby
-                    </h2>
-                    <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-                        The round has not started yet.
-                    </p>
-                    <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
-                        Refresh Status
-                    </button>
+            <div class="standby-container text-center standby-floating-card">
+                <div class="standby-icon standby-pulse" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
+                    ⏳
                 </div>
+
+                <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
+                    Please Standby
+                </h2>
+                <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
+                    The round has not started yet.
+                </p>
+                <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
+                    Refresh Status
+                </button>
             </div>
         }
     }
@@ -242,7 +317,7 @@
 </div>
 
 <!-- Waiting Screen (after submission) -->
-<div id="submissionWaitingScreen" class="standby-container text-center hidden" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+<div id="submissionWaitingScreen" class="standby-container text-center hidden" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 166px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
     <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
         ⏳
     </div>
@@ -263,15 +338,15 @@
 
         function showToast(message, type = 'error') {
             const toast = document.getElementById('scoreToast');
+            if(!toast) return;
             toast.textContent = message;
-            toast.className = `score-toast ${type} active`; // Add type for styling (e.g., error, success)
+            toast.className = `score-toast ${type} active`;
             clearTimeout(toastTimeout);
             toastTimeout = setTimeout(() => {
                 toast.classList.remove('active');
-            }, 3000); // Hide after 3 seconds
+            }, 3000);
         }
 
-        // --- Modal and Waiting Screen Logic ---
         const submissionSuccessModalOverlay = document.getElementById('submissionSuccessModalOverlay');
         const successRoundNameSpan = document.getElementById('successRoundName');
         const btnOkSubmissionSuccess = document.getElementById('btnOkSubmissionSuccess');
@@ -297,27 +372,21 @@
         if (btnOkSubmissionSuccess) {
             btnOkSubmissionSuccess.addEventListener('click', function() {
                 closeSubmissionSuccessModal();
-                if (scoringCard) scoringCard.classList.add('hidden'); // Hide the scoring card
-                if (wizardNavigation) wizardNavigation.classList.add('hidden'); // Hide navigation
-                if (submissionWaitingScreen) submissionWaitingScreen.classList.remove('hidden'); // Show waiting screen
+                if (scoringCard) scoringCard.style.display = 'none';
+                if (wizardNavigation) wizardNavigation.style.display = 'none';
+                if (submissionWaitingScreen) submissionWaitingScreen.classList.remove('hidden');
             });
         }
 
-        // Validation Logic
         function validateScore(input, min, max) {
             const val = parseFloat(input.value);
-            
-            // Remove error class if input is empty or valid
             if (input.value === '' || (val >= min && val <= max)) {
                 input.classList.remove('invalid');
             } else {
-                // Add error class if invalid
                 input.classList.add('invalid');
             }
-            // Removed: showToast(`Score must be between ${min} and ${max}.`, 'error');
         }
 
-        // Photo Logic
         function showPhoto(name, url) {
             document.getElementById('modalTitle').textContent = name;
             document.getElementById('modalImage').src = url;
@@ -330,14 +399,20 @@
             document.body.classList.remove('has-modal-open');
         }
 
-        // Wizard Logic
         document.addEventListener('DOMContentLoaded', function() {
             const steps = document.querySelectorAll('.wizard-step');
             const btnPrev = document.getElementById('btnPrev');
             const btnNext = document.getElementById('btnNext');
             const btnSubmit = document.getElementById('btnSubmit');
+            const progressBar = document.getElementById('wizardProgressBar');
             let currentStep = 0;
             const totalSteps = steps.length;
+
+            function updateProgressBar(index) {
+                if (!progressBar || totalSteps === 0) return;
+                const percent = ((index + 1) / totalSteps) * 100;
+                progressBar.style.width = percent + '%';
+            }
 
             function showStep(index) {
                 steps.forEach((step, idx) => {
@@ -345,83 +420,106 @@
                     else step.classList.remove('active');
                 });
 
-                // Button states
-                btnPrev.disabled = index === 0;
+                updateProgressBar(index);
+
+                if (btnPrev) btnPrev.disabled = index === 0;
                 
                 if (index === totalSteps - 1) {
-                    btnNext.style.display = 'none';
-                    btnSubmit.style.display = 'inline-flex';
+                    if (btnNext) btnNext.style.display = 'none';
+                    if (btnSubmit) {
+                        btnSubmit.style.display = 'inline-flex';
+                        btnSubmit.style.backgroundColor = 'var(--color-primary)';
+                        btnSubmit.style.borderColor = 'var(--color-primary)';
+                    }
                 } else {
-                    btnNext.style.display = 'inline-flex';
-                    btnSubmit.style.display = 'none';
+                    if (btnNext) btnNext.style.display = 'inline-flex';
+                    if (btnSubmit) btnSubmit.style.display = 'none';
                 }
             }
 
-            btnPrev.addEventListener('click', () => {
-                if (currentStep > 0) {
-                    currentStep--;
-                    showStep(currentStep);
-                    window.scrollTo(0, 0); 
-                }
-            });
+            if (window.signalrConnection) {
+                window.signalrConnection.on("ReceiveJudgePulse", function() {
+                    window.location.reload(); 
+                });
+            }
 
-            btnNext.addEventListener('click', () => {
-                // Validation for current step
-                const currentStepEl = steps[currentStep];
-                const inputs = currentStepEl.querySelectorAll('.score-input');
-                let stepIsValid = true;
-                let firstInvalidInput = null;
+            const syncIndicator = document.getElementById('syncIndicator');
+            const DRAFT_KEY_PREFIX = `tallify_draft_@Model.EventCode _@Model.RoundId _`;
+            let syncTimeout;
 
-                inputs.forEach(input => {
-                    const val = parseFloat(input.value);
-                    const min = parseFloat(input.getAttribute('min'));
-                    const max = parseFloat(input.getAttribute('max'));
-                    
-                    // Reset invalid state
-                    input.classList.remove('invalid');
-
-                    // Check validation (Empty or Out of Range)
-                    if (isNaN(val) || input.value.trim() === '') {
-                         stepIsValid = false;
-                         input.classList.add('invalid');
-                         if (!firstInvalidInput) firstInvalidInput = input;
-                    } else if (val < min || val > max) {
-                         stepIsValid = false;
-                         input.classList.add('invalid');
-                         if (!firstInvalidInput) firstInvalidInput = input;
+            function restoreDraft() {
+                document.querySelectorAll('.score-input').forEach(input => {
+                    const contestantId = input.getAttribute('data-contestant-code');
+                    const criteriaName = input.getAttribute('data-criteria-name');
+                    const key = DRAFT_KEY_PREFIX + contestantId + "_" + criteriaName;
+                    const savedValue = localStorage.getItem(key);
+                    if (savedValue !== null) {
+                        input.value = savedValue;
                     }
                 });
+            }
+            restoreDraft();
 
-                if (!stepIsValid) {
-                    showToast("Please fix the errors in this step before proceeding.", "error");
-                    if (firstInvalidInput) {
-                        firstInvalidInput.focus();
-                    }
-                    return; // Stop navigation
-                }
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('input', () => {
+                    const contestantId = input.getAttribute('data-contestant-code');
+                    const criteriaName = input.getAttribute('data-criteria-name');
+                    const key = DRAFT_KEY_PREFIX + contestantId + "_" + criteriaName;
+                    localStorage.setItem(key, input.value);
 
-                if (currentStep < totalSteps - 1) {
-                    currentStep++;
-                    showStep(currentStep);
-                    window.scrollTo(0, 0);
-                }
+                    if (!syncIndicator) return;
+                    syncIndicator.style.opacity = '1';
+                    syncIndicator.innerHTML = '<span class="badge-dot standby-pulse" style="width: 6px; height: 6px;"></span> SAVING...';
+                    syncIndicator.style.color = 'var(--color-primary)';
+
+                    clearTimeout(syncTimeout);
+                    syncTimeout = setTimeout(() => {
+                        syncIndicator.innerHTML = '<span class="badge-dot" style="width: 6px; height: 6px; background: #10b981;"></span> DRAFT SAVED';
+                        syncIndicator.style.color = '#10b981';
+                        setTimeout(() => { syncIndicator.style.opacity = '0'; }, 2000);
+                    }, 800);
+                });
             });
+
+            function clearRoundDraft() {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.startsWith(DRAFT_KEY_PREFIX)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+
+            if (btnPrev) {
+                btnPrev.addEventListener('click', () => {
+                    if (currentStep > 0) {
+                        currentStep--;
+                        showStep(currentStep);
+                        window.scrollTo(0, 0); 
+                    }
+                });
+            }
+
+            if (btnNext) {
+                btnNext.addEventListener('click', () => {
+                    if (currentStep < totalSteps - 1) {
+                        currentStep++;
+                        showStep(currentStep);
+                        window.scrollTo(0, 0);
+                    }
+                });
+            }
             
             if (totalSteps > 0) showStep(0);
 
-            // ==========================================
-            // SUBMISSION LOGIC
-            // ==========================================
             if (btnSubmit) {
                 btnSubmit.addEventListener('click', async function() {
-                    // 1. Gather all inputs
                     const inputs = document.querySelectorAll('.score-input');
                     const submissions = [];
                     const contestantMap = {};
                     let hasError = false;
                     let firstInvalidInput = null;
 
-                    // 2. Validate & Group
                     inputs.forEach(input => {
                         const val = parseFloat(input.value);
                         const min = parseFloat(input.getAttribute('min'));
@@ -429,7 +527,6 @@
                         const cCode = input.getAttribute('data-contestant-code');
                         const cName = input.getAttribute('data-criteria-name');
 
-                        // Clear previous invalid state first
                         input.classList.remove('invalid');
 
                         if (isNaN(val) || input.value.trim() === '') {
@@ -442,16 +539,8 @@
                             if (!firstInvalidInput) firstInvalidInput = input;
                         }
 
-                        // Only add to submission if valid
-                        if (!hasError || input.classList.contains('invalid') === false) { // Add to submission only if not invalid
-                            if (!contestantMap[cCode]) {
-                                contestantMap[cCode] = [];
-                            }
-                            contestantMap[cCode].push({
-                                criteriaName: cName,
-                                score: val
-                            });
-                        }
+                        if (!contestantMap[cCode]) contestantMap[cCode] = [];
+                        contestantMap[cCode].push({ criteriaName: cName, score: val });
                     });
 
                     if (hasError) {
@@ -460,6 +549,7 @@
                             const firstInvalidStep = firstInvalidInput.closest('.wizard-step');
                             if (firstInvalidStep) {
                                 const stepIndex = parseInt(firstInvalidStep.dataset.step);
+                                currentStep = stepIndex;
                                 showStep(stepIndex);
                                 firstInvalidInput.focus();
                                 firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -468,12 +558,8 @@
                         return;
                     }
 
-                    // 3. Construct Payload
                     for (const [code, scores] of Object.entries(contestantMap)) {
-                        submissions.push({
-                            contestantCode: code,
-                            scores: scores
-                        });
+                        submissions.push({ contestantCode: code, scores: scores });
                     }
 
                     const payload = {
@@ -482,7 +568,6 @@
                         submissions: submissions
                     };
 
-                    // 4. Send Request
                     try {
                         btnSubmit.disabled = true;
                         btnSubmit.textContent = "Submitting...";
@@ -500,9 +585,8 @@
                         const result = await response.json();
 
                         if (response.ok && result.success) {
-                            // showToast("Scores submitted successfully!", "success"); // Replaced by modal
+                            clearRoundDraft();
                             openSubmissionSuccessModal('@Model.RoundName');
-                            // No window.location.reload() here. Transition to waiting screen instead.
                         } else {
                             showToast(result.message || "Submission failed.", "error");
                             btnSubmit.disabled = false;

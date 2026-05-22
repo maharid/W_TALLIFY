@@ -528,8 +528,8 @@ namespace ProjectTallify.Controllers
                     OrganizerId = null, // not an Organizer account
                     UserName = judge.Name,
                     UserRole = "Judge",
-                    Action = "Judge Joined",
-                    Details = $"Judge '{judge.Name}' joined scoring with PIN.",
+                    Action = "Entered Judging Room",
+                    Details = $"Judge '{judge.Name}' entered the judging room with PIN.",
                     CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
@@ -597,14 +597,14 @@ namespace ProjectTallify.Controllers
                     OrganizerId    = null,
                     UserName  = name,
                     UserRole  = role, // e.g. "judge"
-                    Action    = "Logged Out",
-                    Details   = $"{role} '{name}' logged out.",
+                    Action    = "Left Judging Room",
+                    Details   = $"{role} '{name}' left the judging room.",
                     CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
 
                 // Notify Organizer
-                await _notificationService.NotifyEventAsync(eventId.Value, "User Left", $"{role} '{name}' logged out.", "warning");
+                await _notificationService.NotifyEventAsync(eventId.Value, "Judge Left", $"{role} '{name}' has left the judging room.", "warning");
             }
 
             await ClearRememberMeAsync();

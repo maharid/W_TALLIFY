@@ -152,8 +152,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const existingEventNameEl        = document.getElementById("existingEventName");
   const existingEventVenueEl       = document.getElementById("existingEventVenue");
   const existingEventDescriptionEl = document.getElementById("existingEventDescription");
-  const existingEventStartDateEl   = document.getElementById("existingEventStartDate");
-  const existingEventStartTimeEl   = document.getElementById("existingEventStartTime");
+  const existingScheduleDateEl   = document.getElementById("existingScheduleDate");
+  const existingScheduleTimeEl   = document.getElementById("existingScheduleTime");
   const existingThemeColorEl       = document.getElementById("existingThemeColor");
   const existingHeaderImageEl      = document.getElementById("existingHeaderImage");
 
@@ -169,8 +169,8 @@ document.addEventListener("DOMContentLoaded", function () {
   if (existingEventNameEl)        window.existingEventName        = existingEventNameEl.value;
   if (existingEventVenueEl)       window.existingEventVenue       = existingEventVenueEl.value;
   if (existingEventDescriptionEl) window.existingEventDescription = existingEventDescriptionEl.value;
-  if (existingEventStartDateEl)   window.existingEventStartDate   = existingEventStartDateEl.value;
-  if (existingEventStartTimeEl)   window.existingEventStartTime   = existingEventStartTimeEl.value;
+  if (existingScheduleDateEl)   window.existingScheduleDate   = existingScheduleDateEl.value;
+  if (existingScheduleTimeEl)   window.existingScheduleTime   = existingScheduleTimeEl.value;
   if (existingThemeColorEl)       window.existingThemeColor       = existingThemeColorEl.value;
   if (existingHeaderImageEl)      window.existingHeaderImage      = existingHeaderImageEl.value;
   
@@ -216,8 +216,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const nameInput  = document.getElementById("eventName");
     const venueInput = document.getElementById("eventVenue");
     const descInput  = document.getElementById("eventDescription");
-    const startDate  = document.getElementById("eventStartDate");
-    const startTime  = document.getElementById("eventStartTime");
+    const scheduleDateEl  = document.getElementById("scheduleDate");
+    const scheduleTimeEl  = document.getElementById("scheduleTime");
     const endDate    = document.getElementById("eventEndDate");
     const endTime    = document.getElementById("eventEndTime");
     const codeInput  = document.getElementById("eventAccessCode");
@@ -227,9 +227,10 @@ document.addEventListener("DOMContentLoaded", function () {
       eventName:        nameInput?.value || "",
       eventVenue:       venueInput?.value || "",
       eventDescription: descInput?.value || "",
-      eventStartDate:   startDate?.value || "",
-      eventStartTime:   startTime?.value || "",
+      scheduleDate:   scheduleDateEl?.value || "",
+      scheduleTime:   scheduleTimeEl?.value || "",
       eventEndDate:     endDate?.value || "",
+
       eventEndTime:     endTime?.value || "",
       scoringLogic:     typeof getSelectedEventType === "function"
                           ? (getSelectedEventType() === "averaging" ? "WeightedAverage" : "PointBased")

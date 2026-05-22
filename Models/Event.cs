@@ -13,7 +13,7 @@ namespace ProjectTallify.Models
 
         public string ScoringLogic { get; set; } = "WA";
 
-        public DateTime StartDateTime { get; set; }
+        public DateTime Schedule { get; set; }
 
 
         public string Status { get; set; } = "preparing";

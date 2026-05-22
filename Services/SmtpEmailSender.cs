@@ -119,6 +119,9 @@ namespace ProjectTallify.Services
         {
             if (string.IsNullOrWhiteSpace(judge.Email)) return;
 
+            // Theme color logic (fallback to Tallify primary if null)
+            var themeColor = string.IsNullOrWhiteSpace(judge.Event.ThemeColor) ? "#007bff" : judge.Event.ThemeColor;
+
             using var client = new SmtpClient(_settings.Host, _settings.Port)
             {
                 EnableSsl = _settings.EnableSsl,
@@ -128,68 +131,61 @@ namespace ProjectTallify.Services
             var message = new MailMessage
             {
                 From = new MailAddress(_settings.FromAddress, _settings.FromName),
-                Subject = $"Invitation to Judge: {eventName}",
+                Subject = $"Access Credentials: {eventName}",
                 IsBodyHtml = true
             };
 
             message.To.Add(judge.Email);
 
-            // Professional HTML Template
             message.Body = $@"
             <!DOCTYPE html>
             <html>
             <head>
                 <style>
-                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }}
-                    .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-                    .header {{ text-align: center; margin-bottom: 30px; }}
-                    .header h1 {{ color: #333; font-size: 24px; margin: 0; }}
-                    .content {{ font-size: 16px; color: #555; line-height: 1.6; }}
-                    .credentials-box {{ background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; padding: 20px; margin: 20px 0; text-align: center; }}
-                    .credential-item {{ margin: 10px 0; }}
-                    .credential-label {{ font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }}
-                    .credential-value {{ font-size: 24px; font-weight: bold; color: #333; font-family: monospace; letter-spacing: 2px; }}
+                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; color: #1e293b; }}
+                    .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }}
+                    .header {{ text-align: center; margin-bottom: 25px; }}
+                    .header h1 {{ color: #0f172a; font-size: 24px; margin: 0; font-weight: 800; }}
+                    .content {{ font-size: 16px; line-height: 1.6; color: #475569; }}
+                    .credential-box {{ background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; margin: 24px 0; overflow: hidden; border-left: 5px solid {themeColor}; }}
+                    .cred-col {{ padding: 20px 10px; text-align: center; }}
+                    .cred-label {{ font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; font-weight: 800; display: block; margin-bottom: 8px; }}
+                    .cred-value {{ font-size: 20px; font-weight: 800; color: {themeColor}; font-family: monospace; background: #f8fafc; padding: 6px 12px; border-radius: 6px; display: inline-block; letter-spacing: 1px; }}
                     .btn-container {{ text-align: center; margin-top: 30px; }}
-                    .btn {{ display: inline-block; background-color: #007bff; color: #ffffff; padding: 12px 30px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 5px; transition: background-color 0.3s; }}
-                    .btn:hover {{ background-color: #0056b3; }}
-                    .footer {{ margin-top: 40px; text-align: center; font-size: 12px; color: #aaa; }}
+                    .btn {{ display: inline-block; background-color: {themeColor}; color: #ffffff !important; padding: 14px 35px; font-size: 16px; font-weight: bold; text-decoration: none; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }}
+                    .footer {{ margin-top: 40px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 15px; }}
                 </style>
             </head>
             <body>
                 <div class=""container"">
                     <div class=""header"">
-                        <h1>You're Invited to Judge!</h1>
+                        <h1>Your Panel Access is Ready</h1>
                     </div>
                     <div class=""content"">
                         <p>Hello <strong>{judge.Name}</strong>,</p>
-                        <p>You have been selected to be a judge for the event: <strong>{eventName}</strong>.</p>
-                        <p>Please use the credentials below to log in and access the scoring dashboard.</p>
-
-                        <div class=""credentials-box"">
-                            <div class=""credential-item"">
-                                <span class=""credential-label"">Event Access Code</span>
-                                <span class=""credential-value"">{eventCode}</span>
-                            </div>
-                            <div class=""credential-item"">
-                                <span class=""credential-label"">Your Personal PIN</span>
-                                <span class=""credential-value"">{judge.Pin}</span>
-                            </div>
+                        <p>Your email has been verified. You may now access the scoring interface for <strong>{eventName}</strong> using the credentials below.</p>
+                        
+                        <div class=""credential-box"">
+                            <table style=""width: 100%; border-collapse: collapse; table-layout: fixed;"">
+                                <tr>
+                                    <td class=""cred-col"" style=""width: 50%; border-right: 1px solid #e2e8f0;"">
+                                        <span class=""cred-label"">Access Code</span>
+                                        <div class=""cred-value"">{eventCode}</div>
+                                    </td>
+                                    <td class=""cred-col"" style=""width: 50%;"">
+                                        <span class=""cred-label"">PIN</span>
+                                        <div class=""cred-value"">{judge.Pin}</div>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
 
                         <div class=""btn-container"">
-                            <a href=""{inviteLink}"" class=""btn"" style=""color: #ffffff;"">Access Event</a>
+                            <a href=""{inviteLink}"" class=""btn"">Join Event with Code</a>
                         </div>
-                        
-                        <p style=""text-align: center; margin-top: 15px;"">
-                            When you click the button, you will be redirected to the event access page.
-                        </p>
-
-                        <p style=""margin-top: 20px; text-align: center; font-size: 14px;"">
-                            Or verify directly via this link:<br>
-                            <a href=""{inviteLink}"" style=""color: #007bff;"">{inviteLink}</a>
-                        </p>
                     </div>
                     <div class=""footer"">
+                        <p>This is a secure automated message from Tallify.<br>Please do not share your PIN with anyone.</p>
                         <p>&copy; {DateTime.Now.Year} Tallify. All rights reserved.</p>
                     </div>
                 </div>
@@ -260,9 +256,10 @@ namespace ProjectTallify.Services
                                 <span class=""detail-label"">Venue:</span>
                                 <span class=""detail-value"">Divine Word College of Calapan — {ev.Venue}</span>
                             </div>
+
                             <div class=""detail-row"">
-                                <span class=""detail-label"">Date:</span>
-                                <span class=""detail-value"">{ev.StartDateTime:MMMM dd, yyyy} at {ev.StartDateTime:h:mm tt}</span>
+                                <span class=""detail-label"">Schedule:</span>
+                                <span class=""detail-value"">{ev.Schedule:MMMM dd, yyyy} at {ev.Schedule:h:mm tt}</span>
                             </div>
                         </div>
 

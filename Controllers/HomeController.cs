@@ -33,13 +33,14 @@ namespace ProjectTallify.Controllers
             if (!userId.HasValue) return RedirectToAction("Login", "Auth", new { returnUrl = Request.Path });
 
             // Only OPEN events, not archived, and belonging to the user
-            var activeEvents = await _db.Events
-                .Where(e => e.OrganizerId == userId.Value && e.Status == "open" && !e.IsArchived)
-                .OrderBy(e => e.StartDateTime)
+            var upcomingEvents = await _db.Events
+                .Where(e => e.OrganizerId == userId.Value && e.Status != null && e.Status.ToLower() == "open" && !e.IsArchived)
+                .OrderBy(e => e.Schedule)
+                .Take(5)
                 .ToListAsync();
 
             // Pass active events as model to Dashboard.cshtml
-            return View(activeEvents);
+            return View(upcomingEvents);
         }
 
         // GET: /Home/CreateEvent

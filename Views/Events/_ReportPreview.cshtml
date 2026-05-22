@@ -19,7 +19,7 @@
                 <div class="report-header">
                     <h1>@Model.Event.Name</h1>
                     <h2>Official Winners</h2>
-                    <p>@Model.Event.Venue &bull; @Model.Event.StartDateTime.ToString("MMM dd, yyyy")</p>
+                    <p>@Model.Event.Venue &bull; @Model.Event.Schedule.ToString("MMM dd, yyyy")</p>
                 </div>
 
                 <table class="app-table">
@@ -61,7 +61,7 @@
                 <div class="report-header">
                     <h1>@Model.Event.Name</h1>
                     <h2>Overall Tally</h2>
-                    <p>@Model.Event.Venue &bull; @Model.Event.StartDateTime.ToString("MMM dd, yyyy")</p>
+                    <p>@Model.Event.Venue &bull; @Model.Event.Schedule.ToString("MMM dd, yyyy")</p>
                 </div>
 
                 <table class="app-table">
@@ -100,7 +100,7 @@
                 <div class="report-header">
                     <h1>@Model.Event.Name</h1>
                     <h2>Result Per Round</h2>
-                    <p>@Model.Event.Venue &bull; @Model.Event.StartDateTime.ToString("MMM dd, yyyy")</p>
+                    <p>@Model.Event.Venue &bull; @Model.Event.Schedule.ToString("MMM dd, yyyy")</p>
                 </div>
 
                 <table class="app-table">
@@ -141,7 +141,7 @@
                     <div class="report-header">
                         <h1>@Model.Event.Name</h1>
                         <h2>Score Sheet - @round.RoundName</h2>
-                        <p>@Model.Event.Venue &bull; @Model.Event.StartDateTime.ToString("MMM dd, yyyy")</p>
+                        <p>@Model.Event.Venue &bull; @Model.Event.Schedule.ToString("MMM dd, yyyy")</p>
                     </div>
 
                     <table class="app-table small-text">

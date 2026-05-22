@@ -107,7 +107,7 @@
                 <tr>
                     <th>Event</th>
                     <th>Type</th>
-                    <th>Event Date &amp; Time</th>
+                    <th>Schedule</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -130,13 +130,13 @@
                     var typeLabel = ev.ScoringLogic == "WeightedAverage" ? "WA" : "PB";
                     var typeClass = ev.ScoringLogic == "WeightedAverage" ? "pill pill-type-cb" : "pill pill-type-orw";
 
-                    // Derive status from ev.Status (fallback using start date if null/empty)
+                    // Derive status from ev.Status (fallback using schedule date if null/empty)
                     string statusText;
                     if (string.IsNullOrWhiteSpace(ev.Status))
                     {
-                        // Fallback: if no status saved, decide based on current time vs start
+                        // Fallback: if no status saved, decide based on current time vs schedule
                         var now = DateTime.Now;
-                        statusText = now < ev.StartDateTime ? "Preparing" : "Open";
+                        statusText = now < ev.Schedule ? "Preparing" : "Open";
                     }
                     else
                     {
@@ -163,7 +163,7 @@
                             <span class="@typeClass" style="@(ev.ScoringLogic == "WeightedAverage" ? "background:#fee2f3; color:#fb0a74;" : "background:#e5ecff; color:#4f46e5;")">@typeLabel</span>
                         </td>
 
-                        <td>@ev.StartDateTime.ToString("MMM dd, yyyy h:mm tt")</td>
+                        <td>@ev.Schedule.ToString("MMM dd, yyyy h:mm tt")</td>
 
                         <td>
                             <span class="@statusClass" style="@(statusText=="Open"?"background:#dcfce7;color:#16a34a;" : statusText=="Preparing"?"background:#fef3c7;color:#d97706;" : "background:#f3f4f6;color:#374151;")">@statusText</span>

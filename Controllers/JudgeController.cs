@@ -94,13 +94,13 @@ namespace ProjectTallify.Controllers
                     OrganizerId = null,
                     UserName = judge.Name,
                     UserRole = "Judge",
-                    Action = "Judge Logged In",
-                    Details = $"Judge '{judge.Name}' logged in using the application.",
+                    Action = "Entered Judging Room",
+                    Details = $"Judge '{judge.Name}' entered the judging room.",
                     CreatedAt = DateTime.UtcNow
                 });
                 await _db.SaveChangesAsync();
                 
-                await _notificationService.NotifyEventAsync(ev.Id, "Judge Joined", $"{judge.Name} has logged in.", "info");
+                await _notificationService.NotifyEventAsync(ev.Id, "Judge Joined", $"{judge.Name} has entered the judging room.", "info");
 
                 return Ok(new 
                 {  
@@ -250,7 +250,7 @@ namespace ProjectTallify.Controllers
                 IsRoundActive       = (ev.Status?.ToLower() == "open") && (activeRound?.IsActive ?? false),
                 IsSubmitted         = isSubmitted,
                 EventStatus         = ev.Status?.ToLower() ?? "preparing",
-                EventStartDate      = ev.StartDateTime,
+                Schedule            = ev.Schedule,
                 Venue               = ev.Venue,
                 SelectedContestantId = selectedId,
                 ThemeColor          = ev.ThemeColor,

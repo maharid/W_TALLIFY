@@ -61,8 +61,8 @@
                 }
 
                 // Date Badge Logic
-                string dateBadgeMonth = ev.StartDateTime.ToString("MMM");
-                string dateBadgeDay   = ev.StartDateTime.ToString("dd");
+                string dateBadgeMonth = ev.Schedule.ToString("MMM");
+                string dateBadgeDay   = ev.Schedule.ToString("dd");
                 
                 <div class="event-card">
                     <!-- Banner Area -->
@@ -78,11 +78,11 @@
                         <h3 class="event-card-title">@ev.Name</h3>
                         <div class="event-card-tags">
                             <span class="pill @typeClass">@typeLabel</span>
-                            @if (statusText == "Open")
+                            @if (statusText.ToLower() == "open")
                             {
                                 <span class="pill pill-status-open" style="background:#dcfce7; color:#16a34a;">OPEN</span>
                             }
-                            else if (statusText == "Preparing")
+                            else if (statusText.ToLower() == "preparing")
                             {
                                 <span class="pill pill-status-preparing" style="background:#fef3c7; color:#d97706;">PREPARING</span>
                             }

@@ -33,6 +33,9 @@
     --font-size-xl: 20px;
     --font-size-md: 14px;
     --transition-fast: 0.2s ease;
+
+    /* Matching Organizer Widths */
+    --content-max-width: 1280px;
 }
 
 * { box-sizing: border-box; }
@@ -54,7 +57,8 @@ body {
 .scoring-header {
     width: 100%;
     background: var(--color-surface);
-    padding: var(--space-6) 120px;
+    /* Match Organizer Layout Padding */
+    padding: 18px max(32px, calc((100% - var(--content-max-width)) / 2)) 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -186,7 +190,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px; /* Reduced padding */
+    /* Match Organizer Layout Padding */
+    padding: 32px max(32px, calc((100% - var(--content-max-width)) / 2)) 40px;
     overflow: hidden; /* Prevent main container scrolling */
 }
 
@@ -200,7 +205,7 @@ body {
     border-radius: var(--radius-md); /* Now using radius-md (10px) */
     box-shadow: var(--shadow-card);
     width: 100%;
-    max-width: 900px;
+    max-width: var(--content-max-width);
     padding: 24px; /* Reduced padding */
     display: flex;
     flex-direction: column;
@@ -217,15 +222,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
+
     width: 100%;             /* Ensure it takes full width of its parent */
-    max-width: 900px;        /* Match the max-width of .scoring-card */
+    max-width: var(--content-max-width);
     margin: 0 auto 16px auto; /* Reduced bottom margin */
     padding: 0 0 16px 0; /* Reduced padding */
-    
+
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0; /* Prevent shrinking */
 }
+
 
 .event-title {
     margin: 0;
@@ -502,7 +508,7 @@ body {
    =================================================================== */
 .wizard-navigation {
     width: 100%;
-    max-width: 900px;
+    max-width: var(--content-max-width);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -673,16 +679,11 @@ body {
 }
 
 /* ===================================================================
-   STANDBY CARD (Floating in Middle)
+   STANDBY CARD (Centered below header)
    =================================================================== */
 .standby-floating-card {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000; /* Ensure it floats above other content */
-    width: 90%; /* Max width for responsiveness */
-    max-width: 600px; /* Max width for larger screens */
+    width: 100%;
+    max-width: 600px;
     background: var(--color-surface); /* Use general surface color */
     padding: 3rem;
     border-radius: var(--radius-md); /* Use existing radius variable */
@@ -692,14 +693,14 @@ body {
     flex-direction: column; /* Stack content */
     align-items: center; /* Center horizontally */
     justify-content: center; /* Center vertically if flex height */
-    margin: 0; /* Override any external margin */
+    margin: 2rem auto; /* Centered block in flow */
     /* Add a subtle animation to make it pop up */
     animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeInScale {
-    from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 /* Specific adjustments for content within the floating card */

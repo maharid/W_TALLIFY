@@ -187,15 +187,15 @@ document.addEventListener("DOMContentLoaded", function () {
         let valid = true;
         const name = document.getElementById("eventName").value.trim();
         const venue = document.getElementById("eventVenue").value.trim();
-        const startDate = document.getElementById("eventStartDate").value;
-        const startTime = document.getElementById("eventStartTime").value;
+        const startDate = document.getElementById("scheduleDate").value;
+        const startTime = document.getElementById("scheduleTime").value;
 
         if (!name) { setError("eventName", "Required"); valid = false; }
         if (!venue) { setError("eventVenue", "Required"); valid = false; }
-        if (!startDate || !startTime) { setError("eventStart", "Required"); valid = false; }
+        if (!startDate || !startTime) { setError("scheduleDate", "Required"); valid = false; }
         else {
             const dt = new Date(`${startDate}T${startTime}`);
-            if (dt <= new Date()) { setError("eventStart", "Must be in the future"); valid = false; }
+            if (dt <= new Date()) { setError("scheduleDate", "Must be in the future"); valid = false; }
         }
         if (!valid) showToast("Please check the highlighted fields.");
         return valid;
@@ -691,12 +691,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div style="font-weight:700; color:#6b7280;">Venue:</div>
                 <div>${data.eventVenue || "—"}</div>
 
-                <div style="font-weight:700; color:#6b7280;">Start Date:</div>
+                <div style="font-weight:700; color:#6b7280;">Schedule:</div>
                 <div>
                     ${(() => {
-                        if (!data.eventStartDate || !data.eventStartTime) return "—";
-                        const dt = new Date(`${data.eventStartDate}T${data.eventStartTime}`);
-                        if (isNaN(dt.getTime())) return `${data.eventStartDate} at ${data.eventStartTime}`;
+                        if (!data.scheduleDate || !data.scheduleTime) return "—";
+                        const dt = new Date(`${data.scheduleDate}T${data.scheduleTime}`);
+                        if (isNaN(dt.getTime())) return `${data.scheduleDate} at ${data.scheduleTime}`;
                         const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                         const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                         return `${dateStr} at ${timeStr}`;
@@ -848,8 +848,8 @@ document.addEventListener("DOMContentLoaded", function () {
             eventName: document.getElementById("eventName").value.trim(),
             eventVenue: document.getElementById("eventVenue").value.trim(),
             eventDescription: document.getElementById("eventDescription").value.trim(),
-            eventStartDate: document.getElementById("eventStartDate").value,
-            eventStartTime: document.getElementById("eventStartTime").value,
+            scheduleDate: document.getElementById("scheduleDate").value,
+            scheduleTime: document.getElementById("scheduleTime").value,
             scoringLogic: isPointing ? "PointBased" : "WeightedAverage",
             accessCode: document.getElementById("eventAccessCode").value.trim(),
             themeColor: eventThemeColor,
@@ -910,8 +910,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("eventName").value = data.eventName || "";
                 document.getElementById("eventVenue").value = data.eventVenue || "";
                 document.getElementById("eventDescription").value = data.eventDescription || "";
-                document.getElementById("eventStartDate").value = data.eventStartDate || "";
-                document.getElementById("eventStartTime").value = data.eventStartTime || "";
+                document.getElementById("scheduleDate").value = data.scheduleDate || "";
+                document.getElementById("scheduleTime").value = data.scheduleTime || "";
 
                 if (data.scoringLogic === "PointBased") document.getElementById("criteriaSystemPointing").checked = true;
                 else document.getElementById("criteriaSystemAveraging").checked = true;
@@ -1102,8 +1102,8 @@ document.addEventListener("DOMContentLoaded", function () {
             eventName: data.eventName, 
             eventVenue: data.eventVenue, 
             eventDescription: data.eventDescription,
-            eventStartDate: data.eventStartDate, 
-            eventStartTime: data.eventStartTime, 
+            scheduleDate: data.scheduleDate, 
+            scheduleTime: data.scheduleTime, 
             scoringLogic: data.scoringLogic,
             accessCode: data.accessCode, 
             themeColor: data.themeColor, 
@@ -1287,8 +1287,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (window.existingEventName)        document.getElementById("eventName").value = window.existingEventName;
         if (window.existingEventVenue)       document.getElementById("eventVenue").value = window.existingEventVenue;
         if (window.existingEventDescription) document.getElementById("eventDescription").value = window.existingEventDescription;
-        if (window.existingEventStartDate)   document.getElementById("eventStartDate").value = window.existingEventStartDate;
-        if (window.existingEventStartTime)   document.getElementById("eventStartTime").value = window.existingEventStartTime;
+        if (window.existingScheduleDate)   document.getElementById("scheduleDate").value = window.existingScheduleDate;
+        if (window.existingScheduleTime)   document.getElementById("scheduleTime").value = window.existingScheduleTime;
         if (window.existingAccessCode)      document.getElementById("eventAccessCode").value = window.existingAccessCode;
 
         // 2. Scoring Logic
@@ -1417,8 +1417,53 @@ document.addEventListener("DOMContentLoaded", function () {
     // Resume Draft Check
     if (window.currentEventId && window.currentEventId > 0) {
         initExistingData();
+        
+        // CHECK STATUS FOR LIMITED EDIT MODE
+        const status = document.getElementById("existingEventStatus")?.value;
+        if (status === "open") {
+            showToast("Limited Edit Mode Active: Scoring logic and round structure are locked during a live event.", "info");
+            disableStructuralFields();
+        }
     } else {
         loadDraft();
+    }
+
+    function disableStructuralFields() {
+        // 1. Logic Selection
+        const logicCard = document.getElementById("criteriaSystemCard");
+        if (logicCard) {
+            logicCard.style.opacity = "0.7";
+            logicCard.style.pointerEvents = "none";
+            logicCard.title = "Scoring logic cannot be changed during a live event.";
+        }
+
+        // 2. Add Round Button
+        const btnAddRound = document.getElementById("btnAddCriteriaRound");
+        if (btnAddRound) {
+            btnAddRound.disabled = true;
+            btnAddRound.title = "Round structure is locked during a live event.";
+        }
+
+        // 3. Delete Round Buttons
+        document.querySelectorAll(".event-round-remove").forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.title = "Existing rounds cannot be deleted during a live event.";
+        });
+
+        // 4. Criteria Removal
+        document.querySelectorAll(".criteria-remove").forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.title = "Existing criteria cannot be removed during a live event.";
+        });
+        
+        // 5. Derived dropdowns & Weight Inputs (Structural)
+        document.querySelectorAll(".criteria-weight, .criteria-derived-from, .min-point, .max-point").forEach(input => {
+            input.readOnly = true;
+            input.style.backgroundColor = "#f9fafb";
+            input.title = "Structural scoring rules are locked.";
+        });
     }
     setInterval(saveDraft, 10000);
 });

@@ -16,22 +16,23 @@ namespace ProjectTallify.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMyNotifications(int limit = 10)
+        public async Task<IActionResult> GetMyNotifications(int limit = 10, bool unreadOnly = false)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null) return Unauthorized();
 
             var query = _db.NotificationLogs
                 .Where(n => n.OrganizerId == userId)
-                .OrderByDescending(n => n.CreatedAt)
                 .AsQueryable();
 
-            if (limit > 0)
+            if (unreadOnly)
             {
-                query = query.Take(limit);
+                query = query.Where(n => !n.IsRead);
             }
 
             var logs = await query
+                .OrderByDescending(n => n.CreatedAt)
+                .Take(limit > 0 ? limit : 1000)
                 .Select(n => new {
                     n.Id,
                     n.Title,

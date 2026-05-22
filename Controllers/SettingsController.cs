@@ -283,9 +283,10 @@ namespace ProjectTallify.Controllers
             }
 
             var archivedEvents = await _db.Events
-                .Where(e => e.OrganizerId == userId.Value && e.IsArchived == true)
-                .OrderByDescending(e => e.StartDateTime)
+                .Where(e => e.OrganizerId == userId.Value && e.IsArchived)
+                .OrderByDescending(e => e.Schedule)
                 .ToListAsync();
+
 
             return PartialView("~/Views/Settings/_ArchivedEventsList.cshtml", archivedEvents);
         }

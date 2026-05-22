@@ -350,19 +350,19 @@ namespace ProjectTallify.Controllers
             // 1. Validate basics
             if (string.IsNullOrWhiteSpace(request.EventName) ||
                 string.IsNullOrWhiteSpace(request.EventVenue) ||
-                string.IsNullOrWhiteSpace(request.EventStartDate) ||
-                string.IsNullOrWhiteSpace(request.EventStartTime))
+                string.IsNullOrWhiteSpace(request.ScheduleDate) ||
+                string.IsNullOrWhiteSpace(request.ScheduleTime))
             {
                 return (false, "Missing required fields.", null);
             }
 
-            if (!DateTime.TryParse($"{request.EventStartDate} {request.EventStartTime}", out var start))
-                return (false, "Invalid start date or time.", null);
+            if (!DateTime.TryParse($"{request.ScheduleDate} {request.ScheduleTime}", out var start))
+                return (false, "Invalid schedule date or time.", null);
 
             var now = DateTime.Now;
             if (start <= now)
             {
-                return (false, "Event start date and time must be in the future.", null);
+                return (false, "Event schedule date and time must be in the future.", null);
             }
 
             if (string.IsNullOrWhiteSpace(request.AccessCode))
@@ -387,10 +387,13 @@ namespace ProjectTallify.Controllers
             try
             {
                 Event? ev;
+                bool statusIsOpen = false;
+
                 if (isEdit)
                 {
                     ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
                     if (ev == null) return (false, "Event not found.", null);
+                    statusIsOpen = ev.Status?.ToLower() == "open";
                 }
                 else
                 {
@@ -403,12 +406,28 @@ namespace ProjectTallify.Controllers
                     _db.Events.Add(ev);
                 }
 
-                // Update fields
+                // --- LIMITED EDIT MODE ENFORCEMENT ---
+                if (statusIsOpen)
+                {
+                    // Block scoring logic change
+                    if (ev.ScoringLogic != request.ScoringLogic && !string.IsNullOrWhiteSpace(request.ScoringLogic))
+                    {
+                        return (false, "Scoring logic cannot be changed while the event is open.", null);
+                    }
+                    // Note: Round/Criteria sync helper will handle individual structural blocks
+                }
+
+                // Update non-structural fields
                 ev.Name = request.EventName!.Trim();
                 ev.Venue = request.EventVenue!.Trim();
                 ev.Description = request.EventDescription?.Trim();
-                ev.StartDateTime = start;
-                ev.ScoringLogic = string.IsNullOrWhiteSpace(request.ScoringLogic) ? "WeightedAverage" : request.ScoringLogic;
+                ev.Schedule = start;
+                
+                if (!statusIsOpen)
+                {
+                    ev.ScoringLogic = string.IsNullOrWhiteSpace(request.ScoringLogic) ? "WeightedAverage" : request.ScoringLogic;
+                }
+
                 ev.AccessCode = trimmedCode;
 
                 ev.ContestantsJson = JsonSerializer.Serialize(request.Contestants ?? new List<SimpleContestant>());
@@ -416,20 +435,30 @@ namespace ProjectTallify.Controllers
                 
                 if (ev.HeaderImage != request.HeaderImage)
                 {
-                    // Cleanup old header image if it existed
-                    if (!string.IsNullOrEmpty(ev.HeaderImage))
-                    {
-                        DeleteLocalFile(ev.HeaderImage);
-                    }
+                    if (!string.IsNullOrEmpty(ev.HeaderImage)) DeleteLocalFile(ev.HeaderImage);
                     ev.HeaderImage = request.HeaderImage;
                 }
                 
-                await _db.SaveChangesAsync(); // Get ID
+                await _db.SaveChangesAsync();
 
-                // Sync sub-tables
+                // Sync sub-tables (Internals will handle open-status restrictions)
                 await SyncContestantsInternal(ev, request.Contestants);
                 await SyncAccessUsersInternal(ev, request.AccessUsers);
                 await SyncRoundsAndCriteriaInternal(ev, request.RoundsJson, request.CriteriaType ?? "WeightedAverage");
+
+                if (statusIsOpen)
+                {
+                    _db.AuditLogs.Add(new AuditLog
+                    {
+                        EventId = ev.Id,
+                        OrganizerId = userId,
+                        UserName = HttpContext.Session.GetString("UserName") ?? "Organizer",
+                        UserRole = "Organizer",
+                        Action = "Modified active event",
+                        Details = "Organizer updated event details while event was 'open'.",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -543,7 +572,17 @@ namespace ProjectTallify.Controllers
 
         private async Task SyncRoundsAndCriteriaInternal(Event ev, string? roundsJson, string criteriaType)
         {
-            // 1. Cleanup existing Rounds & Criteria for this event
+            bool isOpen = ev.Status?.ToLower() == "open";
+            
+            // 1. Structural Lock: If open, do not allow any changes to Rounds or Criteria
+            if (isOpen)
+            {
+                // We skip the sync entirely to protect existing scores and rankings
+                Console.WriteLine($"SyncRoundsAndCriteriaInternal: Event {ev.Id} is OPEN. Structural changes blocked.");
+                return;
+            }
+
+            // Cleanup existing Rounds & Criteria for this event
             var existingRounds = await _db.Rounds.Where(r => r.EventId == ev.Id).ToListAsync();
             _db.Rounds.RemoveRange(existingRounds);
             
@@ -693,6 +732,9 @@ namespace ProjectTallify.Controllers
                 });
 
                 await _db.SaveChangesAsync();
+
+                // Real-time update for Organizer Dashboard
+                await _notificationService.NotifyJudgeStatusUpdateAsync(judge.EventId, judge.Id, "Verified", true, judge.IsAccessSent);
             }
 
             ViewBag.Verified = true;
@@ -855,13 +897,19 @@ namespace ProjectTallify.Controllers
             // Prerequisite check: All judges must have received access details
             if (ev.Judges != null && ev.Judges.Any())
             {
-                var unreadyJudges = ev.Judges.Where(j => !j.IsAccessSent).ToList();
+                var unreadyJudges = ev.Judges.Where(j => !j.IsAccessSent).Select(j => new {
+                    j.Name,
+                    Status = !j.IsInviteSent ? "Not Invited" : 
+                             (!j.IsEmailVerified ? "Email Not Verified" : "Access Not Sent")
+                }).ToList();
+
                 if (unreadyJudges.Any())
                 {
                     return BadRequest(new { 
                         success = false, 
-                        message = "Cannot start event. All judges must have received their access details first. " +
-                                  $"Pending judges: {string.Join(", ", unreadyJudges.Select(j => j.Name))}" 
+                        isReadyError = true,
+                        message = "Cannot start event. Some judges are not yet ready.",
+                        unreadyJudges = unreadyJudges
                     });
                 }
             }
@@ -1000,6 +1048,10 @@ namespace ProjectTallify.Controllers
             });
 
             await _db.SaveChangesAsync();
+
+            // REAL-TIME PULSE: Automatically transition judges from Standby to Scoring
+            await _notificationService.NotifyJudgePulseAsync(request.EventId);
+
             return Ok(new { success = true, message = $"Round '{round.Name}' started successfully." });
         }
 
@@ -1070,13 +1122,16 @@ namespace ProjectTallify.Controllers
 
             try
             {
-                // Generate invite link to the new AccessEvent page
-                var inviteLink = Url.Action("AccessJudgeEvent", "Events", new { judgeId = judge.Id, token = judge.VerificationToken ?? "valid" }, Request.Scheme);
+                // Generate invite link directly to the join screen on the login page
+                var inviteLink = Url.Action("Login", "Auth", new { mode = "join", code = judge.Event.AccessCode, pin = judge.Pin }, Request.Scheme);
                 
                 await _emailSender.SendJudgeInvitationAsync(judge, inviteLink!, judge.Event.Name, judge.Event.AccessCode);
                 
                 judge.IsAccessSent = true;
                 await _db.SaveChangesAsync();
+
+                // Real-time update for Organizer Dashboard
+                await _notificationService.NotifyJudgeStatusUpdateAsync(judge.EventId, judge.Id, "Ready", judge.IsEmailVerified, true);
 
                 return Ok(new { success = true, message = "Access details sent successfully." });
             }
@@ -1131,6 +1186,9 @@ namespace ProjectTallify.Controllers
                     await _emailSender.SendJudgeInvitationAsync(judge, inviteLink!, ev.Name, ev.AccessCode);
                     judge.IsAccessSent = true;
                     successCount++;
+
+                    // Real-time update for Organizer Dashboard
+                    await _notificationService.NotifyJudgeStatusUpdateAsync(ev.Id, judge.Id, "Ready", judge.IsEmailVerified, true);
                 }
                 catch
                 {
@@ -1175,6 +1233,9 @@ namespace ProjectTallify.Controllers
                 
                 judge.IsInviteSent = true;
                 await _db.SaveChangesAsync();
+
+                // Real-time update for Organizer Dashboard
+                await _notificationService.NotifyJudgeStatusUpdateAsync(judge.EventId, judge.Id, "Pending", judge.IsEmailVerified, judge.IsAccessSent);
 
                 return Ok(new { success = true, message = "Invitation sent successfully." });
             }

@@ -56,7 +56,7 @@
     }
 
     var statusText = string.IsNullOrWhiteSpace(Model.Status) ? "Preparing" : Model.Status;
-    var isCriteria = Model.ScoringLogic == "WeightedAverage";
+    var isCriteria = Model.ScoringLogic == "WeightedAverage" || Model.ScoringLogic == "PointBased";
     var isEnded = statusText.ToLower() == "closed";
 }
 
@@ -135,6 +135,15 @@
                 }
                 else if (statusText.ToLower() == "open")
                 {
+                    <a asp-controller="Events"
+                       asp-action="Edit"
+                       asp-route-id="@Model.Id"
+                       asp-route-returnUrl="@Context.Request.Path"
+                       class="btn-secondary"
+                       style="display: inline-flex; align-items: center; gap: 6px;"
+                       title="Limited Edit Mode: You can only edit names and details, but not scoring rules while the event is open.">
+                        <i class="ri-error-warning-line" style="color: #f59e0b;"></i> Edit event
+                    </a>
                     <button type="button" class="btn-danger" onclick="openConfirmModal('end')">
                         End Event
                     </button>
@@ -192,9 +201,9 @@
                     <p class="card-value">@Model.Venue</p>
                 </div>
                 <div class="card overview-item">
-                    <p class="card-label">Start</p>
+                    <p class="card-label">Schedule</p>
                     <p class="card-value">
-                        @Model.StartDateTime.ToString("MMM dd, yyyy h:mm tt")
+                        @Model.Schedule.ToString("MMM dd, yyyy h:mm tt")
                     </p>
                 </div>
 
@@ -636,7 +645,9 @@
                             foreach (var log in logs)
                             {
                                 <tr>
-                                    <td>@log.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td class="audit-time" data-utc="@log.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")Z">
+                                        @log.CreatedAt.ToString("MMM dd, yyyy h:mm tt")
+                                    </td>
                                     <td>@log.UserName</td>
                                     <td>@log.UserRole</td>
                                     <td>
@@ -758,11 +769,12 @@
                         <table class="app-table" style="margin-bottom: 0; border: none;">
                             <thead style="position: sticky; top: 0; z-index: 1; background-color: #F9FAFB;">
                                 <tr>
-                                    <th style="width: 50px; text-align: center; padding: 12px;">
+                                    <th style="width: 10%; text-align: center; padding: 12px;">
                                         <input type="checkbox" id="select-all-contestants-checkbox" />
                                     </th>
-                                    <th style="width: 60px; text-align: center;">Photo</th>
-                                    <th style="text-align: left;">Name / Org</th>
+                                    <th style="width: 10%; text-align: center;">Photo</th>
+                                    <th style="width: 40%; text-align: left;">Name</th>
+                                    <th style="width: 40%; text-align: left;">Organization</th>
                                     <th id="select-contestants-rank-th" style="width: 80px; text-align: center;">Rank</th>
                                 </tr>
                             </thead>
@@ -797,7 +809,7 @@
                 <!-- Step 2 Buttons -->
                 <div id="modal-footer-step-2" style="display:none; gap:12px; width:100%;">
                     <button type="button" id="btn-back-selection" class="btn-screen-cancel" style="flex:1;">Back</button>
-                    <button type="button" id="btn-confirm-start-round" class="btn-screen-confirm" style="flex:1; justify-content: center;">Confirm & Start Round</button>
+                    <button type="button" id="btn-confirm-start-round" class="btn-screen-primary" style="flex:1; justify-content: center;">Confirm & Start Round</button>
                 </div>
 
             </div>
@@ -854,10 +866,28 @@
                 <p id="access-code-modal-hint">Please enter the event's Access Code to confirm.</p>
                 <input type="text" id="accessCodeInput" class="event-input" placeholder="Access Code" />
                 <p id="accessCodeError" class="event-error-message" style="color:var(--color-danger-primary); margin-top: 5px;"></p>
+                
+                <p style="margin-top: 15px; text-align: center;">
+                    <a href="#" id="link-where-is-my-code" style="font-size: 13px; color: var(--color-primary); font-weight: 600; text-decoration: none;">
+                        Where is my Access Code?
+                    </a>
+                </p>
             </div>
             <div class="screen-actions" style="width: 100%;">
                 <button type="button" id="btn-cancel-access-code" class="btn-screen-cancel">Cancel</button>
                 <button type="button" id="btn-submit-access-code" class="btn-screen-primary" style="width: 100%; justify-content: center;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Access Code Help Modal (Organizer) -->
+    <div id="modal-access-code-help" class="summary-overlay">
+        <div class="summary-modal screen-modal" style="text-align: center; align-items: center; max-width: 400px;">
+            <div class="summary-modal-body screen-body" style="margin-top: 12px; font-size: 15px; color: var(--color-text);">
+                This event's Access Code is displayed in the Overview tab.
+            </div>
+            <div class="screen-actions" style="width: 100%;">
+                <button type="button" id="btn-go-to-overview" class="btn-screen-primary" style="width: 100%; justify-content: center;">Go to Overview Tab</button>
             </div>
         </div>
     </div>
@@ -873,7 +903,7 @@
             </div>
             <div class="screen-actions" style="width: 100%;">
                 <button type="button" id="btn-cancel-send" class="btn-screen-cancel">Cancel</button>
-                <button type="button" id="btn-confirm-send" class="btn-screen-confirm" style="width: 100%; justify-content: center;">Yes, Send</button>
+                <button type="button" id="btn-confirm-send" class="btn-screen-primary" style="width: 100%; justify-content: center;">Yes, Send</button>
             </div>
         </div>
     </div>
@@ -889,7 +919,7 @@
             </div>
             <div class="screen-actions" style="width: 100%;">
                 <button type="button" id="btn-cancel-send-single" class="btn-screen-cancel">Cancel</button>
-                <button type="button" id="btn-confirm-send-single" class="btn-screen-confirm" style="width: 100%; justify-content: center;">Yes, Send</button>
+                <button type="button" id="btn-confirm-send-single" class="btn-screen-primary" style="width: 100%; justify-content: center;">Yes, Send</button>
             </div>
         </div>
     </div>
@@ -939,6 +969,36 @@
             </div>
             <div class="event-photo-modal-body">
                 <img id="photoPreviewImage" alt="Contestant photo" src="" style="max-width: 100%; max-height: 80vh; display: block; margin: 0 auto;" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Not Ready Modal -->
+    <div id="modal-event-not-ready" class="summary-overlay" aria-hidden="true">
+        <div class="summary-modal screen-modal" style="max-width: 500px;">
+            <div class="summary-modal-header" style="border-bottom: 1px solid #fee2e2; padding-bottom: 15px;">
+                <h3 class="screen-title" style="color: #991b1b;">Event Not Ready</h3>
+                <button type="button" class="screen-close-btn btn-close-not-ready" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="summary-modal-body screen-body">
+                <p style="margin-bottom: 20px; color: #4b5563; text-align: center;">
+                    The event cannot be started yet. All judges must verify their email and obtain the access credentials.
+                </p>
+                <p style="margin-bottom: 12px; font-weight: 600; color: #374151; text-align: left;">
+                    Listed below are the judge(s) that need attention:
+                </p>
+                <div id="unready-judges-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 8px; padding: 10px; background: #f9fafb;">
+                    <!-- List of unready judges will be injected here -->
+                </div>
+            </div>
+            <div class="screen-actions">
+                <button type="button" class="btn-screen-primary btn-go-to-access" style="width: 100%; justify-content: center;">Go to Access Tab</button>
             </div>
         </div>
     </div>
@@ -1115,7 +1175,7 @@
                 const rankTh = document.getElementById('select-contestants-rank-th');
                 const isFirstRound = roundOrder === 1;
                 const canUseRank = !isFirstRound; // Can use rank means it's NOT the first round
-                const colCount = isFirstRound ? 3 : 4; // Checkbox, Photo, Name/Org, (Rank)
+                const colCount = isFirstRound ? 4 : 5; // Checkbox, Photo, Name, Organization, (Rank)
 
                 selectContestantsTableBody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center; padding: 20px;">Loading...</td></tr>`; 
                 
@@ -1157,6 +1217,8 @@
                             <td style="text-align: center; vertical-align: middle;">${photoHtml}</td>
                             <td style="vertical-align: middle;">
                                 <div style="font-weight: 600; color: var(--color-text); font-size: 14px;">${c.name}</div>
+                            </td>
+                            <td style="vertical-align: middle;">
                                 <div style="font-size: 12px; color: var(--color-text-soft);">${c.organization}</div>
                             </td>
                             ${canUseRank ? `<td style="text-align: center; vertical-align: middle; font-weight: 500; color: var(--color-text-soft);">${rankDisplay}</td>` : ''}
@@ -1342,12 +1404,29 @@
             // Exposed function for Start/End Event buttons
             window.openConfirmModal = function(action) {
                 currentAction = action;
+                const btnProceed = document.getElementById('btn-proceed-confirm');
+                
                 if (action === 'start') {
                     if(confirmModalTitle) confirmModalTitle.textContent = 'Ready to Start Event?';
                     if(confirmModalMessage) confirmModalMessage.innerHTML = 'You are about to <strong>officially start</strong> this event. This action will activate all associated rounds and judging/scoring interfaces. Event details cannot be modified after starting. Ensure all configurations are final.';
+                    
+                    // Positive action -> Theme Color
+                    if (btnProceed) {
+                        btnProceed.className = 'btn-screen-primary';
+                        btnProceed.style.width = '100%';
+                        btnProceed.style.justifyContent = 'center';
+                        btnProceed.style.background = ''; // Clear hardcoded if any
+                    }
                 } else if (action === 'end') {
                     if(confirmModalTitle) confirmModalTitle.textContent = 'Confirm Event End';
                     if(confirmModalMessage) confirmModalMessage.innerHTML = 'Are you sure you want to <strong>end</strong> this event?<br>This action cannot be undone.';
+                    
+                    // Destructive action -> Red
+                    if (btnProceed) {
+                        btnProceed.className = 'btn-screen-confirm';
+                        btnProceed.style.width = '100%';
+                        btnProceed.style.justifyContent = 'center';
+                    }
                 }
                 if(confirmActionModal) confirmActionModal.classList.add('open');
             };
@@ -1374,6 +1453,29 @@
 
             if (btnCancelConfirm) btnCancelConfirm.addEventListener('click', hideConfirmModal);
             if (btnProceedConfirm) btnProceedConfirm.addEventListener('click', function() {
+                if (currentAction === 'start') {
+                    // 1. Perform Readiness Check (Client-side pre-validation)
+                    const unreadyJudges = [];
+                    const rows = document.querySelectorAll('#manageAccessBody tr:not(.table-empty-row)');
+                    
+                    rows.forEach(r => {
+                        // Status is in Cell index 4
+                        const statusText = r.cells[4].textContent.trim();
+                        if (statusText !== "Ready") {
+                            unreadyJudges.push({
+                                name: r.cells[1].textContent.trim(),
+                                status: statusText
+                            });
+                        }
+                    });
+
+                    if (unreadyJudges.length > 0) {
+                        hideConfirmModal();
+                        showEventNotReadyModal(unreadyJudges);
+                        return; // Block access code modal
+                    }
+                }
+
                 hideConfirmModal();
                 openAccessCodeModal();
             });
@@ -1487,6 +1589,12 @@
                         setTimeout(() => {
                             window.location.reload(); 
                         }, 1500);
+                    } else if (data.isReadyError) {
+                        // Special Handling for Judge Readiness
+                        if (startBtn && currentAction === 'start') startBtn.disabled = false;
+                        if (endBtn && currentAction === 'end') endBtn.disabled = false;
+                        
+                        showEventNotReadyModal(data.unreadyJudges);
                     } else {
                         showSuccessModal(data.message || `Failed to ${currentAction} event.`);
                         if (startBtn && currentAction === 'start') startBtn.disabled = false;
@@ -1536,6 +1644,86 @@
                 });
             });
 
+            // --- SignalR Integration ---
+            if (window.signalrConnection) {
+                window.signalrConnection.on("ReceiveJudgeStatusUpdate", function(judgeId, status, isVerified, isAccessSent) {
+                    console.log(`Real-time update for judge ${judgeId}: ${status}`);
+                    updateJudgeRowUI(judgeId, status, isVerified, isAccessSent);
+                });
+            }
+
+            function updateJudgeRowUI(judgeId, status, isVerified, isAccessSent) {
+                const row = document.querySelector(`button[data-judge-id="${judgeId}"]`)?.closest('tr') || 
+                            document.querySelector(`.send-access-btn[data-judge-id="${judgeId}"]`)?.closest('tr');
+                if (!row) return;
+
+                // 1. Update Status Pill (Cell index 4)
+                const statusTd = row.cells[4];
+                if (statusTd) {
+                    let pillHtml = '';
+                    if (isAccessSent) {
+                        pillHtml = '<span class="status-pill" style="background:#dcfce7; color:#166534; font-size:11px; font-weight:600;">Ready</span>';
+                    } else if (isVerified) {
+                        pillHtml = '<span class="status-pill" style="background:#dcfce7; color:#166534; font-size:11px; font-weight:600;">Verified</span>';
+                    } else if (status === "Pending") {
+                        pillHtml = '<span class="status-pill" style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:600;">Pending</span>';
+                    } else {
+                        pillHtml = '<span class="status-pill" style="background:#f3f4f6; color:#4b5563; font-size:11px; font-weight:600;">Not Invited</span>';
+                    }
+                    statusTd.innerHTML = pillHtml;
+                }
+
+                // 2. Update Action Button (Cell index 5)
+                const actionTd = row.cells[5];
+                if (actionTd) {
+                    if (!isVerified) {
+                        actionTd.innerHTML = `
+                            <button type="button"
+                                    class="btn-secondary btn-send-invite"
+                                    data-judge-id="${judgeId}"
+                                    data-judge-name="${row.cells[1].textContent.trim()}"
+                                    data-judge-email="${row.cells[2].textContent.trim()}">
+                                Send Invitation
+                            </button>`;
+                        // Re-attach listener
+                        attachInviteListener(actionTd.querySelector('.btn-send-invite'));
+                    } else {
+                        const btnText = isAccessSent ? "Access Sent" : "Send Access";
+                        const disabledAttr = isAccessSent ? "disabled" : "";
+                        actionTd.innerHTML = `
+                            <button type="button"
+                                    class="btn-secondary send-access-btn"
+                                    data-judge-id="${judgeId}"
+                                    ${disabledAttr}>
+                                ${btnText}
+                            </button>`;
+                        // Re-attach listener
+                        attachAccessListener(actionTd.querySelector('.send-access-btn'));
+                    }
+                }
+
+                // 3. Update "Send Access to All" button state
+                updateSendAllButtonState();
+            }
+
+            function updateSendAllButtonState() {
+                const sendAllBtn = document.querySelector('.send-all-access-btn');
+                if (!sendAllBtn) return;
+
+                const allRows = document.querySelectorAll('#manageAccessBody tr:not(.table-empty-row)');
+                let allVerified = true;
+                if (allRows.length === 0) allVerified = false;
+
+                allRows.forEach(r => {
+                    const statusText = r.cells[4].textContent.trim();
+                    if (statusText !== "Verified" && statusText !== "Ready") {
+                        allVerified = false;
+                    }
+                });
+
+                sendAllBtn.disabled = !allVerified;
+            }
+
             // --- 6. Send Access & Invitation Logic ---
             const confirmSendOverlay = document.getElementById('confirm-send-overlay');
             const btnCancelSend = document.getElementById('btn-cancel-send');
@@ -1575,9 +1763,9 @@
                         });
                         const data = await response.json();
                         showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
-                        if (data.success) {
-                            setTimeout(() => window.location.reload(), 1500);
-                        }
+                        // REFRESH: Instead of full reload, we could trigger individual row updates, 
+                        // but since the controller now sends SignalR updates inside the loop, 
+                        // the UI will update automatically per row! No action needed here.
                     } catch (err) {
                         console.error(err);
                         showSuccessModal("An error occurred while sending emails.");
@@ -1588,25 +1776,25 @@
                 });
             }
             
-            // Send Single (Access)
+            // Send Single (Access) extracted to function
+            function attachAccessListener(btn) {
+                if (!btn) return;
+                btn.addEventListener('click', function() {
+                    pendingJudgeId = this.getAttribute('data-judge-id');
+                    pendingJudgeBtn = this;
+                    if (pendingJudgeId && confirmSendSingleOverlay) {
+                        confirmSendSingleOverlay.classList.add('open');
+                    }
+                });
+            }
+
             const confirmSendSingleOverlay = document.getElementById('confirm-send-single-overlay');
             const btnCancelSendSingle = document.getElementById('btn-cancel-send-single');
             const btnConfirmSendSingle = document.getElementById('btn-confirm-send-single');
             let pendingJudgeId = null;
             let pendingJudgeBtn = null;
 
-            const sendSingleBtns = document.querySelectorAll('.send-access-btn');
-            sendSingleBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // REMOVED eventStatus !== 'open' check
-                    pendingJudgeId = this.getAttribute('data-judge-id');
-                    pendingJudgeBtn = this;
-                    
-                    if (pendingJudgeId && confirmSendSingleOverlay) {
-                        confirmSendSingleOverlay.classList.add('open');
-                    }
-                });
-            });
+            document.querySelectorAll('.send-access-btn').forEach(btn => attachAccessListener(btn));
 
             if (btnCancelSendSingle) {
                 btnCancelSendSingle.addEventListener('click', function() {
@@ -1624,7 +1812,6 @@
                     const btn = pendingJudgeBtn;
                     const judgeId = pendingJudgeId;
                     
-                    // Reset pending vars
                     pendingJudgeId = null;
                     pendingJudgeBtn = null;
 
@@ -1643,8 +1830,9 @@
                         });
                         const data = await response.json();
                         showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
+                        // Manual UI Update instead of reload
                         if (data.success) {
-                            setTimeout(() => window.location.reload(), 1500);
+                            updateJudgeRowUI(judgeId, "Ready", true, true);
                         }
                     } catch (err) {
                         console.error(err);
@@ -1658,12 +1846,11 @@
                 });
             }
 
-            // Send Invitation (Initial Invite)
-            const sendInviteBtns = document.querySelectorAll('.btn-send-invite');
-            sendInviteBtns.forEach(btn => {
+            // Send Invitation logic extracted
+            function attachInviteListener(btn) {
+                if (!btn) return;
                 btn.addEventListener('click', async function() {
                     const judgeId = this.getAttribute('data-judge-id');
-                    
                     if (!judgeId) {
                         showSuccessModal("Could not identify judge ID.");
                         return;
@@ -1682,8 +1869,9 @@
                         });
                         const data = await response.json();
                         showSuccessModal(data.message || "Invitation sent.");
+                        // Manual UI Update instead of reload
                         if (data.success) {
-                            setTimeout(() => window.location.reload(), 1500);
+                            updateJudgeRowUI(judgeId, "Pending", false, false);
                         }
                     } catch (err) {
                         console.error(err);
@@ -1693,7 +1881,9 @@
                         this.disabled = false;
                     }
                 });
-            });
+            }
+
+            document.querySelectorAll('.btn-send-invite').forEach(btn => attachInviteListener(btn));
 
             // --- 7. Generate Report Logic ---
             const btnGenerateReport = document.getElementById('btnGenerateReport');
@@ -1845,6 +2035,94 @@
                     alert(msg);
                 }
             }
+
+            function showEventNotReadyModal(unreadyJudges) {
+                const modal = document.getElementById('modal-event-not-ready');
+                const listContainer = document.getElementById('unready-judges-list');
+                
+                if (!modal || !listContainer) return;
+
+                let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
+                unreadyJudges.forEach(j => {
+                    html += `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #edf2f7;">
+                            <span style="font-weight: 600; color: #1a202c;">${j.name}</span>
+                            <span class="status-pill" style="background:#fff5f5; color:#c53030; font-size:11px; font-weight:700; border: 1px solid #feb2b2;">${j.status}</span>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+                
+                listContainer.innerHTML = html;
+                modal.classList.add('open');
+                document.body.classList.add('has-modal-open');
+            }
+
+            // Close listeners for Event Not Ready Modal
+            document.querySelectorAll('.btn-close-not-ready').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('modal-event-not-ready').classList.remove('open');
+                    document.body.classList.remove('has-modal-open');
+                });
+            });
+
+            // "Go to Access Tab" logic
+            const btnGoToAccess = document.querySelector('.btn-go-to-access');
+            if (btnGoToAccess) {
+                btnGoToAccess.addEventListener('click', function() {
+                    // Close modal
+                    document.getElementById('modal-event-not-ready').classList.remove('open');
+                    document.body.classList.remove('has-modal-open');
+                    
+                    // Switch to Access tab
+                    const accessTabLink = document.querySelector('.tab-link[data-tab="access"]');
+                    if (accessTabLink) accessTabLink.click();
+                });
+            }
+
+            // --- Access Code Help Logic (Organizer) ---
+            const linkWhereIsCode = document.getElementById('link-where-is-my-code');
+            const modalAccessCodeHelp = document.getElementById('modal-access-code-help');
+            const btnCloseCodeHelp = document.getElementById('btn-close-code-help');
+            const btnGoToOverview = document.getElementById('btn-go-to-overview');
+
+            if (linkWhereIsCode) {
+                linkWhereIsCode.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (modalAccessCodeHelp) modalAccessCodeHelp.classList.add('open');
+                });
+            }
+
+            if (btnGoToOverview) {
+                btnGoToOverview.addEventListener('click', function() {
+                    // 1. Close Help Modal
+                    if (modalAccessCodeHelp) modalAccessCodeHelp.classList.remove('open');
+                    // 2. Close Parent Access Code Modal if open
+                    if (accessCodeModal) accessCodeModal.classList.remove('open');
+                    // 3. Switch to Overview tab
+                    const overviewTabLink = document.querySelector('.tab-link[data-tab="overview"]');
+                    if (overviewTabLink) overviewTabLink.click();
+                });
+            }
+
+            // Local Time Conversion for Audit Logs
+            function formatAuditTimes() {
+                document.querySelectorAll('.audit-time').forEach(function(el) {
+                    const utc = el.getAttribute('data-utc');
+                    if (utc) {
+                        const date = new Date(utc);
+                        el.textContent = date.toLocaleString('en-US', {
+                            month: 'short',
+                            day: '2-digit',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                    }
+                });
+            }
+            formatAuditTimes();
             if (btnCloseSuccess) btnCloseSuccess.addEventListener('click', () => successModalOverlay.classList.remove('open'));
             if (btnOkSuccess) btnOkSuccess.addEventListener('click', () => successModalOverlay.classList.remove('open'));
 

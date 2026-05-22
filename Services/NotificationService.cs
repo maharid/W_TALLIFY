@@ -11,6 +11,8 @@ namespace ProjectTallify.Services
     {
         Task NotifyOrganizerAsync(int organizerId, string title, string message, string type = "info", string? actionUrl = null);
         Task NotifyEventAsync(int eventId, string title, string message, string type = "info", string? actionUrl = null);
+        Task NotifyJudgeStatusUpdateAsync(int eventId, int judgeId, string status, bool isVerified, bool isAccessSent);
+        Task NotifyJudgePulseAsync(int eventId);
     }
 
     public class NotificationService : INotificationService
@@ -62,6 +64,20 @@ namespace ProjectTallify.Services
             // These connections are added to the Event_{id} group in NotificationHub.OnConnectedAsync
             await _hubContext.Clients.Group($"Event_{eventId}")
                 .SendAsync("ReceiveNotification", title, message, type, actionUrl);
+        }
+
+        public async Task NotifyJudgeStatusUpdateAsync(int eventId, int judgeId, string status, bool isVerified, bool isAccessSent)
+        {
+            // Broadcast specialized message to the event group (Dashboard)
+            await _hubContext.Clients.Group($"Event_{eventId}")
+                .SendAsync("ReceiveJudgeStatusUpdate", judgeId, status, isVerified, isAccessSent);
+        }
+
+        public async Task NotifyJudgePulseAsync(int eventId)
+        {
+            // Broadcast pulse to all judges in this event
+            await _hubContext.Clients.Group($"Event_{eventId}")
+                .SendAsync("ReceiveJudgePulse");
         }
     }
 }

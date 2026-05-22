@@ -229,7 +229,7 @@ namespace ProjectTallify.Services
             {
                 col.Item().Text(ev.Name).FontSize(20).Bold().AlignCenter();
                 if (!string.IsNullOrWhiteSpace(ev.Venue)) col.Item().Text(ev.Venue).FontSize(10).AlignCenter();
-                col.Item().Text(ev.StartDateTime.ToString("MMMM dd, yyyy h:mm tt")).FontSize(10).AlignCenter();
+                col.Item().Text(ev.Schedule.ToString("MMMM dd, yyyy h:mm tt")).FontSize(10).AlignCenter();
                 if (!string.IsNullOrWhiteSpace(ev.Description)) col.Item().Text(ev.Description).FontSize(9).Italic().AlignCenter();
                 
                 col.Item().PaddingTop(10).Text(reportTitle).FontSize(16).Bold().Underline().AlignCenter();

@@ -89,7 +89,7 @@
               type="button"
               class="auth-button auth-button-secondary"
               id="goToJoinFromLogin">
-              Enter room with code
+              Enter judging room
             </button>
           </div>
       </form>
@@ -106,7 +106,7 @@
     <section class="auth-screen @(authMode == "join" ? "is-active" : "")"
              id="screen-join"
              aria-label="Join event with code screen">
-      <h1 class="auth-title">Join Event with Code</h1>
+      <h1 class="auth-title">Enter judging room</h1>
       <p class="auth-subtitle">
         Welcome! Please use the unique code and pin sent to you by the event organizer.
       </p>
@@ -154,23 +154,9 @@
           </div>
         </div>
 
-        <div class="auth-actions">
+        <div class="auth-actions-single">
           <button type="submit" class="auth-button auth-button-primary">
-            Join Event
-          </button>
-
-          <div class="auth-divider">
-            <span class="auth-divider-line"></span>
-            <span class="auth-divider-text">or</span>
-            <span class="auth-divider-line"></span>
-          </div>
-
-          <button
-            type="button"
-            class="auth-button auth-button-secondary"
-            id="goToLoginFromJoin"
-          >
-            Login
+            Enter judging room
           </button>
         </div>
       </form>
@@ -370,7 +356,7 @@
   <div class="auth-modal-inner">
     <p class="auth-modal-text">
       Your event code and personal pin are provided by your event organizer.
-      Please check your invitation email or contact your organizer directly.
+      Please check your email or contact your organizer directly.
     </p>
     <button
       type="button"
