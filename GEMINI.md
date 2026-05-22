@@ -1,83 +1,95 @@
 # ProjectTallify
 
-ProjectTallify is a comprehensive event management and scoring system designed for organized competitions, such as pageants or talent shows. It facilitates event coordination, judge participation, real-time scoring, and automated reporting.
+ProjectTallify is a sophisticated event management and scoring system designed for organized competitions, such as pageants, talent shows, and corporate events. It streamlines the entire lifecycle of an event—from registration and judging to real-time tallying and automated PDF reporting.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- .NET 8.0 SDK
-- MySQL Server (or Docker)
-- SMTP Server (for email features, e.g., Gmail)
+- **.NET 8.0 SDK**
+- **MySQL Server** (or a compatible instance like MariaDB/Docker)
+- **SMTP Server** for email features (e.g., Gmail App Passwords, Mailtrap)
+- **Katalon Studio** (Optional, for automated testing)
 
 ### Building and Running
-1.  **Database Setup:**
-    - Ensure a MySQL instance is running.
-    - Update the connection string in `appsettings.json` or via environment variables.
-    - Apply migrations:
-      ```bash
-      dotnet ef database update
-      ```
-2.  **Run the Application:**
-    ```bash
+1.  **Database Configuration:**
+    - Update `ConnectionStrings:TallifyDb` in `appsettings.json` with your MySQL credentials.
+    - Ensure `SslMode=none;AllowPublicKeyRetrieval=True;` is set if using local development MySQL.
+2.  **Apply Migrations:**
+    ```powershell
+    dotnet ef database update
+    ```
+3.  **Run the Application:**
+    ```powershell
     dotnet run
     ```
-    The application will be available at `http://localhost:5022` (or the port configured in `Properties/launchSettings.json`).
+    The application typically listens on `http://localhost:5022`.
 
-3.  **Docker (Optional):**
+4.  **Docker (Optional):**
     ```bash
     docker-compose up --build
     ```
+    This will spin up both the application and a MySQL database container.
 
 ### Configuration
-Environment variables can be managed via `appsettings.json`, `.env.example` (if using a loader), or system environment variables. Key sections include:
-- `ConnectionStrings:TallifyDb`: MySQL connection string.
-- `EmailSettings`: SMTP configuration for system emails.
+Key settings are managed in `appsettings.json`:
+- `EmailSettings`: SMTP host, port, credentials, and sender info.
+- `ConnectionStrings`: Database connection details.
 
 ## 🏗️ Architecture & Technology Stack
 
--   **Backend:** ASP.NET Core 8.0 MVC
--   **Database:** MySQL with Entity Framework Core (Pomelo provider)
--   **Real-time:** SignalR for live notifications and scoring updates
--   **Reporting:** QuestPDF for generating PDF result summaries
--   **Authentication:** Cookie-based authentication for Organizers; PIN-based access for Judges
--   **Security:** SHA256 hashing for passwords/tokens (using `BCrypt.Net-Next` as per project file, though `AuthController` uses a custom SHA256 helper)
--   **Frontend:** Razor Views, Vanilla JavaScript, CSS, Bootstrap, and jQuery
+-   **Backend:** ASP.NET Core 8.0 MVC (C#)
+-   **Database:** MySQL with Entity Framework Core (using `Pomelo.EntityFrameworkCore.MySql`)
+-   **Real-time:** SignalR for live scoring updates and notifications.
+-   **Reporting:** QuestPDF for high-quality, code-defined PDF generation.
+-   **Authentication:** 
+    -   **Organizers:** Cookie-based authentication with session management.
+    -   **Judges:** Secure PIN/Token-based access via unique invitation links.
+-   **Security:** SHA256 hashing for sensitive tokens; `BCrypt.Net-Next` for password hashing.
+-   **Frontend:** Razor Views, Vanilla JavaScript, jQuery, and custom CSS (Vanilla CSS + Bootstrap).
 
 ## 📂 Project Structure
 
--   `Controllers/`: Handles incoming requests (Auth, Events, Judge, etc.)
--   `Models/`: Contains data entities (`Event.cs`, `Contestant.cs`, `Judge.cs`, `Score.cs`) and DTOs
+-   `Controllers/`: Request handlers (e.g., `EventsController` for management, `AuthController` for login).
+-   `Models/`: 
+    -   `Data/`: `TallifyDbContext.cs` (EF Core context).
+    -   Entities: `Event.cs`, `Contestant.cs`, `Judge.cs`, `Score.cs`, `Round.cs`, `Criteria.cs`.
+    -   `DTOs`: Data transfer objects for API requests and view models.
 -   `Services/`: Business logic implementations:
-    -   `ScoringService.cs`: Logic for tallying and ranking
-    -   `ReportService.cs`: PDF generation logic
-    -   `NotificationService.cs`: SignalR wrapper for notifications
--   `Views/`: Razor templates for the UI
--   `wwwroot/`: Static assets (CSS, JS, images, uploads)
--   `TALLIFY/`: Automation testing project (Katalon Studio/Gradle)
--   `Hubs/`: SignalR Hub definitions (`NotificationHub.cs`)
--   `Migrations/`: EF Core database migration history
+    -   `ScoringService.cs`: Core logic for `WeightedAverage` and `PointBased` scoring.
+    -   `ReportService.cs`: Logic for generating PDF summaries and score sheets.
+    -   `NotificationService.cs`: SignalR wrapper for pushing real-time alerts.
+    -   `SmtpEmailSender.cs`: Handles system emails (invites, password resets).
+-   `Views/`: Razor templates, organized by controller.
+-   `wwwroot/`: Static assets (JS, CSS, images, uploads).
+-   `Hubs/`: SignalR Hub definitions (`NotificationHub.cs`).
+-   `TALLIFY/`: Katalon Studio project for automated E2E testing.
+-   `Migrations/`: EF Core database schema history.
 
 ## 🛠️ Development Conventions
 
 ### Coding Style
--   Follow standard C# and .NET naming conventions (PascalCase for classes/methods).
--   Use Dependency Injection (DI) for services in controllers.
--   Asynchronous programming (`async`/`await`) is preferred for I/O operations (database, email).
+-   **C#:** PascalCase for classes, methods, and public properties; camelCase for private fields (with `_` prefix).
+-   **Asynchronous:** Always use `async`/`await` for I/O-bound operations (DB, Email, Files).
+-   **Dependency Injection:** All services and the DbContext must be injected via constructors.
+-   **Error Handling:** Use custom middleware for global exception handling (`Home/Error`).
+
+### Scoring Systems
+1.  **Weighted Average (WA):** Scores are averaged across judges and then weighted based on criteria percentages.
+2.  **Point-Based (PB):** Simple summation of judge points or Rank Aggregation (where lower rank sum wins).
+3.  **Derived Criteria:** Supports carrying over scores from previous rounds (e.g., "Preliminary Score" in a "Top 5" round).
 
 ### Database Management
--   All schema changes must be done via EF Core Migrations.
--   Avoid raw SQL queries unless absolutely necessary for performance.
-
-### Testing
--   **Manual Testing:** Most features involve complex multi-user flows (Organizer vs. Judge).
--   **Automation:** The `TALLIFY` directory contains Gradle-based automation tests using the Katalon plugin.
+-   **Migrations Only:** Never modify the database schema manually. Always use `dotnet ef migrations add <Name>`.
+-   **Auditing:** Critical actions (event start/end, judge verification) must be logged to the `AuditLogs` table.
 
 ## 📝 Key Commands
 -   **Add Migration:** `dotnet ef migrations add <MigrationName>`
 -   **Update Database:** `dotnet ef database update`
--   **Build:** `dotnet build`
--   **Clean:** `dotnet clean`
+-   **Remove Last Migration:** `dotnet ef migrations remove`
+-   **Run Tests:** `cd TALLIFY && ./gradlew katalonTest` (Requires Gradle and Katalon setup)
 
-## 💡 Important Notes
--   **Email:** Password resets and signup verifications require a valid SMTP configuration in `appsettings.json`.
--   **Environment:** Ensure `ASPNETCORE_ENVIRONMENT` is set to `Development` during local work to see detailed error pages.
+## 💡 System Logic Notes
+-   **Judge Invitations:** Judges must verify their email via a unique token before they can access the scoring portal.
+-   **Round Management:** Only one round is typically "Active" at a time to prevent scoring confusion.
+-   **Live Tally:** The Organizer's dashboard polls/listens for SignalR updates to show real-time rankings as judges submit scores.
+-   **File Storage:** Uploaded photos (contestants/organizers) are stored in `wwwroot/uploads/` and cleaned up if orphaned for >30 days.

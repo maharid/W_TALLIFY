@@ -172,8 +172,11 @@ namespace ProjectTallify.Controllers
                     {
                         Id = j.Id.ToString(),
                         Name = j.Name,
-                        Assigned = j.Email, // Email for judges
-                        Pin = j.Pin
+                        Assigned = j.Email,
+                        Pin = j.Pin,
+                        IsVerified = j.IsEmailVerified,
+                        IsInviteSent = j.IsInviteSent,
+                        IsAccessSent = j.IsAccessSent
                     })
                     .ToListAsync();
                 accessAccounts.AddRange(judges);
@@ -271,6 +274,9 @@ namespace ProjectTallify.Controllers
                 return BadRequest(new { success = false, message = result.Message });
             }
 
+            // Send invitations automatically upon publishing
+            await SendJudgeVerificationsInternal(result.Event!);
+
             return Ok(new
             {
                 success = true,
@@ -279,47 +285,7 @@ namespace ProjectTallify.Controllers
                 redirectUrl = Url.Action("Manage", "Events", new { id = result.Event.Id })
             });
         }
-        
-        // ... [OMITTED FOR BREVITY, REST OF CODE REMAINS THE SAME AS ORIGINAL READ] ...
-        // Note: I will only replace the necessary parts or just overwrite the file if I have the full content.
-        // Since I have the full content from read_file, I will write the full content back with added comments.
-        // Wait, I need to make sure I include ALL code. The previous response truncated the end of `EventsController.cs`.
-        // I need to be careful. The `read_file` output for EventsController seemed to end at `GetReportPreview`.
-        // I must ensure I don't lose the end of the file.
-        // Re-reading the `read_file` output... it ended with `_ReportPreview`.
-        // Let me double check if `read_file` was truncated.
-        // Yes, the output might have been truncated. 
-        // Strategy: I will rely on the `read_file` content I got. 
-        // Wait, looking at the previous turn, `EventsController.cs` ended with `return PartialView("_ReportPreview", viewModel);` inside `GetReportPreview`.
-        // It seems `GetReportPreview` was the last method shown.
-        // But the class closing brace `}` might be missing or there might be more methods.
-        // I should probably read the file again to be sure, or better, I will apply comments to the methods I see in the content I have, and assume the rest is standard.
-        // Actually, if I write back only what I have, I might delete code if it was truncated.
-        // Limit for `read_file` is usually large but if the file is huge it might cut off.
-        // The file `EventsController.cs` seems to have around 700 lines.
-        // I will assume the `read_file` gave me everything because `EventsController` typically ends there.
-        // Wait, `GetReportPreview` ends with `}` then `}` then `}`. It looks like the end of namespace.
-        // Let's assume it's complete.
 
-        // Moving to `JudgeController.cs` and `ScorerController.cs`.
-
-        // Writing EventsController with comments.
-        // I'll reuse the logic from `SaveEventCoreAsync` etc down to the end.
-
-        // For safety, I will use the code I have and if I suspect truncation I would check.
-        // The code ends with:
-        // }
-        // }
-        // }
-        // This matches end of method, class, namespace.
-
-        // I will proceed with writing `EventsController.cs`.
-        
-        // Wait, the `GetReportPreview` in the previous `read_file` output seems to correspond to the bottom of the file.
-        // I will rewrite `EventsController.cs` adding comments.
-        
-        // ... (Writing full content) ...
-        
         [HttpPost]
         public async Task<IActionResult> SendJudgeVerification([FromBody] CreateEventRequest request)
         {
@@ -358,7 +324,7 @@ namespace ProjectTallify.Controllers
                 
                 try 
                 {
-                    await _emailSender.SendJudgeVerificationLinkAsync(judge, verifyLink!, ev.Name);
+                    await _emailSender.SendJudgeVerificationLinkAsync(judge, verifyLink!, ev);
                     sentCount++;
                     judge.IsInviteSent = true; 
                 }
@@ -812,7 +778,9 @@ namespace ProjectTallify.Controllers
                         Name = j.Name,
                         Assigned = j.Email,
                         Pin = j.Pin,
-                        IsVerified = j.IsEmailVerified
+                        IsVerified = j.IsEmailVerified,
+                        IsInviteSent = j.IsInviteSent,
+                        IsAccessSent = j.IsAccessSent
                     })
                     .ToListAsync();
                 accessAccounts.AddRange(judges);
@@ -876,12 +844,26 @@ namespace ProjectTallify.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Start(int id, [FromBody] EventActionRequest request)
         {
-            var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
+            var ev = await _db.Events.Include(e => e.Judges).FirstOrDefaultAsync(e => e.Id == id);
             if (ev == null) return NotFound();
 
             if (ev.AccessCode != request?.AccessCode)
             {
                 return BadRequest(new { success = false, message = "Incorrect Access Code." });
+            }
+
+            // Prerequisite check: All judges must have received access details
+            if (ev.Judges != null && ev.Judges.Any())
+            {
+                var unreadyJudges = ev.Judges.Where(j => !j.IsAccessSent).ToList();
+                if (unreadyJudges.Any())
+                {
+                    return BadRequest(new { 
+                        success = false, 
+                        message = "Cannot start event. All judges must have received their access details first. " +
+                                  $"Pending judges: {string.Join(", ", unreadyJudges.Select(j => j.Name))}" 
+                    });
+                }
             }
 
             ev.Status = "open";   
@@ -1069,14 +1051,21 @@ namespace ProjectTallify.Controllers
             var judge = await _db.Judges.Include(j => j.Event).FirstOrDefaultAsync(j => j.Id == judgeId);
             if (judge == null) return NotFound(new { success = false, message = "Judge not found." });
 
-            if (judge.Event.Status?.ToLower() != "open")
+            // Allow sending before start (preparing) or during event (open)
+            if (judge.Event.Status?.ToLower() == "closed")
             {
-                return BadRequest(new { success = false, message = "You cannot send access codes yet. Please start the event first." });
+                return BadRequest(new { success = false, message = "Event is already ended." });
             }
 
             if (!judge.IsEmailVerified)
             {
                 return BadRequest(new { success = false, message = "Judge email not verified yet." });
+            }
+
+            // Limitation: Prevent numerous sending
+            if (judge.IsAccessSent)
+            {
+                return BadRequest(new { success = false, message = "Access details have already been sent to this judge." });
             }
 
             try
@@ -1086,12 +1075,10 @@ namespace ProjectTallify.Controllers
                 
                 await _emailSender.SendJudgeInvitationAsync(judge, inviteLink!, judge.Event.Name, judge.Event.AccessCode);
                 
-                // Update status if needed
-                judge.IsInviteSent = true; 
                 judge.IsAccessSent = true;
                 await _db.SaveChangesAsync();
 
-                return Ok(new { success = true, message = "Access code sent." });
+                return Ok(new { success = true, message = "Access details sent successfully." });
             }
             catch (Exception ex)
             {
@@ -1107,35 +1094,30 @@ namespace ProjectTallify.Controllers
         {
             if (eventId <= 0) return BadRequest(new { success = false, message = "Invalid Event ID." });
 
-            var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+            var ev = await _db.Events.Include(e => e.Judges).FirstOrDefaultAsync(e => e.Id == eventId);
             if (ev == null) return NotFound(new { success = false, message = "Event not found." });
 
-            if (ev.Status?.ToLower() != "open")
+            if (ev.Status?.ToLower() == "closed")
             {
-                return BadRequest(new { success = false, message = "You cannot send access codes yet. Please start the event first." });
+                return BadRequest(new { success = false, message = "Event is already ended." });
             }
 
-            var allJudges = await _db.Judges.Where(j => j.EventId == eventId).ToListAsync();
-            
-            if (!allJudges.Any())
+            if (ev.Judges == null || !ev.Judges.Any())
             {
-                return Ok(new { success = false, message = $"No judges found for this event (ID: {eventId})." });
+                return Ok(new { success = false, message = "No judges found for this event." });
             }
 
-            var verifiedJudges = allJudges.Where(j => j.IsEmailVerified).ToList();
-
-            if (!verifiedJudges.Any())
+            // Prerequisite: All judges must be verified
+            if (ev.Judges.Any(j => !j.IsEmailVerified))
             {
-                return Ok(new { success = false, message = $"Found {allJudges.Count} judge(s), but none are verified yet." });
+                return BadRequest(new { success = false, message = "All judges must verify their email before you can send access codes to all." });
             }
 
-            var judgesToSend = await _db.Judges.Include(j => j.Event)
-                .Where(j => j.EventId == eventId && j.IsEmailVerified && !j.IsAccessSent)
-                .ToListAsync();
+            var judgesToSend = ev.Judges.Where(j => !j.IsAccessSent).ToList();
 
             if (!judgesToSend.Any())
             {
-                return Ok(new { success = true, message = "All verified judges have already received the access code." });
+                return Ok(new { success = true, message = "All verified judges have already received the access details." });
             }
 
             int successCount = 0;
@@ -1146,8 +1128,7 @@ namespace ProjectTallify.Controllers
                 try
                 {
                     var inviteLink = Url.Action("AccessJudgeEvent", "Events", new { judgeId = judge.Id, token = judge.VerificationToken ?? "valid" }, Request.Scheme);
-                    await _emailSender.SendJudgeInvitationAsync(judge, inviteLink!, judge.Event.Name, judge.Event.AccessCode);
-                    judge.IsInviteSent = true;
+                    await _emailSender.SendJudgeInvitationAsync(judge, inviteLink!, ev.Name, ev.AccessCode);
                     judge.IsAccessSent = true;
                     successCount++;
                 }
@@ -1159,7 +1140,48 @@ namespace ProjectTallify.Controllers
             
             await _db.SaveChangesAsync();
 
-            return Ok(new { success = true, message = $"Sent successfully to {successCount} verified judges." });
+            return Ok(new { success = true, message = $"Sent successfully to {successCount} judges." + (failCount > 0 ? $" Failed to send to {failCount}." : "") });
+        }
+
+        /// <summary>
+        /// Resends the initial invitation/verification email to a single judge.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ResendJudgeInvitation(int judgeId)
+        {
+            var judge = await _db.Judges.Include(j => j.Event).FirstOrDefaultAsync(j => j.Id == judgeId);
+            if (judge == null) return NotFound(new { success = false, message = "Judge not found." });
+
+            if (judge.IsEmailVerified)
+            {
+                return BadRequest(new { success = false, message = "Judge email is already verified." });
+            }
+
+            // Limitation: Prevent numerous sending of invitations
+            if (judge.IsInviteSent)
+            {
+                return BadRequest(new { success = false, message = "Invitation has already been sent to this judge." });
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(judge.VerificationToken))
+                {
+                    judge.VerificationToken = Guid.NewGuid().ToString("N");
+                }
+
+                var verifyLink = Url.Action("VerifyJudge", "Events", new { judgeId = judge.Id, token = judge.VerificationToken }, Request.Scheme);
+                await _emailSender.SendJudgeVerificationLinkAsync(judge, verifyLink!, judge.Event);
+                
+                judge.IsInviteSent = true;
+                await _db.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Invitation sent successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Failed to send email: " + ex.Message });
+            }
         }
 
         // ============================================
@@ -1482,7 +1504,7 @@ namespace ProjectTallify.Controllers
 
                 try
                 {
-                    await _emailSender.SendJudgeVerificationLinkAsync(judge, verifyLink!, ev.Name);
+                    await _emailSender.SendJudgeVerificationLinkAsync(judge, verifyLink!, ev);
                     judge.IsInviteSent = true; 
                 }
                 catch (Exception ex)
@@ -1591,11 +1613,6 @@ namespace ProjectTallify.Controllers
 
             return PartialView("_ReportPreview", viewModel);
         }
-        
-        // ... Missing GetContestantsRank?
-        // Ah, I missed GetContestantsRank in the previous paste?
-        // Let me check. Yes, it was in the middle of the original file.
-        // I should include it. I'll add it before Manage.
         
         /// <summary>
         /// Retrieves contestants ranked by the previous round's results.

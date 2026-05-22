@@ -93,9 +93,7 @@
                             <div class="manage-event-tags">
 
                                 <span class="pill pill-type">
-
                                     @(isCriteria ? "WA" : "PB")
-
                                 </span>
 
                 
@@ -203,9 +201,10 @@
                 <div class="card overview-item">
                     <p class="card-label">Access Code</p>
                     <div class="access-code-row">
-                        <span id="accessCodeValue" class="code-font">
-                            @(string.IsNullOrWhiteSpace(Model.AccessCode) ? "â€”" : Model.AccessCode)
+                        <span id="accessCodeValue" style="font-family:monospace; font-weight:700; color:#000; background:var(--color-primary-soft-bg); padding:4px 10px; border-radius:6px; letter-spacing:1px; text-transform: uppercase;">
+                            @(string.IsNullOrWhiteSpace(Model.AccessCode) ? "—" : Model.AccessCode)
                         </span>
+
                         @if (!string.IsNullOrWhiteSpace(Model.AccessCode))
                         {
                             <button type="button"
@@ -301,8 +300,11 @@
                 @if (isCriteria)
                 {
                     <div style="display: flex; flex: 1; justify-content: flex-end;">
-                        <button type="button" class="btn-secondary send-all-access-btn" data-event-id="@Model.Id" disabled="@isEnded" style="margin-left: auto;">
-                            Send Access to all
+                        @{
+                            bool allVerified = accessUsers.All(u => u.IsVerified);
+                        }
+                        <button type="button" class="btn-secondary send-all-access-btn" data-event-id="@Model.Id" disabled="@(isEnded || !allVerified)" style="margin-left: auto;">
+                            Send Access to All
                         </button>
                     </div>
                 }
@@ -314,16 +316,17 @@
                         <tr>
                             <th style="width:10%;">ID</th>
                             <th style="width:25%;">@(isCriteria ? "Judge Name" : "Scorer Name")</th>
-                            <th style="width:30%;">@(isCriteria ? "Email" : "Assigned Contestant/s")</th>
-                            <th style="width:15%;">Pin</th>
-                            <th style="width:20%;">Action</th>
+                            <th style="width:25%;">@(isCriteria ? "Email" : "Assigned Contestant/s")</th>
+                            <th style="width:10%;">Pin</th>
+                            <th style="width:15%;">Status</th>
+                            <th style="width:15%;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="manageAccessBody">
                         @if (!accessUsers.Any())
                         {
                             <tr class="table-empty-row">
-                                <td colspan="5">
+                                <td colspan="6">
                                     @(isCriteria
                                         ? "Judges configured in the event wizard will appear here."
                                         : "Scorers configured in the event wizard will appear here.")
@@ -340,29 +343,55 @@
                                     <td><span class="code-font">@judgeCode</span></td>
                                     <td>@u.Name</td>
                                     <td>@u.Assigned</td> @* criteria: email; orw: assigned contestants *@
+                                    <td><span class="code-font">@u.Pin</span></td>
                                     <td>
-                                        <span class="code-font">@u.Pin</span>
                                         @if (isCriteria)
                                         {
-                                            if (u.IsVerified)
+                                            if (u.IsAccessSent)
                                             {
-                                                <span class="status-pill" style="background:#dcfce7; color:#166534; margin-left:8px; font-size:10px;">Verified</span>
+                                                <span class="status-pill" style="background:#dcfce7; color:#166534; font-size:11px; font-weight:600;">Ready</span>
+                                            }
+                                            else if (u.IsVerified)
+                                            {
+                                                <span class="status-pill" style="background:#dbeafe; color:#1e40af; font-size:11px; font-weight:600;">Verified</span>
+                                            }
+                                            else if (u.IsInviteSent)
+                                            {
+                                                <span class="status-pill" style="background:#fef3c7; color:#b45309; font-size:11px; font-weight:600;">Pending</span>
                                             }
                                             else
                                             {
-                                                <span class="status-pill" style="background:#fef3c7; color:#b45309; margin-left:8px; font-size:10px;">Pending</span>
+                                                <span class="status-pill" style="background:#f3f4f6; color:#4b5563; font-size:11px; font-weight:600;">Not Invited</span>
                                             }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
                                         }
                                     </td>
                                     <td>
                                         @if (isCriteria)
                                         {
-                                            <button type="button"
-                                                    class="btn-secondary send-access-btn"
-                                                    data-judge-id="@u.Id"
-                                                    disabled="@isEnded">
-                                                Send Access
-                                            </button>
+                                            if (!u.IsVerified)
+                                            {
+                                                <button type="button"
+                                                        class="btn-secondary btn-send-invite"
+                                                        data-judge-id="@u.Id"
+                                                        data-judge-name="@u.Name"
+                                                        data-judge-email="@u.Assigned"
+                                                        disabled="@isEnded">
+                                                    Send Invitation
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button"
+                                                        class="btn-secondary send-access-btn"
+                                                        data-judge-id="@u.Id"
+                                                        disabled="@(isEnded || u.IsAccessSent)">
+                                                    @(u.IsAccessSent ? "Access Sent" : "Send Access")
+                                                </button>
+                                            }
                                         }
                                         else
                                         {
@@ -1016,21 +1045,27 @@
             // --- 2. Tabs Logic ---
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
+                    const targetId = tab.getAttribute('data-tab');
+                    
+                    // Save to sessionStorage
+                    sessionStorage.setItem('activeManageTab', targetId);
+
                     tabs.forEach(t => t.classList.remove('active'));
                     tabContents.forEach(content => content.classList.remove('active'));
                     tab.classList.add('active');
-                    const targetId = tab.getAttribute('data-tab');
+                    
                     const targetContent = document.getElementById(`tab-${targetId}`);
                     if (targetContent) targetContent.classList.add('active');
                 });
             });
 
-            // Restore active tab
+            // Restore active tab from sessionStorage
             const savedTab = sessionStorage.getItem('activeManageTab');
             if (savedTab) {
                 const tabToActivate = document.querySelector(`.tab-link[data-tab="${savedTab}"]`);
-                if (tabToActivate) tabToActivate.click();
-                sessionStorage.removeItem('activeManageTab');
+                if (tabToActivate) {
+                    tabToActivate.click();
+                }
             }
             
             // --- 2b. Photo Modal Logic ---
@@ -1501,7 +1536,7 @@
                 });
             });
 
-            // --- 6. Send Access Logic ---
+            // --- 6. Send Access & Invitation Logic ---
             const confirmSendOverlay = document.getElementById('confirm-send-overlay');
             const btnCancelSend = document.getElementById('btn-cancel-send');
             const btnConfirmSend = document.getElementById('btn-confirm-send');
@@ -1510,10 +1545,7 @@
             // Send All
             if (sendAllBtn) {
                 sendAllBtn.addEventListener('click', function() {
-                    if (eventStatus !== 'open') {
-                        showSuccessModal("You cannot send access codes yet. Please start the event first.");
-                        return;
-                    }
+                    // REMOVED eventStatus !== 'open' check per requirement to allow sending before start
                     if (confirmSendOverlay) confirmSendOverlay.classList.add('open');
                 });
             }
@@ -1530,8 +1562,9 @@
                     if (confirmSendOverlay) confirmSendOverlay.classList.remove('open');
                     
                     // Show loading state on button (optional)
-                    const originalText = this.textContent;
-                    this.textContent = "Sending...";
+                    const originalText = sendAllBtn.textContent;
+                    sendAllBtn.textContent = "Sending...";
+                    sendAllBtn.disabled = true;
                     
                     try {
                         const response = await fetch(`/Events/SendAccessCodeToAll?eventId=${eventId}`, {
@@ -1542,16 +1575,20 @@
                         });
                         const data = await response.json();
                         showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
+                        if (data.success) {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
                     } catch (err) {
                         console.error(err);
                         showSuccessModal("An error occurred while sending emails.");
                     } finally {
-                        this.textContent = originalText;
+                        sendAllBtn.textContent = originalText;
+                        sendAllBtn.disabled = false;
                     }
                 });
             }
             
-            // Send Single
+            // Send Single (Access)
             const confirmSendSingleOverlay = document.getElementById('confirm-send-single-overlay');
             const btnCancelSendSingle = document.getElementById('btn-cancel-send-single');
             const btnConfirmSendSingle = document.getElementById('btn-confirm-send-single');
@@ -1561,11 +1598,7 @@
             const sendSingleBtns = document.querySelectorAll('.send-access-btn');
             sendSingleBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
-                    if (eventStatus !== 'open') {
-                        showSuccessModal("You cannot send access codes yet. Please start the event first.");
-                        return;
-                    }
-
+                    // REMOVED eventStatus !== 'open' check
                     pendingJudgeId = this.getAttribute('data-judge-id');
                     pendingJudgeBtn = this;
                     
@@ -1610,6 +1643,9 @@
                         });
                         const data = await response.json();
                         showSuccessModal(data.message || (data.success ? "Sent successfully." : "Failed to send."));
+                        if (data.success) {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
                     } catch (err) {
                         console.error(err);
                         showSuccessModal("An error occurred.");
@@ -1621,6 +1657,43 @@
                     }
                 });
             }
+
+            // Send Invitation (Initial Invite)
+            const sendInviteBtns = document.querySelectorAll('.btn-send-invite');
+            sendInviteBtns.forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const judgeId = this.getAttribute('data-judge-id');
+                    
+                    if (!judgeId) {
+                        showSuccessModal("Could not identify judge ID.");
+                        return;
+                    }
+
+                    const originalText = this.textContent;
+                    this.textContent = "Sending...";
+                    this.disabled = true;
+
+                    try {
+                        const response = await fetch(`/Events/ResendJudgeInvitation?judgeId=${judgeId}`, {
+                            method: 'POST',
+                            headers: {
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            }
+                        });
+                        const data = await response.json();
+                        showSuccessModal(data.message || "Invitation sent.");
+                        if (data.success) {
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred while sending the invitation.");
+                    } finally {
+                        this.textContent = originalText;
+                        this.disabled = false;
+                    }
+                });
+            });
 
             // --- 7. Generate Report Logic ---
             const btnGenerateReport = document.getElementById('btnGenerateReport');

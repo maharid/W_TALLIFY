@@ -35,6 +35,7 @@ namespace ProjectTallify.Models
         public bool IsArchived { get; set; } = false;
 
         public ICollection<Contestant> Contestants { get; set; } = new List<Contestant>();
+        public ICollection<Judge> Judges { get; set; } = new List<Judge>();
         public ICollection<Round> Rounds { get; set; } = new List<Round>();
         public ICollection<Score> Scores { get; set; } = new List<Score>();
         public ICollection<ComputedRoundScore> ComputedRoundScores { get; set; } = new List<ComputedRoundScore>();

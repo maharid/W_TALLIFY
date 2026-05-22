@@ -14,7 +14,9 @@ namespace ProjectTallify.Models
         public string? Name { get; set; }
         public string? Assigned { get; set; }  // email or contestant IDs
         public string? Pin { get; set; }
-        public bool IsVerified { get; set; } // Add this property
+        public bool IsVerified { get; set; } 
+        public bool IsInviteSent { get; set; }
+        public bool IsAccessSent { get; set; }
     }
 
     public class SimpleRoundWithCriteria
