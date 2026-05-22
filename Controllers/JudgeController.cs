@@ -166,6 +166,7 @@ namespace ProjectTallify.Controllers
             ViewBag.HideHeader  = true;
             ViewBag.HideOrgCard = true;
             ViewBag.ThemeColor = ev.ThemeColor;
+            ViewBag.OrgColor = ev.Organizer.ThemeColor;
 
             Round? activeRound = null;
             var allRounds = ev.Rounds.OrderBy(r => r.Order).ToList();

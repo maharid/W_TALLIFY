@@ -2,83 +2,12 @@
 @{
     Layout = "_ScoringLayout"; 
     ViewBag.JudgeName = Model.JudgeName;
+    var allCriteria = Model.Groups.SelectMany(g => g.Criteria).ToList();
 }
-
-<style>
-    .standby-pulse {
-        animation: standby-pulse 2s infinite ease-in-out;
-    }
-    @@keyframes standby-pulse {
-        0% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
-        100% { transform: scale(1); opacity: 0.5; }
-    }
-
-    /* Premium Header Styling */
-    .judge-header-premium {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        max-width: var(--content-max-width);
-        padding: 1.5rem 0;
-        margin: 0 auto 2rem auto;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .event-branding {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .event-title-premium {
-        font-size: 2rem;
-        font-weight: 900;
-        letter-spacing: -0.5px;
-        background: linear-gradient(135deg, var(--color-text) 0%, #64748b 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin: 0;
-        line-height: 1.1;
-    }
-
-    .status-badge-premium {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
-    }
-
-    .badge-active {
-        background: var(--color-primary-soft-bg);
-        color: var(--color-primary);
-        border: 1px solid var(--color-primary-soft);
-    }
-
-    .badge-standby {
-        background: #f1f5f9;
-        color: #64748b;
-        border: 1px solid #e2e8f0;
-    }
-
-    .badge-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: currentColor;
-    }
-</style>
 
 <main class="judge-main">
     
-    <!-- Top Row: Premium Event Header -->
+    <!-- Restored Premium Header with reduced margins -->
     <div class="judge-header-premium">
         <div class="event-branding">
             <h1 class="event-title-premium">@Model.EventTitle</h1>
@@ -100,508 +29,282 @@
         </div>
     </div>
 
-    @if (Model.EventStatus == "preparing")
+    @if (Model.EventStatus == "open" && Model.IsRoundActive)
     {
-        <!-- EVENT NOT STARTED STANDBY -->
-        <div class="standby-container text-center standby-floating-card">
-            <div class="standby-icon standby-pulse" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
-                📅
-            </div>
-            <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
-                Event Not Started
-            </h2>
-            <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-                This event is currently in preparation. It is scheduled for <strong>@Model.Schedule.ToString("MMM dd, yyyy h:mm tt")</strong>.
-            </p>
-            <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
-                Refresh Status
-            </button>
-        </div>
-    }
-    else if (Model.EventStatus == "open")
-    {
-        @if (Model.IsRoundActive)
-        {
-            <!-- 3. The Scoring Card (Wizard Style) -->
-            <div class="scoring-card">
-
-                <!-- Progress Bar -->
-                <div class="scoring-progress-container" style="padding: 1rem 2rem 0; display: flex; align-items: center; gap: 15px;">
-                    <div class="scoring-progress-track" style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; flex: 1;">
-                        <div id="wizardProgressBar" style="height: 100%; width: 0%; background: var(--color-primary); transition: width 0.3s ease;"></div>
-                    </div>
-                    <div id="syncIndicator" style="font-size: 11px; font-weight: 700; color: #10b981; opacity: 0; transition: opacity 0.3s; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
-                        <span class="badge-dot standby-pulse" style="width: 6px; height: 6px;"></span>
-                        DRAFT SAVED
-                    </div>
-                </div>
-
-                <!-- Wizard Container -->
-                @{
-                    var allCriteria = Model.Groups.SelectMany(g => g.Criteria).ToList();
-                    var totalSteps = allCriteria.Count;
-                }
+        <div class="scoring-card">
+            <!-- Precise card header split -->
+            <div class="card-header-v2">
+                <h2 id="currentCriteriaName" class="criteria-title-centered">Loading...</h2>
                 
-                <form id="scoring-form" class="wizard-container">
-                    @Html.AntiForgeryToken()
-                    @for (int i = 0; i < totalSteps; i++)
-                    {
-                        var criteria = allCriteria[i];
-                        var stepIndex = i;
-                        var isActive = i == 0 ? "active" : "";
-
-                        <div class="wizard-step @isActive" data-step="@stepIndex">
-                            
-                            <!-- Criteria Row -->
-                            <div class="criteria-header-row">
-                                <div class="criteria-meta">
-                                    <span class="step-counter">Criteria @(i + 1) of @totalSteps</span>
-                                    <h2 class="criteria-name">@criteria.Name</h2>
-                                </div>
-                                <div class="criteria-weight-badge">
-                                    @criteria.WeightPercentage.ToString("F2")%
-                                </div>
-                            </div>
-
-                            <!-- The List (Contestants) -->
-                            <div class="contestant-list-container" style="flex: 1; overflow-y: auto; min-height: 0;">
-                                <div class="contestant-list-div">
-                                    @foreach (var contestant in Model.Contestants)
-                                    {
-                                        <div class="contestant-row-card">
-                                            <!-- LEFT SIDE: Info -->
-                                            <div class="contestant-info-group">
-                                                
-                                                <!-- Photo -->
-                                                <div class="c-photo-wrapper">
-                                                    @if (!string.IsNullOrEmpty(contestant.PhotoPath))
-                                                    {
-                                                        <img src="@contestant.PhotoPath"
-                                                             alt="@contestant.FullName"
-                                                             class="contestant-photo-thumb"
-                                                             data-name="@contestant.FullName"
-                                                             data-url="@contestant.PhotoPath"
-                                                             onclick="showPhoto(this.dataset.name, this.dataset.url)" />
-                                                    }
-                                                    else
-                                                    {
-                                                        <div class="contestant-photo-placeholder" 
-                                                             data-name="@contestant.FullName"
-                                                             onclick="showPhoto(this.dataset.name, '')">N/A</div>
-                                                    }
-                                                </div>
-
-                                                <!-- ID Badge -->
-                                                <div class="c-id-wrapper">
-                                                    <span class="id-badge" style="font-size: 16px; font-weight: 800; min-width: 50px;">@contestant.ContestantId</span>
-                                                </div>
-
-                                                <!-- Name Text -->
-                                                <div class="contestant-text">
-                                                    <span class="c-name" style="font-size: 14px;">@contestant.FullName</span>
-                                                    <span class="c-school" style="font-size: 12px;">@contestant.Subtitle</span>
-                                                </div>
-                                            </div>
-
-                                            <!-- RIGHT SIDE: Score Input -->
-                                            <div class="contestant-score-group">
-                                                <div class="score-input-wrapper">
-                                                    <input type="number" 
-                                                           class="score-input" 
-                                                           name="Scores[@contestant.ContestantId][@criteria.Name]" 
-                                                           data-contestant-code="@contestant.ContestantId"
-                                                           data-criteria-name="@criteria.Name"
-                                                           min="@criteria.MinPoints" 
-                                                           max="@criteria.MaxPoints" 
-                                                           step="0.01" 
-                                                           placeholder="@criteria.MinPoints.ToString("0")-@criteria.MaxPoints.ToString("0")"
-                                                           oninput="validateScore(this, @criteria.MinPoints, @criteria.MaxPoints)"
-                                                           style="font-size: 16px; height: 48px;"
-                                                           @(Model.IsSubmitted ? "readonly" : "") />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
+                <div class="header-stats-row">
+                    <!-- 85% Progress Section -->
+                    <div class="stats-progress-container">
+                        <div class="progress-track-v2">
+                            <div id="criteriaProgressBar" class="progress-fill-v2"></div>
+                            <span id="progressLabel" class="progress-text-v2">Scored 0 of @Model.Contestants.Count</span>
                         </div>
-                    }
-                </form>
+                    </div>
+                    
+                    <!-- 5% Separator Section -->
+                    <div class="stats-separator-container">
+                        <div class="v-separator"></div>
+                    </div>
+
+                    <!-- 10% Weight Section -->
+                    <div class="stats-weight-container">
+                        <div id="criteriaWeight" class="weight-badge-v2">0%</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 4. Navigation Buttons -->
-            <div class="wizard-navigation">
-                <button type="button" id="btnPrev" class="btn-nav btn-secondary" @(Model.IsSubmitted ? "disabled" : "")>
-                    Prev Criteria
-                </button>
+            <form id="scoring-form">
+                @Html.AntiForgeryToken()
+                <div class="contestant-carousel-viewport">
+                    <div id="contestantGrid" class="contestant-grid">
+                        @foreach (var contestant in Model.Contestants)
+                        {
+                            <div class="contestant-card-v2" data-contestant-id="@contestant.ContestantId">
+                                <div class="c-code-v2">@contestant.ContestantId</div>
+                                <div class="c-identity-v2">
+                                    <span class="c-name-v2">@contestant.FullName</span>
+                                    <div class="c-separator"></div>
+                                    <span class="c-org-v2">@contestant.Subtitle</span>
+                                </div>
+                                <div class="c-photo-wrapper" onclick="showPhoto('@contestant.FullName', '@contestant.PhotoPath')">
+                                    <div class="c-photo-blur" style="background-image: url('@(contestant.PhotoPath ?? "/images/default pfp.png")');"></div>
+                                    <img src="@(contestant.PhotoPath ?? "/images/default pfp.png")" class="c-photo-main" alt="Contestant" />
+                                </div>
+                                <div class="c-score-v2">
+                                    <input type="number" inputmode="decimal" class="score-input-v2" 
+                                           data-contestant-id="@contestant.ContestantId" placeholder="Score"
+                                           @(Model.IsSubmitted ? "readonly" : "") />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div id="carouselPagination" class="carousel-pagination"></div>
+                </div>
+            </form>
+
+            <!-- Standardized 3-Column Footer Hub -->
+            <footer class="event-step-footer">
+                <div class="event-step-actions" style="flex: 1; display: flex; justify-content: flex-start; padding: 0;">
+                    <button type="button" id="btnPrevCriterion" class="btn-outline" disabled>Previous Criterion</button>
+                </div>
                 
-                <div class="nav-right">
-                    <button type="button" id="btnNext" class="btn-nav btn-primary" @(Model.IsSubmitted ? "disabled" : "")>
-                        Next Criteria
-                    </button>
-                    <!-- Shown only on last step -->
-                    <button type="button" id="btnSubmit" class="btn-nav btn-success" style="display: none;" @(Model.IsSubmitted ? "disabled" : "")>
-                        Submit All Scores
-                    </button>
-                </div>
-            </div>
-        }
-        else
-        {
-            <!-- ROUND NOT STARTED STANDBY (Inside Layout) -->
-            <div class="standby-container text-center standby-floating-card">
-                <div class="standby-icon standby-pulse" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
-                    ⏳
+                <div class="footer-col-center" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <div id="criteriaPagination" class="carousel-pagination" style="margin-top: 0; padding-bottom: 0;"></div>
                 </div>
 
-                <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
-                    Please Standby
-                </h2>
-                <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-                    The round has not started yet.
-                </p>
-                <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
-                    Refresh Status
-                </button>
-            </div>
-        }
-    }
-    else
-    {
-        <!-- FALLBACK / CLOSED STATE -->
-        <div class="standby-container text-center" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-            <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
-                Event Ended
-            </h2>
-            <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-                This event has concluded.
-            </p>
-            <a href="/Auth/Logout" class="btn-nav btn-secondary" style="max-width: 200px; margin: 0 auto; display: inline-block; text-decoration: none;">
-                Logout
-            </a>
+                <div class="event-step-actions" style="flex: 1; display: flex; justify-content: flex-end; padding: 0;">
+                    <button type="button" id="btnNextCriterion" class="btn-primary">Next Criterion</button>
+                    <button type="button" id="btnFinalSubmit" class="btn-primary hidden" style="background-color: #10B981; border-color: #10B981;">Submit Scores</button>
+                </div>
+            </footer>
         </div>
     }
-
 </main>
 
-<!-- Photo Modal -->
-<div id="photoModal" class="event-photo-modal-backdrop" onclick="hidePhoto()">
-    <div class="event-photo-modal" onclick="event.stopPropagation()">
-        <div class="event-photo-modal-header">
-            <h3 class="event-photo-modal-title" id="modalTitle"></h3>
-            <button class="event-photo-modal-close" onclick="hidePhoto()">×</button>
-        </div>
-        <div class="event-photo-modal-body">
-            <img id="modalImage" src="" alt="Contestant" />
-        </div>
-    </div>
-</div>
-
-<!-- Score Toast Notification -->
 <div id="scoreToast" class="score-toast"></div>
-
-<!-- Score Submission Success Modal -->
-<div id="submissionSuccessModalOverlay" class="summary-overlay" aria-hidden="true">
-    <div class="summary-modal screen-modal">
-        <div class="summary-modal-header">
-            <h3 class="screen-title">Scores Recorded</h3>
-        </div>
-        <div class="summary-modal-body screen-body">
-            <p>Your scores for <span id="successRoundName"></span> have been successfully recorded.</p>
-            <p>Please wait for the organizer to start the next round.</p>
-        </div>
-        <div class="screen-actions">
-            <button type="button" id="btnOkSubmissionSuccess" class="btn-screen-primary" style="width:100%">OK</button>
-        </div>
-    </div>
-</div>
-
-<!-- Waiting Screen (after submission) -->
-<div id="submissionWaitingScreen" class="standby-container text-center hidden" style="margin-top: 3rem; padding: 3rem; background: white; border-radius: 166px; box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
-    <div class="standby-icon" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.5;">
-        ⏳
-    </div>
-    <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; color: var(--color-text);">
-        Waiting for Next Round
-    </h2>
-    <p style="font-size: 1.1rem; color: var(--color-text-soft); margin-bottom: 2rem;">
-        Your scores have been submitted. The organizer will notify you when the next round begins.
-    </p>
-    <button type="button" onclick="window.location.reload()" class="btn-nav btn-primary" style="max-width: 200px; margin: 0 auto;">
-        Refresh Status
-    </button>
-</div>
 
 @section Scripts {
     <script>
-        let toastTimeout;
+        const criteria = @Html.Raw(Json.Serialize(allCriteria));
+        const contestants = @Html.Raw(Json.Serialize(Model.Contestants));
+        const eventCode = '@Model.EventCode';
+        const roundId = @Model.RoundId;
+        const DRAFT_KEY = `tallify_draft_${eventCode}_${roundId}`.replace(/\s+/g, '');
+        
+        let currentCritIndex = 0;
+        let currentCarouselPage = 0;
+        const itemsPerPage = 3;
 
-        function showToast(message, type = 'error') {
-            const toast = document.getElementById('scoreToast');
-            if(!toast) return;
-            toast.textContent = message;
-            toast.className = `score-toast ${type} active`;
-            clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('active');
-            }, 3000);
+        const grid = document.getElementById('contestantGrid');
+        const critNameEl = document.getElementById('currentCriteriaName');
+        const critWeightEl = document.getElementById('criteriaWeight');
+        const critProgressFill = document.getElementById('criteriaProgressBar');
+        const critProgressLabel = document.getElementById('progressLabel');
+        const critDots = document.getElementById('criteriaPagination');
+        const carouselDots = document.getElementById('carouselPagination');
+        
+        const btnPrevCrit = document.getElementById('btnPrevCriterion');
+        const btnNextCrit = document.getElementById('btnNextCriterion');
+        const btnFinalSubmit = document.getElementById('btnFinalSubmit');
+
+        function showToast(msg) {
+            const t = document.getElementById('scoreToast');
+            t.textContent = msg;
+            t.classList.add('active');
+            setTimeout(() => t.classList.remove('active'), 3000);
         }
 
-        const submissionSuccessModalOverlay = document.getElementById('submissionSuccessModalOverlay');
-        const successRoundNameSpan = document.getElementById('successRoundName');
-        const btnOkSubmissionSuccess = document.getElementById('btnOkSubmissionSuccess');
-        const submissionWaitingScreen = document.getElementById('submissionWaitingScreen');
-        const scoringCard = document.querySelector('.scoring-card');
-        const wizardNavigation = document.querySelector('.wizard-navigation');
-
-        function openSubmissionSuccessModal(roundName) {
-            if (submissionSuccessModalOverlay) {
-                successRoundNameSpan.textContent = roundName;
-                submissionSuccessModalOverlay.classList.add('open');
-                submissionSuccessModalOverlay.setAttribute('aria-hidden', 'false');
-            }
+        function getDraft() {
+            const d = localStorage.getItem(DRAFT_KEY);
+            return d ? JSON.parse(d) : {};
         }
 
-        function closeSubmissionSuccessModal() {
-            if (submissionSuccessModalOverlay) {
-                submissionSuccessModalOverlay.classList.remove('open');
-                submissionSuccessModalOverlay.setAttribute('aria-hidden', 'true');
-            }
+        function saveToDraft(cid, cname, val) {
+            const draft = getDraft();
+            if (!draft[cname]) draft[cname] = {};
+            draft[cname][cid] = val;
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            updateProgress();
         }
 
-        if (btnOkSubmissionSuccess) {
-            btnOkSubmissionSuccess.addEventListener('click', function() {
-                closeSubmissionSuccessModal();
-                if (scoringCard) scoringCard.style.display = 'none';
-                if (wizardNavigation) wizardNavigation.style.display = 'none';
-                if (submissionWaitingScreen) submissionWaitingScreen.classList.remove('hidden');
+        function updateProgress() {
+            const draft = getDraft();
+            const currentCrit = criteria[currentCritIndex];
+            const scores = draft[currentCrit.name] || {};
+            const count = Object.keys(scores).filter(k => scores[k] !== "").length;
+            const percent = (count / contestants.length) * 100;
+            critProgressFill.style.width = `${percent}%`;
+            critProgressLabel.textContent = `Scored ${count} of ${contestants.length}`;
+        }
+
+        function renderCriteria() {
+            const crit = criteria[currentCritIndex];
+            critNameEl.textContent = crit.name;
+            
+            const w = crit.weightPercentage;
+            critWeightEl.textContent = (w % 1 === 0 ? w.toFixed(0) : w.toFixed(2)) + "%";
+
+            // Footer Criteria Boxes (Non-clickable)
+            critDots.innerHTML = '';
+            criteria.forEach((_, i) => {
+                const d = document.createElement('div');
+                d.className = `dot static ${i === currentCritIndex ? 'active' : ''}`;
+                d.textContent = i + 1;
+                critDots.appendChild(d);
             });
-        }
 
-        function validateScore(input, min, max) {
-            const val = parseFloat(input.value);
-            if (input.value === '' || (val >= min && val <= max)) {
-                input.classList.remove('invalid');
+            const draft = getDraft();
+            const critScores = draft[crit.name] || {};
+            document.querySelectorAll('.score-input-v2').forEach(input => {
+                const cid = input.dataset.contestantId;
+                input.value = critScores[cid] || "";
+                input.placeholder = `${crit.minPoints}-${crit.maxPoints}`;
+            });
+
+            updateProgress();
+            renderCarousel();
+
+            btnPrevCrit.disabled = currentCritIndex === 0;
+            
+            if (currentCritIndex === criteria.length - 1) {
+                btnNextCrit.classList.add('hidden');
+                btnFinalSubmit.classList.remove('hidden');
             } else {
-                input.classList.add('invalid');
+                btnNextCrit.classList.remove('hidden');
+                btnFinalSubmit.classList.add('hidden');
             }
         }
 
-        function showPhoto(name, url) {
-            document.getElementById('modalTitle').textContent = name;
-            document.getElementById('modalImage').src = url;
-            document.getElementById('photoModal').classList.add('is-open');
-            document.body.classList.add('has-modal-open');
-        }
+        function renderCarousel() {
+            const totalPages = Math.ceil(contestants.length / itemsPerPage);
+            const startIndex = currentCarouselPage * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
 
-        function hidePhoto() {
-            document.getElementById('photoModal').classList.remove('is-open');
-            document.body.classList.remove('has-modal-open');
-        }
+            const cards = document.querySelectorAll('.contestant-card-v2');
+            cards.forEach((card, idx) => {
+                card.style.display = (idx >= startIndex && idx < endIndex) ? 'flex' : 'none';
+            });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const steps = document.querySelectorAll('.wizard-step');
-            const btnPrev = document.getElementById('btnPrev');
-            const btnNext = document.getElementById('btnNext');
-            const btnSubmit = document.getElementById('btnSubmit');
-            const progressBar = document.getElementById('wizardProgressBar');
-            let currentStep = 0;
-            const totalSteps = steps.length;
+            grid.classList.toggle('centered', (contestants.length - startIndex) < itemsPerPage);
 
-            function updateProgressBar(index) {
-                if (!progressBar || totalSteps === 0) return;
-                const percent = ((index + 1) / totalSteps) * 100;
-                progressBar.style.width = percent + '%';
+            // Carousel Adaptive Boxes
+            carouselDots.innerHTML = '';
+            
+            // "First" box
+            const first = document.createElement('div');
+            first.className = `dot ${currentCarouselPage === 0 ? 'active' : ''}`;
+            first.textContent = '<< First';
+            first.onclick = () => { currentCarouselPage = 0; renderCarousel(); };
+            carouselDots.appendChild(first);
+
+            // Middle Number box (only if 3+ pages)
+            if (totalPages > 2) {
+                const mid = document.createElement('div');
+                const isMidActive = currentCarouselPage > 0 && currentCarouselPage < totalPages - 1;
+                mid.className = `dot ${isMidActive ? 'active' : ''}`;
+                mid.textContent = isMidActive ? (currentCarouselPage + 1) : '-';
+                mid.classList.add('static'); // Middle box in this specific style is often just an indicator
+                carouselDots.appendChild(mid);
             }
 
-            function showStep(index) {
-                steps.forEach((step, idx) => {
-                    if (idx === index) step.classList.add('active');
-                    else step.classList.remove('active');
-                });
+            // "Last" box
+            const last = document.createElement('div');
+            last.className = `dot ${currentCarouselPage === totalPages - 1 ? 'active' : ''}`;
+            last.textContent = 'Last >>';
+            last.onclick = () => { currentCarouselPage = totalPages - 1; renderCarousel(); };
+            carouselDots.appendChild(last);
+        }
 
-                updateProgressBar(index);
+        btnNextCrit.onclick = () => { currentCritIndex++; currentCarouselPage = 0; renderCriteria(); window.scrollTo(0,0); };
+        btnPrevCrit.onclick = () => { currentCritIndex--; currentCarouselPage = 0; renderCriteria(); window.scrollTo(0,0); };
 
-                if (btnPrev) btnPrev.disabled = index === 0;
-                
-                if (index === totalSteps - 1) {
-                    if (btnNext) btnNext.style.display = 'none';
-                    if (btnSubmit) {
-                        btnSubmit.style.display = 'inline-flex';
-                        btnSubmit.style.backgroundColor = 'var(--color-primary)';
-                        btnSubmit.style.borderColor = 'var(--color-primary)';
-                    }
-                } else {
-                    if (btnNext) btnNext.style.display = 'inline-flex';
-                    if (btnSubmit) btnSubmit.style.display = 'none';
+        document.querySelectorAll('.score-input-v2').forEach(input => {
+            input.oninput = (e) => saveToDraft(input.dataset.contestantId, criteria[currentCritIndex].name, e.target.value);
+        });
+
+        btnFinalSubmit.onclick = async () => {
+            const draft = getDraft();
+            // Validate ALL criteria before submission
+            for (let c of criteria) {
+                const scores = draft[c.name] || {};
+                const count = Object.keys(scores).filter(k => scores[k] !== "").length;
+                if (count < contestants.length) {
+                    showToast(`Please complete scores for ${c.name} before submitting.`);
+                    // Switch to the missing criterion
+                    currentCritIndex = criteria.indexOf(c);
+                    renderCriteria();
+                    return;
                 }
             }
 
-            if (window.signalrConnection) {
-                window.signalrConnection.on("ReceiveJudgePulse", function() {
-                    window.location.reload(); 
-                });
-            }
-
-            const syncIndicator = document.getElementById('syncIndicator');
-            const DRAFT_KEY_PREFIX = `tallify_draft_@Model.EventCode _@Model.RoundId _`;
-            let syncTimeout;
-
-            function restoreDraft() {
-                document.querySelectorAll('.score-input').forEach(input => {
-                    const contestantId = input.getAttribute('data-contestant-code');
-                    const criteriaName = input.getAttribute('data-criteria-name');
-                    const key = DRAFT_KEY_PREFIX + contestantId + "_" + criteriaName;
-                    const savedValue = localStorage.getItem(key);
-                    if (savedValue !== null) {
-                        input.value = savedValue;
-                    }
-                });
-            }
-            restoreDraft();
-
-            document.querySelectorAll('.score-input').forEach(input => {
-                input.addEventListener('input', () => {
-                    const contestantId = input.getAttribute('data-contestant-code');
-                    const criteriaName = input.getAttribute('data-criteria-name');
-                    const key = DRAFT_KEY_PREFIX + contestantId + "_" + criteriaName;
-                    localStorage.setItem(key, input.value);
-
-                    if (!syncIndicator) return;
-                    syncIndicator.style.opacity = '1';
-                    syncIndicator.innerHTML = '<span class="badge-dot standby-pulse" style="width: 6px; height: 6px;"></span> SAVING...';
-                    syncIndicator.style.color = 'var(--color-primary)';
-
-                    clearTimeout(syncTimeout);
-                    syncTimeout = setTimeout(() => {
-                        syncIndicator.innerHTML = '<span class="badge-dot" style="width: 6px; height: 6px; background: #10b981;"></span> DRAFT SAVED';
-                        syncIndicator.style.color = '#10b981';
-                        setTimeout(() => { syncIndicator.style.opacity = '0'; }, 2000);
-                    }, 800);
-                });
+            // Map draft to API payload
+            const submissions = contestants.map(c => {
+                return {
+                    contestantCode: c.contestantId.toString(),
+                    scores: criteria.map(crit => ({
+                        criteriaName: crit.name,
+                        score: parseFloat(draft[crit.name][c.contestantId])
+                    }))
+                };
             });
 
-            function clearRoundDraft() {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.startsWith(DRAFT_KEY_PREFIX)) {
-                        localStorage.removeItem(key);
-                    }
+            try {
+                btnFinalSubmit.disabled = true;
+                btnFinalSubmit.textContent = "Submitting...";
+
+                const response = await fetch('/Judge/Submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0]?.value
+                    },
+                    body: JSON.stringify({ eventCode, roundId, submissions })
                 });
+
+                const res = await response.json();
+                if (res.success) {
+                    localStorage.removeItem(DRAFT_KEY);
+                    window.location.reload();
+                } else {
+                    showToast(res.message);
+                    btnFinalSubmit.disabled = false;
+                    btnFinalSubmit.textContent = "Submit Scores";
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Connection error. Please try again.");
+                btnFinalSubmit.disabled = false;
+                btnFinalSubmit.textContent = "Submit Scores";
             }
+        };
 
-            if (btnPrev) {
-                btnPrev.addEventListener('click', () => {
-                    if (currentStep > 0) {
-                        currentStep--;
-                        showStep(currentStep);
-                        window.scrollTo(0, 0); 
-                    }
-                });
-            }
-
-            if (btnNext) {
-                btnNext.addEventListener('click', () => {
-                    if (currentStep < totalSteps - 1) {
-                        currentStep++;
-                        showStep(currentStep);
-                        window.scrollTo(0, 0);
-                    }
-                });
-            }
-            
-            if (totalSteps > 0) showStep(0);
-
-            if (btnSubmit) {
-                btnSubmit.addEventListener('click', async function() {
-                    const inputs = document.querySelectorAll('.score-input');
-                    const submissions = [];
-                    const contestantMap = {};
-                    let hasError = false;
-                    let firstInvalidInput = null;
-
-                    inputs.forEach(input => {
-                        const val = parseFloat(input.value);
-                        const min = parseFloat(input.getAttribute('min'));
-                        const max = parseFloat(input.getAttribute('max'));
-                        const cCode = input.getAttribute('data-contestant-code');
-                        const cName = input.getAttribute('data-criteria-name');
-
-                        input.classList.remove('invalid');
-
-                        if (isNaN(val) || input.value.trim() === '') {
-                            hasError = true;
-                            input.classList.add('invalid');
-                            if (!firstInvalidInput) firstInvalidInput = input;
-                        } else if (val < min || val > max) {
-                            hasError = true;
-                            input.classList.add('invalid');
-                            if (!firstInvalidInput) firstInvalidInput = input;
-                        }
-
-                        if (!contestantMap[cCode]) contestantMap[cCode] = [];
-                        contestantMap[cCode].push({ criteriaName: cName, score: val });
-                    });
-
-                    if (hasError) {
-                        showToast("Please fix all errors before submitting.", "error");
-                        if (firstInvalidInput) {
-                            const firstInvalidStep = firstInvalidInput.closest('.wizard-step');
-                            if (firstInvalidStep) {
-                                const stepIndex = parseInt(firstInvalidStep.dataset.step);
-                                currentStep = stepIndex;
-                                showStep(stepIndex);
-                                firstInvalidInput.focus();
-                                firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }
-                        return;
-                    }
-
-                    for (const [code, scores] of Object.entries(contestantMap)) {
-                        submissions.push({ contestantCode: code, scores: scores });
-                    }
-
-                    const payload = {
-                        eventCode: '@Model.EventCode',
-                        roundId: @Model.RoundId,
-                        submissions: submissions
-                    };
-
-                    try {
-                        btnSubmit.disabled = true;
-                        btnSubmit.textContent = "Submitting...";
-                        if (window.showLoader) window.showLoader();
-
-                        const response = await fetch('/Judge/Submit', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.getElementsByName('__RequestVerificationToken')[0]?.value
-                            },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const result = await response.json();
-
-                        if (response.ok && result.success) {
-                            clearRoundDraft();
-                            openSubmissionSuccessModal('@Model.RoundName');
-                        } else {
-                            showToast(result.message || "Submission failed.", "error");
-                            btnSubmit.disabled = false;
-                            btnSubmit.textContent = "Submit All Scores";
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        showToast("Network error. Please try again.", "error");
-                        btnSubmit.disabled = false;
-                        btnSubmit.textContent = "Submit All Scores";
-                    } finally {
-                        if (window.hideLoader) window.hideLoader();
-                    }
-                });
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem(DRAFT_KEY)) showToast("Draft Saved");
+            renderCriteria();
         });
     </script>
 }

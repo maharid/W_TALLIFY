@@ -22,19 +22,22 @@
     <link rel="stylesheet" href="~/css/general.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/scoring.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
-    @if (!string.IsNullOrEmpty(ViewBag.ThemeColor))
-    {
-        <style>
-            :root {
-                --color-primary: @Html.Raw(ViewBag.ThemeColor);
-                /* Define event-specific variables which can be directly used */
-                --event-primary: @Html.Raw(ViewBag.ThemeColor);
-                --event-primary-soft: @Html.Raw(ViewBag.ThemeColor)35; /* Example: hex with alpha */
-                --event-primary-soft-bg: @Html.Raw(ViewBag.ThemeColor)12; /* Example: hex with alpha */
-                --event-primary-text: #ffffff; /* Assuming white text on primary theme */
-            }
-        </style>
+    @{
+        var primaryColor = ViewBag.ThemeColor as string ?? ViewBag.OrgColor as string ?? "#EC4899";
     }
+    <style>
+        :root {
+            --color-primary: @Html.Raw(primaryColor);
+            --event-primary: @Html.Raw(primaryColor);
+            --event-primary-soft: @Html.Raw(primaryColor)35;
+            --event-primary-soft-bg: @Html.Raw(primaryColor)12;
+            --event-primary-text: #ffffff;
+        }
+        .org-subtitle {
+            color: #334155 !important; /* Darker Slate-700 for better contrast */
+            font-weight: 500;
+        }
+    </style>
 </head>
 
 <body>
