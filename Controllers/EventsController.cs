@@ -1009,6 +1009,11 @@ namespace ProjectTallify.Controllers
             var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == request.EventId);
             if (ev == null) return NotFound(new { success = false, message = "Event not found." });
 
+            if (ev.AccessCode != request.AccessCode)
+            {
+                return BadRequest(new { success = false, message = "Invalid Access Code." });
+            }
+
             var round = await _db.Rounds.FirstOrDefaultAsync(r => r.Id == request.RoundId && r.EventId == request.EventId);
             if (round == null) return NotFound(new { success = false, message = "Round not found." });
 
@@ -1091,7 +1096,11 @@ namespace ProjectTallify.Controllers
             });
 
             await _db.SaveChangesAsync();
-            return Ok(new { success = true, message = "Round ended successfully." });
+
+            // Notify judges (refresh to standby)
+            await _notificationService.NotifyJudgePulseAsync(round.EventId);
+
+            return Ok(new { success = true, message = "Round ended successfully.", showPrintPrompt = true, roundId = round.Id });
         }
 
         /// <summary>
@@ -1264,7 +1273,7 @@ namespace ProjectTallify.Controllers
             if (ev == null) return NotFound();
 
             var rounds = ev.Rounds.OrderBy(r => r.Order).ToList();
-            var judges = await _db.Judges.Where(j => j.EventId == eventId).OrderBy(j => j.Name).ToListAsync();
+            var judges = await _db.Judges.Where(j => j.EventId == eventId).OrderBy(j => j.Id).ToListAsync();
             var allScores = await _db.Scores.Where(s => s.EventId == eventId).ToListAsync();
             var allComputed = await _db.ComputedRoundScores.Where(crs => crs.EventId == eventId).ToListAsync();
 
@@ -1318,6 +1327,9 @@ namespace ProjectTallify.Controllers
                     var row = new LiveTallyRow
                     {
                         ContestantName = c.Name,
+                        ContestantCode = c.Code,
+                        Organization = c.Organization ?? "",
+                        PhotoPath = c.PhotoPath,
                         JudgeScores = new Dictionary<int, string>()
                     };
 
@@ -1408,7 +1420,7 @@ namespace ProjectTallify.Controllers
                     roundVm.SummaryRows = roundVm.SummaryRows.OrderBy(x => x.Rank).ToList();
 
                     // 4b. Detailed Breakdown Tables (Per Criteria)
-                    if (ev.ScoringLogic == "WA" || ev.ScoringLogic == "PB") 
+                    if (ev.ScoringLogic == "WeightedAverage" || ev.ScoringLogic == "PointBased" || ev.ScoringLogic == "WA" || ev.ScoringLogic == "PB") 
                     {
                         foreach (var criteria in r.Criterias.OrderBy(c => c.DisplayOrder))
                         {
@@ -1426,6 +1438,9 @@ namespace ProjectTallify.Controllers
                                 var detailRow = new CriteriaDetailRowViewModel
                                 {
                                     ContestantName = c.Name,
+                                    ContestantCode = c.Code,
+                                    Organization = c.Organization ?? "",
+                                    PhotoPath = c.PhotoPath,
                                     JudgeRawScores = new Dictionary<int, decimal>()
                                 };
 
@@ -1509,6 +1524,21 @@ namespace ProjectTallify.Controllers
             {
                 Console.WriteLine($"Error generating report: {ex}");
                 return BadRequest("Failed to generate report: " + ex.Message);
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GenerateJudgeScoreSheets(int eventId, int roundId)
+        {
+            try
+            {
+                var pdfBytes = await _reportService.GenerateJudgeScoreSheetsAsync(eventId, roundId);
+                return File(pdfBytes, "application/pdf");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error generating judge score sheets: {ex}");
+                return BadRequest("Failed to generate judge score sheets: " + ex.Message);
             }
         }
 
@@ -1628,7 +1658,7 @@ namespace ProjectTallify.Controllers
                 {
                     var sheetRound = new ScoreSheetRound { RoundName = r.Name };
 
-                    var judges = await _db.Judges.Where(j => j.EventId == eventId).OrderBy(j => j.Name).ToListAsync();
+                    var judges = await _db.Judges.Where(j => j.EventId == eventId).OrderBy(j => j.Id).ToListAsync();
                     sheetRound.Judges = judges.Select(j => j.Name).ToList();
                     
                     var criteriaList = await _db.Criterias.Where(cr => cr.RoundId == r.Id).ToListAsync();

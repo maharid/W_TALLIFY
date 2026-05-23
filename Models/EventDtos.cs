@@ -82,5 +82,6 @@ namespace ProjectTallify.Models
         public int EventId { get; set; }
         public int RoundId { get; set; }
         public List<string>? ContestantIds { get; set; }
+        public string? AccessCode { get; set; }
     }
 }

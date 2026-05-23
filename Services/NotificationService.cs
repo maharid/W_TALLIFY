@@ -13,6 +13,7 @@ namespace ProjectTallify.Services
         Task NotifyEventAsync(int eventId, string title, string message, string type = "info", string? actionUrl = null);
         Task NotifyJudgeStatusUpdateAsync(int eventId, int judgeId, string status, bool isVerified, bool isAccessSent);
         Task NotifyJudgePulseAsync(int eventId);
+        Task NotifyScoresUpdatedAsync(int eventId);
     }
 
     public class NotificationService : INotificationService
@@ -24,6 +25,21 @@ namespace ProjectTallify.Services
         {
             _hubContext = hubContext;
             _db = db;
+        }
+
+        public async Task NotifyScoresUpdatedAsync(int eventId)
+        {
+            // 1. Broadcast to the generic event group (Judges, Scorers watching the dashboard)
+            await _hubContext.Clients.Group($"Event_{eventId}")
+                .SendAsync("ReceiveScoresUpdate");
+
+            // 2. Also broadcast to the Organizer specifically
+            var ev = await _db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (ev != null && ev.OrganizerId != 0)
+            {
+                await _hubContext.Clients.Group($"Organizer_{ev.OrganizerId}")
+                    .SendAsync("ReceiveScoresUpdate");
+            }
         }
 
         public async Task NotifyOrganizerAsync(int organizerId, string title, string message, string type = "info", string? actionUrl = null)

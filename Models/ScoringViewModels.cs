@@ -134,18 +134,21 @@ namespace ProjectTallify.Models
     public class LiveTallyRow
     {
         public string ContestantName { get; set; } = "";
-        public Dictionary<int, string> JudgeScores { get; set; } = new(); // JudgeId -> Score/Status
+        public string ContestantCode { get; set; } = ""; // Added
+        public string Organization { get; set; } = ""; // Added
+        public string? PhotoPath { get; set; } // Added
+        public Dictionary<int, string> JudgeScores { get; set; } = new Dictionary<int, string>(); // JudgeId -> Score/Status
     }
 
     public class LiveSummaryRow
     {
         public decimal Rank { get; set; }
         public string ContestantName { get; set; } = "";
-        public string Organization { get; set; } = ""; // Added
-        public string? PhotoPath { get; set; } // Added for Grand Reveal
+        public string Organization { get; set; } = ""; 
+        public string? PhotoPath { get; set; } 
         public decimal AverageScore { get; set; }
         public decimal TotalScore { get; set; } // Weighted/Accumulated
-        public Dictionary<int, decimal> CriteriaScores { get; set; } = new(); // CriteriaId -> Weighted Score
+        public Dictionary<int, decimal> CriteriaScores { get; set; } = new Dictionary<int, decimal>(); // CriteriaId -> Weighted Score
     }
 
     public class SimpleCriteriaViewModel
@@ -168,7 +171,10 @@ namespace ProjectTallify.Models
     {
         public decimal Rank { get; set; }
         public string ContestantName { get; set; } = "";
-        public Dictionary<int, decimal> JudgeRawScores { get; set; } = new(); // JudgeId -> Raw Score
+        public string ContestantCode { get; set; } = ""; // Added
+        public string Organization { get; set; } = ""; // Added
+        public string? PhotoPath { get; set; } // Added
+        public Dictionary<int, decimal> JudgeRawScores { get; set; } = new Dictionary<int, decimal>(); // JudgeId -> Raw Score
         public decimal Average { get; set; }
         public decimal Weighted { get; set; }
     }

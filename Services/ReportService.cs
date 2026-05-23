@@ -3,6 +3,10 @@ using ProjectTallify.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace ProjectTallify.Services
 {
@@ -211,6 +215,113 @@ namespace ProjectTallify.Services
                             }
                         });
 
+                        ComposeFooter(page.Footer());
+                    });
+                }
+            });
+
+            return document.GeneratePdf();
+        }
+
+        public async Task<byte[]> GenerateJudgeScoreSheetsAsync(int eventId, int roundId)
+        {
+            var reportData = await FetchAndPrepareDataAsync(eventId);
+            var round = reportData.Rounds.FirstOrDefault(r => r.RoundId == roundId);
+            if (round == null) return Array.Empty<byte>();
+
+            var document = Document.Create(container =>
+            {
+                foreach (var judge in reportData.Judges)
+                {
+                    container.Page(page =>
+                    {
+                        page.Margin(1.5f, Unit.Centimetre);
+                        page.Size(PageSizes.A4);
+                        page.DefaultTextStyle(x => x.FontSize(11));
+
+                        ComposeHeader(page.Header(), reportData.Event, "OFFICIAL SCORE SHEET");
+
+                        page.Content().PaddingVertical(20).Column(col =>
+                        {
+                            col.Item().Row(row =>
+                            {
+                                row.RelativeItem().Text(x =>
+                                {
+                                    x.Span("ROUND: ").Bold();
+                                    x.Span(round.RoundName.ToUpper());
+                                });
+                                row.RelativeItem().AlignRight().Text(x =>
+                                {
+                                    x.Span("JUDGE: ").Bold();
+                                    x.Span(judge.Name.ToUpper());
+                                });
+                            });
+
+                            col.Item().PaddingTop(10).PaddingBottom(20).LineHorizontal(0.5f);
+
+                            col.Item().Table(table =>
+                            {
+                                table.ColumnsDefinition(columns =>
+                                {
+                                    columns.ConstantColumn(40); // Code
+                                    columns.RelativeColumn();   // Name
+                                    foreach (var crit in round.Criteria)
+                                    {
+                                        columns.RelativeColumn();
+                                    }
+                                    columns.RelativeColumn(); // Total
+                                });
+
+                                table.Header(header =>
+                                {
+                                    header.Cell().Element(BlockHeader).Text("Code");
+                                    header.Cell().Element(BlockHeader).Text("Contestant");
+                                    foreach (var crit in round.Criteria)
+                                    {
+                                        string weightText = (crit.WeightPercent % 1 == 0) ? crit.WeightPercent.ToString("0") : crit.WeightPercent.ToString("0.##");
+                                        header.Cell().Element(BlockHeader).AlignCenter().Text($"{crit.Name}\n({weightText}%)");
+                                    }
+                                    header.Cell().Element(BlockHeader).AlignRight().Text("TOTAL");
+                                });
+
+                                foreach (var pRow in round.Participants)
+                                {
+                                    table.Cell().Element(BlockCell).AlignCenter().Text(pRow.Code);
+                                    table.Cell().Element(BlockCell).Text(pRow.Name);
+
+                                    decimal judgeTotal = 0;
+                                    foreach (var crit in round.Criteria)
+                                    {
+                                        decimal score = 0;
+                                        if (round.RawScores.TryGetValue(judge.Id, out var judgeScores) && 
+                                            judgeScores.TryGetValue(pRow.Id, out var cScores))
+                                        {
+                                            cScores.TryGetValue(crit.Id, out score);
+                                        }
+
+                                        table.Cell().Element(BlockCell).AlignCenter().Text(score.ToString("F1"));
+                                        
+                                        if (crit.IsDerived) judgeTotal += score;
+                                        else judgeTotal += score * (crit.WeightPercent / 100M);
+                                    }
+
+                                    table.Cell().Element(BlockCell).AlignRight().Text(judgeTotal.ToString("F2")).Bold();
+                                }
+                            });
+
+                            col.Item().PaddingTop(60).Column(sigCol =>
+                            {
+                                sigCol.Item().Text("I hereby certify that the scores provided above are true and correct to the best of my knowledge.").FontSize(10).AlignCenter();
+                                sigCol.Item().PaddingTop(10).Text("Reviewed and Approved by:").FontSize(10).AlignCenter();
+                                
+                                sigCol.Item().PaddingTop(40).AlignCenter().Width(250).Column(inner =>
+                                {
+                                    inner.Item().LineHorizontal(1).LineColor(Colors.Black);
+                                    inner.Item().PaddingTop(5).Text(judge.Name.ToUpper()).Bold().FontSize(12).AlignCenter();
+                                });
+                            });
+                        });
+                        
                         ComposeFooter(page.Footer());
                     });
                 }
@@ -478,7 +589,7 @@ namespace ProjectTallify.Services
 
             if (ev == null) throw new ArgumentException("Event not found");
 
-            var judges = await _db.Judges.Where(j => j.EventId == eventId).ToListAsync();
+            var judges = await _db.Judges.Where(j => j.EventId == eventId).OrderBy(j => j.Id).ToListAsync();
             var scores = await _db.Scores.Where(s => s.EventId == eventId).ToListAsync();
             var computedScores = await _db.ComputedRoundScores.Where(s => s.EventId == eventId).ToListAsync();
 

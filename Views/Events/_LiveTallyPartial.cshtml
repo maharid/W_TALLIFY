@@ -119,7 +119,7 @@ else
                             <table class="app-table" style="margin-bottom: 0;">
                                 <thead>
                                     <tr>
-                                        <th style="width: 250px; position: sticky; left: 0; background: #fff; z-index: 2; border-right: 1px solid #eee;">Contestant</th>
+                                        <th style="width: 300px; position: sticky; left: 0; background: #fff; z-index: 2; border-right: 1px solid #eee;">Contestant</th>
                                         @foreach (var judge in round.Judges)
                                         {
                                             <th style="text-align: center; min-width: 120px;">
@@ -138,8 +138,14 @@ else
                                         foreach (var row in round.Rows)
                                         {
                                             <tr>
-                                                <td style="font-weight: 600; position: sticky; left: 0; background: #fff; border-right: 1px solid #eee; z-index: 1;">
-                                                    @row.ContestantName
+                                                <td style="position: sticky; left: 0; background: #fff; border-right: 1px solid #eee; z-index: 1;">
+                                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                                        <img src="@(row.PhotoPath ?? "/images/default pfp.png")" class="tally-photo-thumb" alt="" />
+                                                        <div style="display: flex; flex-direction: column;">
+                                                            <span style="font-weight: 700; color: var(--color-text);">@row.ContestantName</span>
+                                                            <span style="font-size: 11px; color: var(--color-text-soft); font-weight: 600;">@row.ContestantCode • @row.Organization</span>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 @foreach (var judge in round.Judges)
                                                 {
@@ -175,8 +181,7 @@ else
                                     <table class="app-table" style="margin-bottom: 0;">
                                         <thead style="background: #f1f5f9;">
                                             <tr>
-                                                <th>Contestant</th>
-                                                <th style="color: #64748b;">Organization</th>
+                                                <th style="width: 250px; position: sticky; left: 0; background: #f1f5f9; z-index: 2; border-right: 1px solid #e5e7eb;">Contestant</th>
                                                 
                                                 <!-- Dynamic Criteria Headers -->
                                                 @foreach (var col in round.CriteriaColumns)
@@ -213,7 +218,7 @@ else
                                                 string rank3TextColor = "black";
 
                                                 // Default styles
-                                                string nameCellStyle = "font-weight: 600;";
+                                                string nameCellStyle = "position: sticky; left: 0; z-index: 1; border-right: 1px solid #e5e7eb; ";
                                                 string rankCellStyle = "text-align: center; vertical-align: middle; font-weight: 700;";
                                                 string rankText = sRow.Rank.ToString("0.##");
 
@@ -234,18 +239,26 @@ else
                                                 }
                                                 else 
                                                 { 
+                                                    nameCellStyle += "background: #fff;"; // Default background for unranked
                                                     rankCellStyle += "color: #000;"; // Lower Ranks: Black text
                                                 }
                                                 
                                                 <tr style="background-color: #fff;">
-                                                    <td style="@nameCellStyle">@sRow.ContestantName</td>
-                                                    <td style="color: #64748b;">@sRow.Organization</td>
+                                                    <td style="@nameCellStyle">
+                                                        <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0;">
+                                                            <img src="@(sRow.PhotoPath ?? "/images/default pfp.png")" class="tally-photo-thumb" style="width: 28px; height: 28px; border-color: rgba(255,255,255,0.3);" alt="" />
+                                                            <div style="display: flex; flex-direction: column;">
+                                                                <span style="font-weight: 700;">@sRow.ContestantName</span>
+                                                                <span style="font-size: 10px; opacity: 0.8;">@sRow.Organization</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                     
                                                     <!-- Dynamic Criteria Scores -->
                                                     @foreach (var col in round.CriteriaColumns)
                                                     {
                                                         var val = sRow.CriteriaScores.ContainsKey(col.Id) ? sRow.CriteriaScores[col.Id] : 0;
-                                                        <td style="text-align: center; color: #475569;">
+                                                        <td style="text-align: center; font-weight: 500;">
                                                             @if (col.IsDerived && val == 0 && !sRow.CriteriaScores.ContainsKey(col.Id))
                                                             {
                                                                 // If derived and no score exists (e.g., previous round not computed yet)
@@ -280,7 +293,7 @@ else
                             <!-- Toggle Button -->
                             <div style="margin-top: 24px; margin-bottom: 24px;">
                                 <button type="button" id="btn-toggle-details-@round.RoundId" class="btn-create-add" onclick="toggleDetails(@round.RoundId)" style="width: 100%; justify-content: center;">
-                                    Show result per criteria
+                                    Show result per criterion
                                 </button>
                             </div>
 
@@ -325,7 +338,7 @@ else
                                                 <thead>
                                                     <tr>
                                                         <th style="width: 50px; text-align: center;">Rank</th>
-                                                        <th>Contestant</th>
+                                                        <th style="position: sticky; left: 0; background: #f8fafc; z-index: 2; border-right: 1px solid #e5e7eb;">Contestant</th>
                                                         @if (currentDetailCriteria?.IsDerived == true)
                                                         {
                                                             <th colspan="@(round.Judges.Count)" style="text-align: center;">Automatically Computed (N/A for Judges)</th>
@@ -347,8 +360,16 @@ else
                                                     @foreach (var dRow in detail.Rows)
                                                     {
                                                         <tr>
-                                                            <td style="text-align: center;">@dRow.Rank</td>
-                                                            <td style="font-weight: 500;">@dRow.ContestantName</td>
+                                                            <td style="text-align: center; vertical-align: middle;">@dRow.Rank</td>
+                                                            <td style="vertical-align: middle; position: sticky; left: 0; background: #fff; z-index: 1; border-right: 1px solid #e5e7eb;">
+                                                                <div style="display: flex; align-items: center; gap: 10px;">
+                                                                    <img src="@(dRow.PhotoPath ?? "/images/default pfp.png")" class="tally-photo-thumb" style="width: 24px; height: 24px;" alt="" />
+                                                                    <div style="display: flex; flex-direction: column;">
+                                                                        <span style="font-weight: 600; font-size: 13px;">@dRow.ContestantName</span>
+                                                                        <span style="font-size: 10px; color: var(--color-text-soft);">@dRow.ContestantCode</span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
                                                             @if (currentDetailCriteria?.IsDerived == true)
                                                             {
                                                                 <td colspan="@(round.Judges.Count)" style="text-align: center; color: #64748b;">—</td>
@@ -360,10 +381,10 @@ else
                                                                 @foreach (var judge in round.Judges)
                                                                 {
                                                                     var raw = dRow.JudgeRawScores.ContainsKey(judge.Id) ? dRow.JudgeRawScores[judge.Id].ToString("F2") : "-";
-                                                                    <td style="text-align: center; color: #64748b;">@raw</td>
+                                                                    <td style="text-align: center; color: #64748b; vertical-align: middle;">@raw</td>
                                                                 }
-                                                                <td style="text-align: right; background: #f8fafc;">@dRow.Average.ToString("F3")</td>
-                                                                <td style="text-align: right; background: #f1f5f9; font-weight: 700;">@dRow.Weighted.ToString("F3")</td>
+                                                                <td style="text-align: right; background: #f8fafc; vertical-align: middle;">@dRow.Average.ToString("F3")</td>
+                                                                <td style="text-align: right; background: #f1f5f9; font-weight: 700; vertical-align: middle;">@dRow.Weighted.ToString("F3")</td>
                                                             }
                                                         </tr>
                                                     }
@@ -388,6 +409,14 @@ else
     </div>
 
     <style>
+        .tally-photo-thumb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #eee;
+            background: #fff;
+        }
         .tally-tab-link.active {
             color: var(--color-primary) !important;
             border-bottom-color: var(--color-primary) !important;

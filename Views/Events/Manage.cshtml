@@ -169,7 +169,7 @@
 
         @if (isCriteria)
         {
-            <button class="tab-link" data-tab="criteria">Criteria</button>
+            <button class="tab-link" data-tab="criteria">Rounds & Criteria</button>
         }
         else
         {
@@ -795,6 +795,16 @@
                     </div>
                 </div>
 
+                <!-- STEP 3: ACCESS CODE -->
+                <div id="modal-step-3" style="display:none; flex: 1; flex-direction: column; justify-content: center; align-items: center; min-height: 0;">
+                    <div style="text-align: center;">
+                        <h4 style="margin-bottom: 10px;">Security Verification</h4>
+                        <p class="text-muted" style="font-size: 14px; color: var(--color-text-soft); margin-bottom: 20px;">Please enter the event's Access Code to start the round.</p>
+                        <input type="text" id="start-round-access-code" class="event-input" placeholder="Access Code" style="text-align: center;" />
+                        <p id="start-round-error" class="event-error-message" style="color:var(--color-danger-primary); margin-top: 5px; display:none;"></p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Footer -->
@@ -809,7 +819,13 @@
                 <!-- Step 2 Buttons -->
                 <div id="modal-footer-step-2" style="display:none; gap:12px; width:100%;">
                     <button type="button" id="btn-back-selection" class="btn-screen-cancel" style="flex:1;">Back</button>
-                    <button type="button" id="btn-confirm-start-round" class="btn-screen-primary" style="flex:1; justify-content: center;">Confirm & Start Round</button>
+                    <button type="button" id="btn-confirm-start-round" class="btn-screen-primary" style="flex:1; justify-content: center;">Confirm</button>
+                </div>
+
+                <!-- Step 3 Buttons -->
+                <div id="modal-footer-step-3" style="display:none; gap:12px; width:100%;">
+                    <button type="button" id="btn-back-access-code" class="btn-screen-cancel" style="flex:1;">Back</button>
+                    <button type="button" id="btn-start-round-final" class="btn-screen-primary" style="flex:1; justify-content: center;">Start Round</button>
                 </div>
 
             </div>
@@ -920,6 +936,33 @@
             <div class="screen-actions" style="width: 100%;">
                 <button type="button" id="btn-cancel-send-single" class="btn-screen-cancel">Cancel</button>
                 <button type="button" id="btn-confirm-send-single" class="btn-screen-primary" style="width: 100%; justify-content: center;">Yes, Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Sheet Print Prompt Modal -->
+    <div id="modal-print-scoresheets" class="summary-overlay">
+        <div class="summary-modal" style="max-width: 450px;">
+            <div class="summary-modal-header">
+                <h3 class="screen-title">Print Judge Score Sheets</h3>
+                <button type="button" onclick="hidePrintScoresheetsModal()" class="screen-close-btn" aria-label="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="summary-modal-body" style="text-align: center; padding: 30px 20px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🖨️</div>
+                <p style="color: var(--color-text); font-size: 1.1rem; font-weight: 500; margin-bottom: 10px;">Verification Required</p>
+                <p style="color: var(--color-text-soft); line-height: 1.5;">The round has ended and all scores are verified. It is recommended to print the official score sheets now for physical signing by each judge.</p>
+            </div>
+            <div class="screen-actions" style="padding: 20px; border-top: 1px solid var(--color-border); display: flex; gap: 12px;">
+                <button type="button" onclick="hidePrintScoresheetsModal()" class="btn-screen-cancel" style="flex: 1;">Later</button>
+                <button type="button" id="btnPrintOfficialScores" class="btn-screen-primary" style="flex: 1; justify-content: center;">
+                    <svg style="margin-right: 8px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print Now
+                </button>
             </div>
         </div>
     </div>
@@ -1535,6 +1578,27 @@
                 submitEventAction(enteredCode);
             }
 
+            const printScoresheetsModal = document.getElementById('modal-print-scoresheets');
+            const btnPrintOfficialScores = document.getElementById('btnPrintOfficialScores');
+            let pendingPrintRoundId = null;
+
+            window.hidePrintScoresheetsModal = function() {
+                if (printScoresheetsModal) printScoresheetsModal.classList.remove('open');
+                window.location.reload(); // Always reload after closing this modal to refresh round status
+            }
+
+            if (btnPrintOfficialScores) {
+                btnPrintOfficialScores.addEventListener('click', function() {
+                    if (!pendingPrintRoundId) return;
+                    
+                    // Open in new tab
+                    window.open(`/Events/GenerateJudgeScoreSheets?eventId=${eventId}&roundId=${pendingPrintRoundId}`, '_blank');
+                    
+                    // Close and reload parent
+                    hidePrintScoresheetsModal();
+                });
+            }
+
             async function submitEventAction(accessCode) {
                 // -- Logic for End Round --
                 if (currentAction === 'endRound') {
@@ -1549,11 +1613,16 @@
                         });
                         const data = await response.json();
                         if (data.success) {
-                            showSuccessModal(data.message);
-                            // Save tab state
-                            const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
-                            if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
-                            setTimeout(() => window.location.reload(), 1500);
+                            if (data.showPrintPrompt) {
+                                pendingPrintRoundId = data.roundId;
+                                if (printScoresheetsModal) printScoresheetsModal.classList.add('open');
+                            } else {
+                                showSuccessModal(data.message);
+                                // Save tab state
+                                const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
+                                if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
+                                setTimeout(() => window.location.reload(), 1500);
+                            }
                         } else {
                             showSuccessModal(data.message || "Failed to end round.");
                         }
@@ -1649,6 +1718,15 @@
                 window.signalrConnection.on("ReceiveJudgeStatusUpdate", function(judgeId, status, isVerified, isAccessSent) {
                     console.log(`Real-time update for judge ${judgeId}: ${status}`);
                     updateJudgeRowUI(judgeId, status, isVerified, isAccessSent);
+                });
+
+                window.signalrConnection.on("ReceiveScoresUpdate", function() {
+                    console.log("Scores updated, refreshing tally...");
+                    // Only refresh if we are actually on the tally tab
+                    const tallyTabBtn = document.querySelector('.tab-link[data-tab="tally"]');
+                    if (tallyTabBtn && tallyTabBtn.classList.contains('active')) {
+                        fetchLiveTally();
+                    }
                 });
             }
 
@@ -2304,11 +2382,11 @@
                     
                     if (isHidden) {
                         el.style.display = 'block';
-                        if (btn) btn.textContent = "Hide result per criteria";
+                        if (btn) btn.textContent = "Hide result per criterion";
                         window.tallyDetailsState[roundId] = true;
                     } else {
                         el.style.display = 'none';
-                        if (btn) btn.textContent = "Show result per criteria";
+                        if (btn) btn.textContent = "Show result per criterion";
                         window.tallyDetailsState[roundId] = false;
                     }
                 }
@@ -2365,7 +2443,7 @@
                                 const el = document.getElementById('details-round-' + rId);
                                 const btn = document.getElementById('btn-toggle-details-' + rId);
                                 if (el) el.style.display = 'block';
-                                if (btn) btn.textContent = "Hide result per criteria";
+                                if (btn) btn.textContent = "Hide result per criterion";
                             }
                         }
                     })

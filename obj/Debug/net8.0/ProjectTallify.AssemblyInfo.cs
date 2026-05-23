@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ProjectTallify")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d464c896e9a0043df438fb8509e2882e93a0348")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e2f2eaee06ba2f9bef09bf0d5dfd3bc9efb27c0")]
 [assembly: System.Reflection.AssemblyProductAttribute("ProjectTallify")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ProjectTallify")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

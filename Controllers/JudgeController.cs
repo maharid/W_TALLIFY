@@ -291,6 +291,29 @@ namespace ProjectTallify.Controllers
                     return NotFound(new { success = false, message = "Event not found." });
 
                 var judgeId = HttpContext.Session.GetInt32("JudgeId");
+                
+                // FALLBACK: If session is null, try to get JudgeId from Claims
+                if (judgeId == null && User.Identity.IsAuthenticated)
+                {
+                    var claim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                    if (claim != null && claim.StartsWith("Judge_"))
+                    {
+                        if (int.TryParse(claim.Replace("Judge_", ""), out int parsedId))
+                        {
+                            judgeId = parsedId;
+                            // Restore session for subsequent calls
+                            HttpContext.Session.SetInt32("JudgeId", judgeId.Value);
+                            
+                            var judge = await _db.Judges.FindAsync(judgeId.Value);
+                            if (judge != null)
+                            {
+                                HttpContext.Session.SetString("JudgeName", judge.Name);
+                                HttpContext.Session.SetInt32("EventId", judge.EventId);
+                            }
+                        }
+                    }
+                }
+
                 if (judgeId == null)
                 {
                      return Unauthorized(new { success = false, message = "Session expired. Please login again." });
@@ -326,7 +349,8 @@ namespace ProjectTallify.Controllers
                 
                 await _db.SaveChangesAsync();
 
-                await _notificationService.NotifyEventAsync(ev.Id, "Scores Submitted", $"{judgeName} submitted scores for Round {roundId}.", "success");
+                // Trigger Real-time Tally Refresh for Organizers
+                await _notificationService.NotifyScoresUpdatedAsync(ev.Id);
 
                 var totalJudges = await _db.Judges.CountAsync(j => j.EventId == ev.Id);
                 
@@ -335,11 +359,6 @@ namespace ProjectTallify.Controllers
                     .Select(s => s.JudgeId)
                     .Distinct()
                     .CountAsync();
-
-                if (submittedJudges >= totalJudges && totalJudges > 0)
-                {
-                    await _notificationService.NotifyEventAsync(ev.Id, "Round Complete", $"All {totalJudges} judges have submitted scores for Round {roundId}.", "success");
-                }
 
                 return Ok(new { success = true, message = "All scores submitted successfully." });
             }

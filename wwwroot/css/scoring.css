@@ -78,26 +78,34 @@ body {
 }
 
 .event-title-premium {
-    font-size: 1.3rem;
+    font-size: 1.75rem; /* Significantly larger */
     font-weight: 900;
-    background: linear-gradient(135deg, var(--color-text) 0%, #64748b 100%);
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-text) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     margin: 0;
+    line-height: 1;
 }
 
 .status-badge-premium {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 11px;
+    gap: 8px; /* Increased gap */
+    padding: 6px 16px; /* Increased padding */
+    border-radius: 12px;
+    font-size: 14px; /* Enlarged from 11px */
     font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.badge-active { background: var(--event-primary-soft-bg); color: var(--event-primary); border: 1px solid var(--event-primary-soft); }
+.badge-active { 
+    background: var(--color-primary); /* Use solid color or very vibrant shade */
+    color: #ffffff; /* White text for active round */
+    box-shadow: 0 4px 12px var(--event-primary-soft);
+}
 
 /* ===================================================================
    SCORING CARD
@@ -172,8 +180,9 @@ body {
 
 .progress-fill-v2 { 
     height: 100%; 
-    background: var(--color-primary); 
-    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy, premium feel */
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--event-primary-soft) 100%);
+    opacity: 0.85; /* Lighter shade effect */
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .progress-text-v2 { 
@@ -184,7 +193,7 @@ body {
     justify-content: center; 
     font-size: 0.85rem; 
     font-weight: 900; 
-    color: #1e293b; 
+    color: #000000; /* Restored to black as requested */
     z-index: 2;
     letter-spacing: 0.5px;
 }
@@ -272,12 +281,9 @@ body {
     height: 100%;
     object-fit: contain; /* Full picture visibility */
     z-index: 2;
-    transition: transform 0.3s ease;
 }
 
-.c-photo-wrapper:hover .c-photo-main {
-    transform: scale(1.05);
-}
+/* Hover effect removed for visual stability */
 
 .score-input-v2 {
     width: 100%;
@@ -292,6 +298,12 @@ body {
 }
 
 .score-input-v2:focus { border-color: var(--color-primary); background: #fff; outline: none; }
+
+.score-input-v2.invalid {
+    color: #ef4444 !important; /* Red-500 */
+    border-color: #fca5a5 !important; /* Red-300 */
+    background-color: #fef2f2 !important; /* Red-50 */
+}
 
 .carousel-pagination { 
     display: flex; 
@@ -333,22 +345,40 @@ body {
 }
 
 /* ===================================================================
-   TOASTS
+   TOASTS (Standardized with Organizer Screen)
    =================================================================== */
-.score-toast {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: #1e293b;
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    z-index: 10000;
-    transition: transform 0.4s ease;
+.toast-container { 
+    position: fixed; 
+    bottom: 24px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    z-index: 10000; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    align-items: center; 
 }
-.score-toast.active { transform: translateX(-50%) translateY(0); }
+
+.toast-item { 
+    background: #ef4444; 
+    color: #fff; 
+    padding: 12px 20px; 
+    border-radius: 10px; 
+    font-size: 14px; 
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    opacity: 0; 
+    transform: translateY(20px); 
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+
+.toast-item.is-visible { 
+    opacity: 1; 
+    transform: translateY(0); 
+}
+
+.toast-item.toast-success { background: #10b981; }
+.toast-item.toast-info { background: #3b82f6; }
 
 .hidden { display: none !important; }
 .event-step-actions .hidden { display: none !important; }

@@ -1479,8 +1479,19 @@ C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\refint\ProjectTalli
 C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\ProjectTallify.pdb
 C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\ProjectTallify.genruntimeconfig.cache
 C:\Users\ACER\Documents\IT LECTURES\TALLIFY\obj\Debug\net8.0\ref\ProjectTallify.dll
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.csproj.AssemblyReference.cache
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.GeneratedMSBuildEditorConfig.editorconfig
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.AssemblyInfoInputs.cache
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.AssemblyInfo.cs
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.csproj.CoreCompileInputs.cache
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.MvcApplicationPartsAssemblyInfo.cache
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.RazorAssemblyInfo.cache
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.RazorAssemblyInfo.cs
+C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.sourcelink.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\appsettings.Development.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\appsettings.json
+C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.staticwebassets.runtime.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.staticwebassets.endpoints.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-Black.ttf
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-BlackItalic.ttf
@@ -1501,7 +1512,6 @@ C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-SemiBoldItalic.ttf
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-Thin.ttf
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\Lato-ThinItalic.ttf
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\LatoFont\OFL.txt
-C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.staticwebassets.runtime.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.exe
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.deps.json
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\ProjectTallify.runtimeconfig.json
@@ -1603,15 +1613,6 @@ C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\runtimes\win-x86\native\libstdc++-6.dll
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\runtimes\win-x86\native\libwinpthread-1.dll
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\runtimes\win-x86\native\qpdf.dll
 C:\TALLIFY\W_TALLIFY\bin\Debug\net8.0\runtimes\win-x86\native\zlib1.dll
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.csproj.AssemblyReference.cache
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\rpswa.dswa.cache.json
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.GeneratedMSBuildEditorConfig.editorconfig
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.AssemblyInfoInputs.cache
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.AssemblyInfo.cs
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.csproj.CoreCompileInputs.cache
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.MvcApplicationPartsAssemblyInfo.cache
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.RazorAssemblyInfo.cache
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.RazorAssemblyInfo.cs
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -1626,4 +1627,3 @@ C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\refint\ProjectTallify.dll
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.pdb
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.genruntimeconfig.cache
 C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ref\ProjectTallify.dll
-C:\TALLIFY\W_TALLIFY\obj\Debug\net8.0\ProjectTallify.sourcelink.json
