@@ -1,96 +1,90 @@
-# ProjectTallify
+# Project Tallify
 
-ProjectTallify is a sophisticated event management and scoring system designed for organized competitions such as pageants, talent shows, and corporate events. It streamlines the entire lifecycle of an event—from registration and judging to real-time tallying and automated PDF reporting.
+Tallify is a web-based event management and scoring system designed for organizers to manage contests, rounds, criteria, and contestants, while providing a platform for judges to submit real-time scores.
 
-## 🚀 Quick Start
+## Project Overview
+
+- **Purpose:** Event management, scoring, and real-time tallying.
+- **Architecture:** ASP.NET Core 8.0 MVC with a Service Layer for business logic.
+- **Key Features:**
+    - Organizer Dashboard & Event Management.
+    - Judge Portal for score submission.
+    - Multiple Scoring Logics (Weighted Average, Point Based).
+    - Real-time Live Tally & Notifications (SignalR).
+    - PDF Report Generation (QuestPDF).
+    - Automated Testing (Katalon Studio).
+
+## Technology Stack
+
+- **Backend:** .NET 8.0 (C#)
+- **Database:** MySQL (Entity Framework Core with Pomelo provider)
+- **Frontend:** Razor Views, Vanilla CSS, JavaScript (jQuery for some interactions)
+- **Real-time Communication:** SignalR
+- **Security:** BCrypt.Net-Next for password hashing, Cookie-based Authentication
+- **Reporting:** QuestPDF
+- **Containerization:** Docker & Docker Compose
+- **Testing:** Katalon Studio (located in the `TALLIFY/` directory)
+
+## Getting Started
 
 ### Prerequisites
-- **.NET 8.0 SDK**
-- **MySQL Server** (or a compatible instance like MariaDB/Docker)
-- **SMTP Server** for email features (e.g., Gmail App Passwords, Mailtrap)
-- **Katalon Studio** (Optional, for automated testing)
 
-### Building and Running
-1.  **Database Configuration:**
-    - Update `ConnectionStrings:TallifyDb` in `appsettings.json` with your MySQL credentials.
-    - Ensure `SslMode=none;AllowPublicKeyRetrieval=True;` is set if using local development MySQL.
-2.  **Apply Migrations:**
-    ```powershell
-    dotnet ef database update
-    ```
-3.  **Run the Application:**
-    ```powershell
-    dotnet run
-    ```
-    The application typically listens on `http://localhost:5022`.
-
-4.  **Docker (Optional):**
-    ```bash
-    docker-compose up --build
-    ```
-    This will spin up both the application and a MySQL database container.
+- .NET 8.0 SDK
+- MySQL Server
+- (Optional) Docker & Docker Compose
+- (Optional) Katalon Studio (for running automated tests)
 
 ### Configuration
-Key settings are managed in `appsettings.json`:
-- `EmailSettings`: SMTP host, port, credentials, and sender info.
-- `ConnectionStrings`: Database connection details.
 
-## 🏗️ Architecture & Technology Stack
+1.  Copy `.env.example` to `.env` and fill in the required environment variables.
+2.  Update the connection string in `appsettings.json` if necessary (it currently points to `localhost`).
 
--   **Backend:** ASP.NET Core 8.0 MVC (C#)
--   **Database:** MySQL with Entity Framework Core (using `Pomelo.EntityFrameworkCore.MySql`)
--   **Real-time:** SignalR for live scoring updates and notifications.
--   **Reporting:** QuestPDF for high-quality, code-defined PDF generation.
--   **Authentication:** 
-    -   **Organizers:** Cookie-based authentication with session management. (Formerly `Users`).
-    -   **Judges:** Secure PIN/Token-based access via unique invitation links.
--   **Security:** SHA256 hashing for sensitive tokens; `BCrypt.Net-Next` for password hashing.
--   **Frontend:** Razor Views, Vanilla JavaScript, jQuery, and custom CSS (Vanilla CSS + Bootstrap).
+### Building and Running
 
-## 📂 Project Structure
+1.  **Restore dependencies:**
+    ```bash
+    dotnet restore
+    ```
+2.  **Update database:**
+    ```bash
+    dotnet ef database update
+    ```
+3.  **Run the application:**
+    ```bash
+    dotnet run
+    ```
+    The application will typically be available at `http://localhost:5000` or `https://localhost:5001`.
 
--   `Controllers/`: Request handlers (e.g., `EventsController` for management, `AuthController` for login).
--   `Models/`: 
-    -   `Data/`: `TallifyDbContext.cs` (EF Core context).
-    -   Entities: `Event.cs`, `Contestant.cs`, `Judge.cs`, `Score.cs`, `Round.cs`, `Criteria.cs`.
-    -   `DTOs`: Data transfer objects for API requests and view models.
--   `Services/`: Business logic implementations:
-    -   `ScoringService.cs`: Core logic for `WeightedAverage` and `PointBased` scoring.
-    -   `ReportService.cs`: Logic for generating PDF summaries and score sheets.
-    -   `NotificationService.cs`: SignalR wrapper for pushing real-time alerts.
-    -   `SmtpEmailSender.cs`: Handles system emails (invites, password resets).
--   `Views/`: Razor templates, organized by controller.
--   `wwwroot/`: Static assets (JS, CSS, images, uploads).
--   `Hubs/`: SignalR Hub definitions (`NotificationHub.cs`).
--   `TALLIFY/`: Katalon Studio project for automated E2E testing.
--   `Migrations/`: EF Core database schema history.
+### Testing
 
-## 🛠️ Development Conventions
+- Automated tests are located in the `TALLIFY/` directory and are intended to be run with Katalon Studio.
+- Unit/Integration tests (if added in the future) should be placed in a separate `.Tests` project.
 
-### Coding Style
--   **C#:** PascalCase for classes, methods, and public properties; camelCase for private fields (with `_` prefix).
--   **Asynchronous:** Always use `async`/`await` for I/O-bound operations (DB, Email, Files).
--   **Dependency Injection:** All services and the DbContext must be injected via constructors.
--   **Error Handling:** Use custom middleware for global exception handling (`Home/Error`).
+## Development Conventions
 
-### Scoring Systems
-1.  **Weighted Average (WA):** Scores are averaged across judges and then weighted based on criteria percentages.
-2.  **Point-Based (PB):** Simple summation of judge points or Rank Aggregation (where lower rank sum wins).
-3.  **Derived Criteria:** Supports carrying over scores from previous rounds (e.g., "Preliminary Score" in a "Top 5" round).
+- **Services:** Place complex business logic in the `Services/` directory. Services should be registered in `Program.cs` and injected into controllers.
+- **Asynchronous Code:** Always prefer `async/await` for I/O-bound operations (DB queries, file access, email sending).
+- **Models:**
+    - Entities are located in `Models/`.
+    - DTOs and ViewModels should be used for data transfer between layers or to the view.
+- **Frontend:**
+    - CSS files are modularized in `wwwroot/css/`.
+    - JavaScript logic is separated by feature in `wwwroot/js/`.
+- **SignalR:** Use `NotificationHub` for any real-time updates.
+- **Migrations:** Use Entity Framework Core Migrations for any database schema changes.
 
-### Database Management
--   **Migrations Only:** Never modify the database schema manually. Always use `dotnet ef migrations add <Name>`.
--   **Auditing:** Critical actions (event start/end, judge verification) must be logged to the `AuditLogs` table.
+## Directory Structure
 
-## 📝 Key Commands
--   **Add Migration:** `dotnet ef migrations add <MigrationName>`
--   **Update Database:** `dotnet ef database update`
--   **Remove Last Migration:** `dotnet ef migrations remove`
--   **Run Tests:** `cd TALLIFY && ./gradlew katalonTest` (Requires Gradle and Katalon setup)
-
-## 💡 System Logic Notes
--   **Judge Invitations:** Judges must verify their email via a unique token before they can access the scoring portal.
--   **Round Management:** Only one round is typically "Active" at a time to prevent scoring confusion.
--   **Live Tally:** The Organizer's dashboard polls/listens for SignalR updates to show real-time rankings as judges submit scores.
--   **Contestant Codes:** Use sequential codes (e.g., 01, 02) for consistent display and sorting.
--   **File Storage:** Uploaded photos (contestants/organizers) are stored in `wwwroot/uploads/` and cleaned up if orphaned for >30 days.
+- `Controllers/`: MVC Controllers.
+- `Hubs/`: SignalR Hub definitions.
+- `Migrations/`: EF Core database migrations.
+- `Models/`: Database entities and application models.
+- `Properties/`: Project settings and launch configurations.
+- `Services/`: Business logic services (Scoring, Reporting, Email, etc.).
+- `TALLIFY/`: Katalon Studio test project.
+- `Views/`: Razor View files.
+- `wwwroot/`: Static assets (CSS, JS, Images, Libs).
+- `Program.cs`: Application entry point and configuration.
+- `ProjectTallify.csproj`: Project definition and dependencies.
+- `appsettings.json`: Configuration settings.
+- `Dockerfile` / `docker-compose.yml`: Containerization setup.

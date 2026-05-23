@@ -193,28 +193,28 @@ else
             </div>
         </header>
 
-        <!-- Notifications popover (Facebook Style) -->
+        <!-- Notifications popover (Refactored) -->
         <div class="notifications-popover" id="notificationsPopover" aria-hidden="true">
-            <div class="notifications-popover-inner">
-                <div class="notifications-popover-header">
-                    <div class="notif-header-top">
-                        <h3>Notifications</h3>
-                        <button type="button"
-                                class="notifications-close"
-                                id="btnNotificationsClose"
-                                aria-label="Close notifications">
-                            <i class="ri-close-line"></i>
-                        </button>
-                    </div>
-                    <div class="notif-tabs">
-                        <button type="button" class="notif-tab is-active" data-filter="all">All</button>
-                        <button type="button" class="notif-tab" data-filter="unread">Unread</button>
-                        <button type="button" id="btnMarkAllRead" class="notif-mark-read-link">Mark all as read</button>
-                    </div>
+            <div class="notifications-popover-header">
+                <h3>Notifications</h3>
+                <div class="notif-header-actions">
+                    <button type="button" class="btn-notif-options" title="Options">
+                        <i class="ri-more-fill"></i>
+                    </button>
+                    <button type="button" class="notifications-close" id="btnNotificationsClose" aria-label="Close">
+                        <i class="ri-close-line"></i>
+                    </button>
                 </div>
-                <div class="notifications-content">
-                    <!-- Dynamic content -->
-                </div>
+            </div>
+            
+            <div class="notifications-tabs">
+                <div class="notif-tab is-active" data-filter="all">All</div>
+                <div class="notif-tab" data-filter="unread">Unread</div>
+                <button type="button" id="btnMarkAllRead" class="notif-mark-read-link">Mark all as read</button>
+            </div>
+
+            <div class="notifications-content">
+                <!-- Grouped notifications injected here via JS -->
             </div>
         </div>
     }

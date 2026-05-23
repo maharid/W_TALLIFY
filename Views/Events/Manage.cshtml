@@ -141,10 +141,9 @@
                        asp-route-returnUrl="@Context.Request.Path"
                        class="btn-secondary"
                        style="display: inline-flex; align-items: center; gap: 6px;"
-                       title="Limited Edit Mode: You can only edit names and details, but not scoring rules while the event is open.">
-                        <i class="ri-error-warning-line" style="color: #f59e0b;"></i> Edit event
-                    </a>
-                    <button type="button" class="btn-danger" onclick="openConfirmModal('end')">
+                       data-tooltip="Limited Edit Mode:&#10;You can only edit names and details,&#10;but not scoring rules while the event is open.">
+                       <i class="ri-error-warning-line" style="color: #f59e0b;"></i> Edit event
+                    </a>                    <button type="button" class="btn-danger" onclick="openConfirmModal('end')">
                         End Event
                     </button>
                 }
@@ -848,16 +847,6 @@
                     </div>
                 </div>
 
-                <!-- STEP 3: ACCESS CODE -->
-                <div id="modal-step-3" style="display:none; flex: 1; flex-direction: column; justify-content: center; align-items: center; min-height: 0;">
-                    <div style="text-align: center;">
-                        <h4 style="margin-bottom: 10px;">Security Verification</h4>
-                        <p class="text-muted" style="font-size: 14px; color: var(--color-text-soft); margin-bottom: 20px;">Please enter the event's Access Code to start the round.</p>
-                        <input type="text" id="start-round-access-code" class="event-input" placeholder="Access Code" style="text-align: center;" />
-                        <p id="start-round-error" class="event-error-message" style="color:var(--color-danger-primary); margin-top: 5px; display:none;"></p>
-                    </div>
-                </div>
-
             </div>
 
             <!-- Footer -->
@@ -872,13 +861,7 @@
                 <!-- Step 2 Buttons -->
                 <div id="modal-footer-step-2" style="display:none; gap:12px; width:100%;">
                     <button type="button" id="btn-back-selection" class="btn-screen-cancel" style="flex:1;">Back</button>
-                    <button type="button" id="btn-confirm-start-round" class="btn-screen-primary" style="flex:1; justify-content: center;">Confirm</button>
-                </div>
-
-                <!-- Step 3 Buttons -->
-                <div id="modal-footer-step-3" style="display:none; gap:12px; width:100%;">
-                    <button type="button" id="btn-back-access-code" class="btn-screen-cancel" style="flex:1;">Back</button>
-                    <button type="button" id="btn-start-round-final" class="btn-screen-primary" style="flex:1; justify-content: center;">Start Round</button>
+                    <button type="button" id="btn-confirm-start-round" class="btn-screen-primary" style="flex:1; justify-content: center;">Confirm & Start Round</button>
                 </div>
 
             </div>
@@ -1165,6 +1148,8 @@
             const modalFooter1 = document.getElementById('modal-footer-step-1');
             const modalFooter2 = document.getElementById('modal-footer-step-2');
             const summaryContainer = document.getElementById('selected-contestants-summary');
+            const startRoundAccessCode = document.getElementById('start-round-access-code');
+            const startRoundError = document.getElementById('start-round-error');
 
             // -- Confirm Action Modal (Start/End/EndRound) --
             const confirmActionModal = document.getElementById('modal-confirm-action');
@@ -1266,6 +1251,11 @@
                     btnConfirmStartRound.disabled = false;
                 }
                 if (btnBackSelection) btnBackSelection.disabled = false;
+                if (startRoundAccessCode) startRoundAccessCode.value = '';
+                if (startRoundError) {
+                    startRoundError.textContent = '';
+                    startRoundError.style.display = 'none';
+                }
 
                 const topNContainer = document.getElementById('top-n-container');
                 const rankTh = document.getElementById('select-contestants-rank-th');
@@ -1451,46 +1441,17 @@
 
             // 3. Confirm & Start (Step 2 -> Action)
             if (btnConfirmStartRound) {
-                btnConfirmStartRound.addEventListener('click', async function() {
+                btnConfirmStartRound.addEventListener('click', function() {
                     const selectedIds = Array.from(selectContestantsTableBody.querySelectorAll('.contestant-checkbox:checked')).map(cb => cb.value);
                     
-                    if (selectedIds.length === 0) return;
-
-                    const originalText = this.textContent;
-                    this.textContent = "Starting...";
-                    this.disabled = true;
-                    if(btnBackSelection) btnBackSelection.disabled = true;
-
-                    try {
-                        const response = await fetch('/Events/StartRound', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                            },
-                            body: JSON.stringify({ eventId: eventId, roundId: pendingRoundId, contestantIds: selectedIds })
-                        });
-                        const data = await response.json();
-                        if (data.success) {
-                            hideSelectContestantsModal();
-                            showSuccessModal(data.message);
-                            // Save tab state
-                            const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
-                            if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
-                            setTimeout(() => window.location.reload(), 1500);
-                        } else {
-                            alert(data.message || "Failed to start round.");
-                            this.textContent = originalText;
-                            this.disabled = false;
-                            if(btnBackSelection) btnBackSelection.disabled = false;
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        alert("An error occurred.");
-                        this.textContent = originalText;
-                        this.disabled = false;
-                        if(btnBackSelection) btnBackSelection.disabled = false;
+                    if (selectedIds.length === 0) {
+                        alert("Please select at least one contestant.");
+                        return;
                     }
+
+                    hideSelectContestantsModal();
+                    currentAction = 'startRound';
+                    openAccessCodeModal();
                 });
             }
 
@@ -1534,6 +1495,8 @@
             function openAccessCodeModal() {
                 if (currentAction === 'endRound') {
                     if(accessCodeModalTitle) accessCodeModalTitle.textContent = 'End Round';
+                } else if (currentAction === 'startRound') {
+                    if(accessCodeModalTitle) accessCodeModalTitle.textContent = 'Start Round';
                 } else {
                     if(accessCodeModalTitle) accessCodeModalTitle.textContent = (currentAction === 'start' ? 'Start Event' : 'End Event');
                 }
@@ -1653,6 +1616,37 @@
             }
 
             async function submitEventAction(accessCode) {
+                // -- Logic for Start Round --
+                if (currentAction === 'startRound') {
+                    const selectedIds = Array.from(selectContestantsTableBody.querySelectorAll('.contestant-checkbox:checked')).map(cb => cb.value);
+                    if (selectedIds.length === 0) return;
+
+                    try {
+                        const response = await fetch('/Events/StartRound', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                            },
+                            body: JSON.stringify({ eventId: eventId, roundId: pendingRoundId, contestantIds: selectedIds, accessCode: accessCode })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            showSuccessModal(data.message);
+                            // Save tab state
+                            const activeTab = document.querySelector('.tab-link.active')?.getAttribute('data-tab');
+                            if (activeTab) sessionStorage.setItem('activeManageTab', activeTab);
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            showSuccessModal(data.message || "Failed to start round.");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showSuccessModal("An error occurred.");
+                    }
+                    return;
+                }
+
                 // -- Logic for End Round --
                 if (currentAction === 'endRound') {
                     try {
