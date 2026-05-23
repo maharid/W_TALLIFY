@@ -679,33 +679,86 @@
                 <!-- Left Column -->
                 <div class="settings-column">
                     
-                    <!-- Generate Reports -->
+                    <!-- Official Reports -->
                     <div class="settings-group card">
                         <div class="settings-group-header">
-                            <h3 class="settings-group-title">Generate Reports</h3>
+                            <h3 class="settings-group-title">
+                                Official Reports
+                                <button type="button" class="btn-info-access" 
+                                   data-tooltip="These reports are official results and are only available once the event has been officially CLOSED.">
+                                    <i class="ri-information-line"></i>
+                                </button>
+                            </h3>
                         </div>
-                        <p class="settings-error-hint"> <!-- NEW CLASS for informational error -->
-                            Reports can only be generated after the event has ended.
-                        </p>
-                        <p class="settings-label">Select reports to generate:</p>
+                        @if (!isEnded)
+                        {
+                            <p class="settings-error-hint">
+                                Available only after the event has ended.
+                            </p>
+                        }
+                        <p class="settings-label">Select official reports:</p>
                         
-                        <div class="settings-field-row" style="flex-direction: column; gap: 10px; flex: 1; margin-bottom: 20px;"> <!-- Added margin-bottom -->
-                            <label class="report-option">
-                                <input type="checkbox" class="report-checkbox" value="overall"> Consolidated Master Sheet
+                        <div class="settings-field-row" style="flex-direction: column; gap: 10px; flex: 1; margin-bottom: 20px;">
+                            <label class="report-option @(!isEnded ? "disabled" : "")" style="@(!isEnded ? "opacity: 0.6; cursor: not-allowed;" : "")">
+                                <input type="checkbox" class="report-checkbox" value="overall" @(!isEnded ? "disabled" : "")> Master Sheet
                             </label>
-                            <label class="report-option">
-                                <input type="checkbox" class="report-checkbox" value="resultperround"> Result per Round
+                            <label class="report-option @(!isEnded ? "disabled" : "")" style="@(!isEnded ? "opacity: 0.6; cursor: not-allowed;" : "")">
+                                <input type="checkbox" class="report-checkbox" value="resultperround" @(!isEnded ? "disabled" : "")> Result per Round
                             </label>
-                            <label class="report-option">
-                                <input type="checkbox" class="report-checkbox" value="winners"> Winners
+                            <label class="report-option @(!isEnded ? "disabled" : "")" style="@(!isEnded ? "opacity: 0.6; cursor: not-allowed;" : "")">
+                                <input type="checkbox" class="report-checkbox" value="winners" @(!isEnded ? "disabled" : "")> List of Winners
                             </label>
-                            <label class="report-option">
-                                <input type="checkbox" class="report-checkbox" value="judges"> Judge's Score
+                            <label class="report-option @(!isEnded ? "disabled" : "")" style="@(!isEnded ? "opacity: 0.6; cursor: not-allowed;" : "")">
+                                <input type="checkbox" class="report-checkbox" value="judges" @(!isEnded ? "disabled" : "")> Judge's Audit Cards
                             </label>
                         </div>
 
-                        <div> <!-- Removed settings-actions-row -->
-                            <button type="button" id="btnGenerateReport" class="settings-primary-button">Generate Reports</button>
+                        <div>
+                            <button type="button" id="btnGenerateOfficialReport" class="settings-primary-button" @(!isEnded ? "disabled" : "")>Generate Official Reports</button>
+                        </div>
+                    </div>
+
+                    <!-- Informational Reports -->
+                    <div class="settings-group card" style="margin-top: 20px;">
+                        <div class="settings-group-header">
+                            <h3 class="settings-group-title">
+                                Informational Reports
+                                <button type="button" class="btn-info-access" 
+                                   data-tooltip="These reports provide supporting data and can be downloaded at any time (during or after the event).">
+                                    <i class="ri-information-line"></i>
+                                </button>
+                            </h3>
+                        </div>
+                        <p class="settings-label">Select informational reports:</p>
+                        
+                        <div class="settings-field-row" style="flex-direction: column; gap: 10px; flex: 1; margin-bottom: 20px;">
+                            @{
+                                var finishedRounds = Model.Rounds.Where(r => r.Status == "finished").OrderBy(r => r.Order).ToList();
+                                var hasTies = Model.ComputedRoundScores.Any(crs => crs.Rank % 1 != 0); // Fractional ranks indicate ties
+                            }
+
+                            @foreach (var round in finishedRounds)
+                            {
+                                <label class="report-option">
+                                    <input type="checkbox" class="info-report-checkbox" value="judgesheet-@round.Id"> @(round.Name)-JudgeScoreSheet
+                                </label>
+                            }
+
+                            @if (hasTies)
+                            {
+                                <label class="report-option">
+                                    <input type="checkbox" class="info-report-checkbox" value="tiebreak"> Tie-Breaking Audit
+                                </label>
+                            }
+                            
+                            @if (!finishedRounds.Any() && !hasTies)
+                            {
+                                <p class="settings-hint">No informational reports available yet. Finish a round to see judge sheets.</p>
+                            }
+                        </div>
+
+                        <div>
+                            <button type="button" id="btnGenerateInfoReport" class="settings-primary-button">Download Report</button>
                         </div>
                     </div>
 
@@ -720,14 +773,14 @@
                             <h3 class="settings-group-title" style="color: var(--color-danger-text);">Danger Zone</h3>
                         </div>
                         
-                        <div style="flex: 1; margin-bottom: 20px;"> <!-- Added margin-bottom -->
+                        <div style="flex: 1; margin-bottom: 20px;">
                             <p class="settings-label">Archive Event</p>
                             <p class="settings-hint">
                                 Hide this event from your active lists. Can be restored later.
                             </p>
                         </div>
 
-                        <div> <!-- Removed settings-actions-row -->
+                        <div>
                             <button type="button" id="btnArchiveEvent" class="settings-danger-button">Archive Event</button>
                         </div>
                     </div>
@@ -1964,7 +2017,8 @@
             document.querySelectorAll('.btn-send-invite').forEach(btn => attachInviteListener(btn));
 
             // --- 7. Generate Report Logic ---
-            const btnGenerateReport = document.getElementById('btnGenerateReport');
+            const btnGenerateOfficialReport = document.getElementById('btnGenerateOfficialReport');
+            const btnGenerateInfoReport = document.getElementById('btnGenerateInfoReport');
             const reportModal = document.getElementById('reportPreviewModal');
             const btnCloseReportModal = document.getElementById('btnCloseReportModal');
             const reportContent = document.getElementById('reportPreviewContent');
@@ -1974,44 +2028,38 @@
             // Pass server status to JS
             const eventStatus = "@statusText.ToLower()";
 
-            if (btnGenerateReport) {
-                btnGenerateReport.addEventListener('click', async function() {
+            async function generateReport(selectedTypes, btn) {
+                const originalText = btn.textContent;
+                btn.textContent = "Generating...";
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(`/Events/GenerateReportPdf?eventId=${eventId}&reportTypes=${selectedTypes}`);
+                    if (!response.ok) throw new Error("Failed to generate report.");
                     
-                    // 1. Validate Status
-                    if (eventStatus !== "closed") {
-                        showSuccessModal("Reports can only be generated when the event is ended (closed).");
-                        return;
-                    }
-
-                    // 2. Validate Selection
-                    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
-                    if (checkboxes.length === 0) {
-                        showSuccessModal("Please select at least one report option.");
-                        return;
-                    }
-
-                    const selectedTypes = Array.from(checkboxes).map(cb => cb.value).join(',');
-
-                    // 3. Fetch Preview
-                    const originalText = this.textContent;
-                    this.textContent = "Generating...";
-                    this.disabled = true;
-
-                    try {
-                        const response = await fetch(`/Events/GenerateReportPdf?eventId=${eventId}&reportTypes=${selectedTypes}`);
-                        if (!response.ok) throw new Error("Failed to generate report.");
-                        
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        
+                    const contentType = response.headers.get("content-type");
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    
+                    if (contentType && contentType.includes("application/zip")) {
+                        // For ZIP (multiple files), trigger direct download
+                        const a = document.createElement("a");
+                        a.href = url;
+                        const dateStr = new Date().toISOString().slice(0,10);
+                        a.download = `Reports_${eventId}_${dateStr}.zip`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        showSuccessModal("Reports generated and download started as a ZIP file.");
+                    } else {
+                        // For PDF (single file), show in preview modal
                         if(reportContent) {
                             reportContent.innerHTML = `<iframe src="${url}" style="width:100%; height:100%; border:none;"></iframe>`;
                         }
 
-                        // Setup Download Link
+                        // Setup Download Link in Modal
                         if (btnDownloadReport) {
                             btnDownloadReport.href = url;
-                            // Set filename with date
                             const dateStr = new Date().toISOString().slice(0,10);
                             btnDownloadReport.download = `Report_${eventId}_${dateStr}.pdf`;
                         }
@@ -2020,14 +2068,42 @@
                             reportModal.classList.add('is-open');
                             document.body.classList.add('has-modal-open');
                         }
-
-                    } catch (err) {
-                        console.error(err);
-                        showSuccessModal("An error occurred while generating the report.");
-                    } finally {
-                        this.textContent = originalText;
-                        this.disabled = false;
                     }
+
+                } catch (err) {
+                    console.error(err);
+                    showSuccessModal("An error occurred while generating the report.");
+                } finally {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }
+            }
+
+            if (btnGenerateOfficialReport) {
+                btnGenerateOfficialReport.addEventListener('click', function() {
+                    if (eventStatus !== "closed") {
+                        showSuccessModal("Official reports can only be generated when the event is ended (closed).");
+                        return;
+                    }
+                    const checkboxes = document.querySelectorAll('.report-checkbox:checked');
+                    if (checkboxes.length === 0) {
+                        showSuccessModal("Please select at least one official report option.");
+                        return;
+                    }
+                    const selectedTypes = Array.from(checkboxes).map(cb => cb.value).join(',');
+                    generateReport(selectedTypes, this);
+                });
+            }
+
+            if (btnGenerateInfoReport) {
+                btnGenerateInfoReport.addEventListener('click', function() {
+                    const checkboxes = document.querySelectorAll('.info-report-checkbox:checked');
+                    if (checkboxes.length === 0) {
+                        showSuccessModal("Please select at least one informational report option.");
+                        return;
+                    }
+                    const selectedTypes = Array.from(checkboxes).map(cb => cb.value).join(',');
+                    generateReport(selectedTypes, this);
                 });
             }
 

@@ -1517,13 +1517,41 @@ namespace ProjectTallify.Controllers
             try
             {
                 var types = (reportTypes ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
-                var pdfBytes = await _reportService.GeneratePdfReportAsync(eventId, types);
-                return File(pdfBytes, "application/pdf");
+                if (!types.Any()) return BadRequest("No report types selected.");
+
+                var reports = await _reportService.GenerateReportsAsync(eventId, types);
+                if (reports == null || !reports.Any()) return NotFound("No data to generate report.");
+
+                // If only one report is requested, return it directly as a PDF
+                if (reports.Count == 1)
+                {
+                    var report = reports.First();
+                    return File(report.Value, "application/pdf", report.Key);
+                }
+
+                // If multiple reports are requested, package them into a ZIP file
+                using (var memoryStream = new MemoryStream())
+                {
+                    using (var archive = new System.IO.Compression.ZipArchive(memoryStream, System.IO.Compression.ZipArchiveMode.Create, true))
+                    {
+                        foreach (var report in reports)
+                        {
+                            var entry = archive.CreateEntry(report.Key);
+                            using (var entryStream = entry.Open())
+                            {
+                                entryStream.Write(report.Value, 0, report.Value.Length);
+                            }
+                        }
+                    }
+                    
+                    var zipBytes = memoryStream.ToArray();
+                    return File(zipBytes, "application/zip", $"Reports_{eventId}_{DateTime.Now:yyyyMMdd}.zip");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error generating report: {ex}");
-                return BadRequest("Failed to generate report: " + ex.Message);
+                Console.WriteLine($"[GenerateReportPdf] Error: {ex}");
+                return StatusCode(500, "Error generating report: " + ex.Message);
             }
         }
 

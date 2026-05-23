@@ -1,6 +1,6 @@
 # ProjectTallify
 
-ProjectTallify is a sophisticated event management and scoring system designed for organized competitions, such as pageants, talent shows, and corporate events. It streamlines the entire lifecycle of an event—from registration and judging to real-time tallying and automated PDF reporting.
+ProjectTallify is a sophisticated event management and scoring system designed for organized competitions such as pageants, talent shows, and corporate events. It streamlines the entire lifecycle of an event—from registration and judging to real-time tallying and automated PDF reporting.
 
 ## 🚀 Quick Start
 
@@ -42,7 +42,7 @@ Key settings are managed in `appsettings.json`:
 -   **Real-time:** SignalR for live scoring updates and notifications.
 -   **Reporting:** QuestPDF for high-quality, code-defined PDF generation.
 -   **Authentication:** 
-    -   **Organizers:** Cookie-based authentication with session management.
+    -   **Organizers:** Cookie-based authentication with session management. (Formerly `Users`).
     -   **Judges:** Secure PIN/Token-based access via unique invitation links.
 -   **Security:** SHA256 hashing for sensitive tokens; `BCrypt.Net-Next` for password hashing.
 -   **Frontend:** Razor Views, Vanilla JavaScript, jQuery, and custom CSS (Vanilla CSS + Bootstrap).
@@ -92,4 +92,5 @@ Key settings are managed in `appsettings.json`:
 -   **Judge Invitations:** Judges must verify their email via a unique token before they can access the scoring portal.
 -   **Round Management:** Only one round is typically "Active" at a time to prevent scoring confusion.
 -   **Live Tally:** The Organizer's dashboard polls/listens for SignalR updates to show real-time rankings as judges submit scores.
+-   **Contestant Codes:** Use sequential codes (e.g., 01, 02) for consistent display and sorting.
 -   **File Storage:** Uploaded photos (contestants/organizers) are stored in `wwwroot/uploads/` and cleaned up if orphaned for >30 days.
